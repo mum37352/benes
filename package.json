@@ -30,6 +30,14 @@
         "prepare": "husky"
     },
     "dependencies": {
+        "@react-hook/resize-observer": "^2.0.2",
+        "@types/d3": "^7.4.3",
+        "@types/katex": "^0.16.7",
+        "autoprefixer": "^10.4.21",
+        "d3": "^7.9.0",
+        "katex": "^0.16.22",
+        "primereact": "^10.9.5",
+        "raw-loader": "^4.0.2",
         "react": "^19.0.0",
         "react-dom": "^19.1.0"
     },

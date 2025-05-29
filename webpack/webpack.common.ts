@@ -11,8 +11,8 @@ const commonConfig: webpack.Configuration = {
     context: path.resolve(__dirname, '../'),
     entry: {
         index: './src/index.tsx',
-        benes: './src/benes.tsx',
-        construction: './src/construction.tsx',
+        benes: './src/route-benes/page.tsx',
+        construction: './src/construction/page.tsx',
     },
     output: {
         path: path.resolve(__dirname, '../dist'),
