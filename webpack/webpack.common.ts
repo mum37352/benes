@@ -9,7 +9,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const commonConfig: webpack.Configuration = {
     context: path.resolve(__dirname, '../'),
-    entry: './src/index.tsx',
+    entry: {
+        index: './src/index.tsx',
+        benes: './src/benes.tsx',
+        construction: './src/construction.tsx',
+    },
     output: {
         path: path.resolve(__dirname, '../dist'),
         filename: '[name].[contenthash].js',
@@ -72,6 +76,18 @@ const commonConfig: webpack.Configuration = {
     plugins: [
         new HtmlWebpackPlugin({
             template: './public/index.html',
+            filename: 'index.html',
+            chunks: ['index'],
+        }),
+        new HtmlWebpackPlugin({
+            template: './public/construction.html',
+            filename: 'construction.html',
+            chunks: ['construction'],
+        }),
+        new HtmlWebpackPlugin({
+            template: './public/benes.html',
+            filename: 'benes.html',
+            chunks: ['benes'],
         }),
         new CleanWebpackPlugin(),
         new MiniCssExtractPlugin({
