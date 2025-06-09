@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useReducer, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import '@/styles/index.css';
@@ -16,12 +16,51 @@ import Construction from "./Construction";
 import Permutation, { allPerms } from "../common/Permutation";
 import { inputColor, outputColor } from "../common/Colors";
 import { Toolbar } from 'primereact/toolbar';
-import GraphToolbar from './Toolbar';
+import GraphToolbar, { ConstructionAction, ConstructionMode } from './Toolbar';
+import { Graph, GraphNode } from './Graph';
+import * as d3 from "d3";
 
 function Main()
 {
   let [ioHeight, setIoHeight] = useState<number>(4);
   let [perms, setPerms] = useState<Permutation[]>(allPerms(ioHeight));
+
+  let [mode, setMode] = useState<ConstructionMode>('nodes');
+  let [action, setAction] = useState<ConstructionAction>('insert');
+
+  // TODO: This will execute the constructor every time we render.
+  let [graph, setGraph] = useState<Graph>(new Graph(ioHeight));
+
+  let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
+
+  let [, forceUpdate] = useReducer(x => x + 1, 0);
+
+  let ref = useRef(null);
+
+  function ticked() {
+    forceUpdate();
+  }
+
+  useLayoutEffect(() => {
+    let sim = d3.forceSimulation(graph.nodes)
+
+    sim.on("tick", ticked);
+    sim.force("charge", d3.forceManyBody());
+    sim.force("springs", d3.forceLink(graph.edges))
+
+    setSimulation(sim);
+  }, [ref]);
+
+  function reheat() {
+    simulation?.nodes(graph.nodes).alpha(1).restart();
+    forceUpdate();
+  }
+
+  // HACK: Have some default value for our graph.
+  if (graph.edges.length === 0) {
+    let graph = Graph.makeCompleteBipartiteGraph(ioHeight);
+    setGraph(graph);
+  }
 
   let permCards: React.JSX.Element[] = [];
 
@@ -29,22 +68,19 @@ function Main()
     console.log(perm.toString());
     permCards.push(
       <div className="w-full h-96 pointer-events-none">
-        <Construction ioHeight={ioHeight} perm={perm} />
+        <Construction graph={graph} ioHeight={ioHeight} perm={perm} />
       </div>
     );
   }
 
-  let startContent = <>
-
-  </>
-
-  return <Splitter className="h-dvh w-full">
+  return <Splitter className="h-dvh w-full" ref={ref}>
     <SplitterPanel size={60} className="overflow-hidden">
       <div className="w-full h-full">
-        <GraphToolbar onChange={(mode, action) => {
-          console.log(mode, action);
+        <GraphToolbar mode={mode} action={action} onChange={(mode, action) => {
+          setMode(mode);
+          setAction(action);
         }} />
-        <Construction perm={null} ioHeight={ioHeight} />
+        <Construction mode={mode} action={action} graph={graph} perm={null} ioHeight={ioHeight} onChange={reheat} />
       </div>
     </SplitterPanel>
     <SplitterPanel size={40} className="">
@@ -56,9 +92,6 @@ function Main()
           }
         }} mode="decimal" showButtons min={1} max={5} />
 
-        <div>Click and drag to move nodes, Ctrl-Click to add nodes, Alt-Click to add edges.
-
-          </div>
         <h1>Permutations</h1>
 
         {permCards}

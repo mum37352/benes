@@ -339,6 +339,30 @@ export class Graph {
     return this.nextId++;
   }
 
+  deleteNode(node: GraphNode) {
+    // Delete edges containing the node.
+    // Remove all elements greater than 3, in-place
+    for (let i = this.edges.length - 1; i >= 0; i--) {
+      if (this.edges[i].target === node || this.edges[i].source === node) {
+        this.edges.splice(i, 1);
+      }
+    }
+    
+    for (let i = this.nodes.length - 1; i >= 0; i--) {
+      if (this.nodes[i] === node) {
+        this.nodes.splice(i, 1);
+      }
+    }
+  }
+
+  deleteEdge(edge: GraphEdge) {
+    for (let i = this.edges.length - 1; i >= 0; i--) {
+      if (this.edges[i] === edge) {
+        this.edges.splice(i, 1);
+      }
+    }
+  }
+
   nextId: number;
 
   xScale: d3.ScaleLinear<number, number>;

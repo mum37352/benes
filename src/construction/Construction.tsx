@@ -1,23 +1,26 @@
 import useResizeObserver from "@react-hook/resize-observer";
 import * as d3 from "d3";
-import { useLayoutEffect, useReducer, useRef, useState } from "react";
+import { act, useLayoutEffect, useReducer, useRef, useState } from "react";
 import Permutation, { correctIdx } from "../common/Permutation";
 import { backgroundColor, getColorScale, inputColor, midColor, outputColor } from "../common/Colors";
 import PermWidget, { Vec2 } from "@/common/PermWidget";
 import { Graph, GraphEdge, GraphNode, GraphNodeType, height, width } from "./Graph";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
+import { ConstructionAction, ConstructionMode } from "./Toolbar";
 
 
 type AddEdgeInteraction = {
   fromNode: GraphNode,
-  toX: number,
-  toY: number
 };
 
 export default function Construction({
   ioHeight,
-  perm
-} : {ioHeight: number, perm: Permutation | null})
+  perm,
+  graph,
+  onChange = (() => {}),
+  mode='nodes',
+  action='drag'
+} : {ioHeight: number, perm: Permutation | null, graph: Graph, onChange?: Function, mode?: ConstructionMode, action?: ConstructionAction})
 {
   let ref = useRef<HTMLDivElement>(null);
   let dummyRectRef = useRef<SVGRectElement>(null);
@@ -26,43 +29,19 @@ export default function Construction({
 
   let [draggedNode, setDraggedNode] = useState<GraphNode>();
   let [edgeInteraction, setEdgeInteraction] = useState<AddEdgeInteraction>();
-
-  // TODO: This will execute the constructor every time we render.
-  let [graph, setGraph] = useState<Graph>(new Graph(ioHeight));
-  
-  // HACK: Have some default value for our graph.
-  if (graph.edges.length === 0) {
-    let graph = Graph.makeCompleteBipartiteGraph(ioHeight);
-    setGraph(graph);
-  }
+  let [mousePos, setMousePos] = useState<Vec2>();
 
   let [editPerm, setEditPerm] = useState<Permutation>(new Permutation([...Array(ioHeight).keys()]));
 
   if (perm == null) {
     perm = editPerm;
   }
-
-  let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
-  let [, forceUpdate] = useReducer(x => x + 1, 0);
   
   let screenWidth = size?.width || 0;
   let screenHeight = size?.height || 0;
 
   let vertical = false;
 
-  function ticked() {
-    forceUpdate();
-  }
-  
-  useLayoutEffect(() => {
-    let sim = d3.forceSimulation(graph.nodes)
-
-    sim.on("tick", ticked);
-    sim.force("charge", d3.forceManyBody());
-    sim.force("springs", d3.forceLink(graph.edges))
-
-    setSimulation(sim);
-  }, [ref]);
 
   function svgToClient(x: number, y: number) : Vec2 {
     let svgPoint = new DOMPoint(x, y);
@@ -102,34 +81,44 @@ export default function Construction({
     return clientToSvg(e.clientX, e.clientY);
   }
 
-  function reheat() {
-    simulation?.nodes(graph.nodes).alpha(1).restart();
-    forceUpdate();
-  }
-
-  function handleMouseDown(e: React.MouseEvent, node?: GraphNode) {
+  function handleMouseDown(e: React.MouseEvent, node?: GraphNode, edge?: GraphEdge) {
     let [ex, ey] = getEventPoint(e);
 
-    if (e.ctrlKey) {
-      let newNode: GraphNode = { type: GraphNodeType.Internal, key: "usrnd_" + graph.getNextId(), y: ey, x: ex };
+    if (mode === 'nodes') {
+      if (action === 'insert') {
+        let newNode: GraphNode = { type: GraphNodeType.Internal, key: "usrnd_" + graph.getNextId(), y: ey, x: ex };
 
-      graph.nodes.push(newNode);
-      graph.routeAllPermutations();
-      reheat();
-      e.stopPropagation();
-    } else if (e.altKey) {
-      if (node) {
-        setEdgeInteraction({
-          fromNode: node,
-          toX: ex,
-          toY: ey
-        });
+        graph.nodes.push(newNode);
+        graph.routeAllPermutations();
+        onChange();
         e.stopPropagation();
+      } else if (action === 'drag') {
+        if (node?.type === GraphNodeType.Internal) {
+          setDraggedNode(node);
+          e.stopPropagation();
+        }
+      } else if (action === 'delete') {
+        if (node?.type === GraphNodeType.Internal) {
+          graph.deleteNode(node);
+          graph.routeAllPermutations();
+          onChange();
+          e.stopPropagation();
+        }
       }
-    } else {
-      if (node?.type === GraphNodeType.Internal) {
-        setDraggedNode(node);
-        e.stopPropagation();
+    } else if (mode ==='edges') {
+      if (action === 'insert') {
+        if (node) {
+          setEdgeInteraction({
+            fromNode: node
+          });
+          e.stopPropagation();
+        }
+      } else if (action === 'delete') {
+        if (edge) {
+          graph.deleteEdge(edge);
+          graph.routeAllPermutations();
+          onChange();
+        }
       }
     }
   }
@@ -140,15 +129,15 @@ export default function Construction({
     if (draggedNode) {
       draggedNode.fx = ex;
       draggedNode.fy = ey;
-      reheat();
+      onChange();
     } else if (edgeInteraction) {
       setEdgeInteraction({
-        fromNode: edgeInteraction.fromNode,
-        toX: ex,
-        toY: ey
+        fromNode: edgeInteraction.fromNode
       });
       e.stopPropagation();
     }
+
+    setMousePos([ex, ey]);
   }
 
   function handleMouseUp(e: React.MouseEvent, node?: GraphNode) {
@@ -158,7 +147,7 @@ export default function Construction({
       draggedNode.fx = draggedNode.fy = undefined;
       draggedNode.x = ex;
       draggedNode.y = ey;
-      reheat();
+      onChange();
       setDraggedNode(undefined);
       e.stopPropagation();
     }
@@ -173,7 +162,7 @@ export default function Construction({
         graph.routeAllPermutations();
       }
 
-      reheat();
+      onChange();
       setEdgeInteraction(undefined);
       e.stopPropagation();
     }
@@ -184,7 +173,7 @@ export default function Construction({
       let src = edge.source as GraphNode;
       let tgt = edge.target as GraphNode;
 
-      let line = <line key={edge.index} x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke="white" strokeWidth={2} />;
+      let line = <line className={mode==='edges'&&action==='delete'?"cursor-pointer":""} key={edge.index} x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke="white" strokeWidth={2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
 
       canvas.push(line);
     }
@@ -197,17 +186,23 @@ export default function Construction({
           let src = path[nodeIdx];
           let tgt = path[nodeIdx + 1];
 
-          let line = <line x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke={colorScale(pathIdx)} strokeWidth={5} />;
+          let line = <line className="pointer-events-none" x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke={colorScale(pathIdx)} strokeWidth={5} />;
           canvas.push(line);
         }
       }
     }
 
-    if (edgeInteraction) {
+    if (edgeInteraction && mousePos) {
       let src = edgeInteraction.fromNode;
-      let line = <line key={"edgeInteract"} x1={src.x} y1={src.y} x2={edgeInteraction.toX} y2={edgeInteraction.toY} stroke="white" strokeWidth={4} />;
+      let line = <line key={"edgeInteract"} x1={src.x} y1={src.y} x2={mousePos[0]} y2={mousePos[1]} stroke="white" strokeWidth={4} />;
 
       canvas.push(line);
+    }
+
+    if (mode === 'nodes' && action==="insert" && mousePos) {
+      let circ = <circle key="ghostCirc" cx={mousePos[0]} cy={mousePos[1]} r={10} fill={midColor} fillOpacity={0.5}
+    />
+      canvas.push(circ);
     }
 
     for (let node of graph.nodes) {
@@ -220,7 +215,13 @@ export default function Construction({
         color = outputColor;
       }
 
-      let circ = <circle key={node.key} cx={node.x} cy={node.y} r={10} fill={color} onMouseDown={e => handleMouseDown(e, node)} onMouseUp={e => handleMouseUp(e, node)}/>
+      let circ = <circle className={mode==="nodes"&&action==='drag'?"cursor-grab":""} key={node.key} cx={node.x} cy={node.y} r={10} fill={color} 
+      onMouseDown={
+        e => {
+          
+          handleMouseDown(e, node)
+        }
+      } onMouseUp={e => handleMouseUp(e, node)}/>
 
       canvas.push(circ);
     }

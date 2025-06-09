@@ -30,7 +30,7 @@ export function useFlushingResizeObserver<T extends Element>(
           counterRef.current = next;
           return next;
         });
-    }, 100);
+    }, 200);
   }
 
   useLayoutEffect(() => {
