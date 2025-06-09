@@ -14,7 +14,7 @@ root.render(
         <PrimeReactProvider>
             <div>
 
-                At this moment, there are test pages on <a href="/benes.html">Beneš nets</a> and <a href="/construction.html">communication network construction</a>.
+                At this moment, there are test pages on <a href="benes.html">Beneš nets</a> and <a href="construction.html">communication network construction</a>.
             </div>
         </PrimeReactProvider>
     </React.StrictMode>

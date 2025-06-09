@@ -452,7 +452,7 @@ export default function BenesNet({
   
   function drawRouting(routingLines: any[], routing: BenesPath[], k: number) {
     let netHeight = 2 ** k;
-    var colorScale = getColorScale(netHeight-1);
+    var colorScale = getColorScale(netHeight);
   
     for (let inputIdx = 0; inputIdx < netHeight; inputIdx++) {
       let pathColor = colorScale(inputIdx);
