@@ -19,6 +19,10 @@ export default class Permutation {
   invLut: number[];
 }
 
+export function correctIdx(rawIdx: number, height: number) {
+  return Math.min(height - 1, Math.max(0, Math.round(rawIdx)));
+}
+
 function allPerms_recurse(unusedNums: Set<number>, lut: number[], n: number, perms: Permutation[]) {
   if (lut.length === n) {
     perms.push(new Permutation(lut));

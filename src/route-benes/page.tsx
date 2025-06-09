@@ -24,12 +24,12 @@ function Main() {
   let [bipartiteColors, setBipartiteColors] = useState(false);
   let [dottedLines, setDottedLines] = useState(false);
 
-  return <Splitter className="h-dvh w-full">
+  return <Splitter className="h-full w-full">
     <SplitterPanel size={75} className="overflow-hidden">
       <BenesNet order={benesOrder} vertical={vertical} doRouting={doRouting} drawBoxes={drawBoxes} bipartiteColors={bipartiteColors} dottedLines={dottedLines} />
     </SplitterPanel>
     <SplitterPanel size={25} className="">
-      <div className="pl-7 pr-7 space-y-4 overflow-scroll">
+      <div className="pl-7 pr-7 space-y-4 overflow-auto">
         <h1 className="text-xl font-bold my-4 font-italic">Beneš {doRouting ? "Routing" : "Nets"}</h1>
 
         <p>
@@ -113,7 +113,10 @@ initMacros();
 root.render(
   <React.StrictMode>
       <PrimeReactProvider>
-        <Main />
+        {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
+        <div className="fixed flex overflow-hidden h-dvh w-full">
+          <Main />
+        </div>
       </PrimeReactProvider>
   </React.StrictMode>
 );

@@ -19,38 +19,37 @@ import { inputColor, outputColor } from "../common/Colors";
 function Main()
 {
   let [ioHeight, setIoHeight] = useState<number>(4);
-  let [perms, setPerms] = useState<Permutation[]>(allPerms(3));
+  let [perms, setPerms] = useState<Permutation[]>(allPerms(ioHeight));
 
   let permCards: React.JSX.Element[] = [];
 
   for (let perm of perms) {
     console.log(perm.toString());
     permCards.push(
-      <div>
-        {perm.lut.toString()}
-        <Construction ioHeight={ioHeight} />
+      <div className="w-full h-96">
+        <Construction ioHeight={ioHeight} perm={perm} />
       </div>
     );
   }
 
   return <Splitter className="h-dvh w-full">
-    <SplitterPanel size={75} className="overflow-hidden">
-      <div className="flex flex-col w-full">
-        <div>
-           <InputNumber className="w-full" name="benesOrder" value={ioHeight} onValueChange={(e: InputNumberValueChangeEvent) => {
-            let val = e.value;
-            if (val && !isNaN(val)) {
-              setIoHeight(val)
-            }
-          }} mode="decimal" showButtons min={1} max={5} />
-        </div>
-        <Construction ioHeight={3} />
+    <SplitterPanel size={60} className="overflow-hidden">
+      <div className="w-full h-full">
+        <Construction perm={null} ioHeight={ioHeight} />
       </div>
     </SplitterPanel>
-    <SplitterPanel size={25} className="">
-      <div className="flex flex-col">
-        Click and drag to move nodes, Ctrl-Click to add nodes, Alt-Click to add edges.
+    <SplitterPanel size={40} className="">
+      <div className="overflow-auto w-full">
+        <InputNumber className="" name="benesOrder" value={ioHeight} onValueChange={(e: InputNumberValueChangeEvent) => {
+          let val = e.value;
+          if (val && !isNaN(val)) {
+            setIoHeight(val)
+          }
+        }} mode="decimal" showButtons min={1} max={5} />
 
+        <div>Click and drag to move nodes, Ctrl-Click to add nodes, Alt-Click to add edges.
+
+          </div>
         <h1>Permutations</h1>
 
         {permCards}
@@ -65,7 +64,10 @@ initMacros();
 root.render(
   <React.StrictMode>
       <PrimeReactProvider>
-        <Main />
+        {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
+        <div className="fixed flex overflow-hidden h-dvh w-full">
+          <Main />
+        </div>
       </PrimeReactProvider>
   </React.StrictMode>
 );

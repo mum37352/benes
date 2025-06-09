@@ -3,11 +3,10 @@ import { useEffect, useLayoutEffect,useRef, useState } from "react";
 import useResizeObserver from "@react-hook/resize-observer";
 import * as d3 from "d3";
 
-import { backgroundColor, bottomColor, inputColor, midColor, outputColor, topColor } from "../common/Colors";
+import { backgroundColor, bottomColor, getColorScale, inputColor, midColor, outputColor, topColor } from "../common/Colors";
 import { KI } from "../common/katex";
-import Permutation from "../common/Permutation";
-
-type Vec2 = [number, number];
+import Permutation, { correctIdx } from "../common/Permutation";
+import PermWidget, { Vec2 } from "@/common/PermWidget";
 
 class Box {
   constructor(left: number, top: number, right: number, bottom: number) {
@@ -140,7 +139,7 @@ class Grid {
 
   yFromScreen(screenX: number, screenY: number) {
     let result = this.vertical ? this.xScale.invert(screenX) : this.yScale.invert(screenY);
-    result = Math.min(this.rootSubnet.height - 1, Math.max(0, Math.round(result)));
+    result = correctIdx(result, this.rootSubnet.height)
     return result;
   }
 
@@ -291,11 +290,6 @@ function DraggableCircle(props: {onDrag: Function | undefined, onDragStart: Func
   return <circle ref={ref} {...props} />
 }
 
-// https://observablehq.com/@harrystevens/roll-your-own-color-palette-interpolator
-function interpolatePalette(palette : string[]) {
-  return (t: number) => d3.piecewise(d3.interpolateLab, palette)(Math.min(Math.max(0, t), 1));
-}
-
 export default function BenesNet({
   order,
   vertical = true,
@@ -309,9 +303,8 @@ export default function BenesNet({
   let ref = useRef<HTMLDivElement>(null);
   let [size, setSize] = useState<DOMRect|undefined>();
   let [perm, setPerm] = useState(new Permutation([...Array(numInputs).keys()]));
-  let [activeDropIndicator, setActiveDropIndicator] = useState<number>(-1);
-  let [dragSource, setDragSource] = useState<number>(-1);
-  
+
+
   let marginTop = 50,
   marginRight = 50,
   marginBottom = 50,
@@ -324,6 +317,11 @@ export default function BenesNet({
       marginRight += 50;
     }
   }
+  let width = size?.width || 0;
+  let height = size?.height || 0;
+  let screenBox = new Box(marginLeft, marginTop, width - marginRight, height - marginBottom);
+  let grid = new Grid(order, vertical, screenBox);
+
 
   let [prevK, setPrevK] = useState(order);
   if (prevK != order) {
@@ -332,8 +330,6 @@ export default function BenesNet({
     return <></>;
   }
 
-  let width = size?.width || 0;
-  let height = size?.height || 0;
 
   useLayoutEffect(() => {
     setSize(ref.current?.getBoundingClientRect());
@@ -343,14 +339,13 @@ export default function BenesNet({
     useResizeObserver(ref, entry => setSize(entry.contentRect));
   }
 
-  let screenBox = new Box(marginLeft, marginTop, width - marginRight, height - marginBottom);
-  let grid = new Grid(order, vertical, screenBox);
-
   let circles: any[] = [];
 
+  // Connecting the lines to the center of the circle makes them hard to follow,
+  // so we offset the input and output circles by a small terminal bias.
   function applyTerminalBias(screenX: number, screenY: number, isInput: boolean) {
     let [x, y] = grid.verticalitySwap(screenX, screenY);
-    x += isInput ? -15 : 15;
+    x += isInput ? -13 : 13;
     return grid.verticalitySwap(x, y);
   }
 
@@ -457,7 +452,7 @@ export default function BenesNet({
   
   function drawRouting(routingLines: any[], routing: BenesPath[], k: number) {
     let netHeight = 2 ** k;
-    var colorScale = d3.scaleSequential().domain([0,netHeight-1]).interpolator(interpolatePalette(["#fa7970", "#ecf2f8", "#faa356", "#7ce38b", "#a2d2fb", "#77bdfb", "#cea5fb"]));
+    var colorScale = getColorScale(netHeight-1);
   
     for (let inputIdx = 0; inputIdx < netHeight; inputIdx++) {
       let pathColor = colorScale(inputIdx);
@@ -479,6 +474,7 @@ export default function BenesNet({
         }
 
         routingLines.push(<line
+          stroke-linecap="round"
           key={`rt_${inputIdx}_${edgeIdx}`}
           x1={x1} y1={y1} x2={x2} y2={y2}
           fill="none"
@@ -505,8 +501,6 @@ export default function BenesNet({
   let routingLines: any[] = [];
   drawRouting(routingLines, routing, order);
 
-  let labelOffset = 20;
-
   function drawInputLabels(inputLabels: any[]) {
     for (let inputIdx = 0; inputIdx < grid.rootSubnet.height; inputIdx++) {
       let [x, y] = applyTerminalBias(...grid.toScreen(0, inputIdx), true);
@@ -524,7 +518,7 @@ export default function BenesNet({
     }
   }
 
-  function drawOutputLabels(outputLabels: any[], prescriptions: any[]) {
+  function drawOutputLabels(outputLabels: any[]) {
     for (let preimage = 0; preimage < grid.rootSubnet.height; preimage++) {
       let outputIdx = perm.lut[preimage];
       let [x, y] = applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, outputIdx), false);
@@ -540,78 +534,13 @@ export default function BenesNet({
         }}>
           <KI>{`${outputIdx+1}`}</KI>
         </div>);
-
-      let dropIdx = (outputIdx===0 ? 0 : grid.rootSubnet.height);
-      let dropStyle: React.CSSProperties = {
-        opacity: (activeDropIndicator === dropIdx) ? 1 : 0
-      };
-
-      dropStyle[vertical?"left":"top"] = `${outputIdx===0?"-":""}10px`;
-
-      let drop = <div className="relative w-0 h-0">
-        <div
-          key={`drop_${dropIdx}`} 
-          className={`absolute transition bg-cyan-400 shrink-0 ${vertical ? "h-12" : "w-12"} ${vertical ? "w-0.5" : "h-0.5"}`}
-          style={dropStyle}
-        />
-      </div>;
-
-
-      let predrop = undefined;
-      let postdrop = undefined;
-
-      // Both of these cannot occur at the same time because we have at least two outputs.
-      if (outputIdx === 0) {
-        predrop = drop;
-      } else if (outputIdx === grid.rootSubnet.height - 1) {
-        postdrop = drop;
-      }
-
-      function labelStyle(x: number, y: number): React.CSSProperties {
-        return {
-          transform: vertical ? `translate(-50%, 0) translate(${x}px, ${y + labelOffset}px)` :
-          `translate(0, -50%) translate(${x + labelOffset}px, ${y}px)`,
-          flexDirection: vertical ? "row" : "column"
-        };  
-      }
-
-      prescriptions.push(
-        <div
-          key={"ob_" + preimage.toString()}
-          className="absolute flex transition-transform duration-200"
-          style={labelStyle(x, y)}>
-          {predrop}
-          <div
-            className="flex items-center bg-white/0 hover:bg-white/30 pushed:bg-white/50 transition rounded-sm cursor-grab p-1 active:cursor-grabbing"
-            draggable="true"
-            onDragStart={(e: any) => {
-              setDragSource(outputIdx);
-            }}
-            style={{ flexDirection: vertical ? "column" : "row" }}>
-            <div className={`px-1 ${vertical ? "-rotate-90" : "rotate-180"}`}><KI>{`\\mapsto`}</KI></div>
-            <KI>{`${preimage + 1}`}</KI>
-          </div>
-          {postdrop}
-        </div>
-      );
-
-      // Drop indicator
-      if (outputIdx < grid.rootSubnet.height - 1) {
-        [x, y] = applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, outputIdx + 0.5), false);
-        dropIdx = outputIdx+1;
-        outputLabels.push(<div key={`drop_${dropIdx}`} data-before={outputIdx}
-          className={`absolute transition bg-cyan-400 shrink-0 ${vertical ? "h-12" : "w-12"} ${vertical ? "w-0.5" : "h-0.5"}`}
-
-          style={{opacity: activeDropIndicator === outputIdx+1 ? 1 : 0, ...labelStyle(x, y)}}
-        />);
-      }
     }
   }
 
   let labels: any[] = [];
   let prescriptions: any[] = [];
   drawInputLabels(labels);
-  drawOutputLabels(labels, prescriptions);
+  drawOutputLabels(labels);
   if (doRouting) {
     labels.push(...prescriptions);
   }
@@ -643,44 +572,15 @@ export default function BenesNet({
     </g>
   </svg>;
 
-
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    setActiveDropIndicator(-1);
-
-    let fromIdx = dragSource;
-    let toIdx = grid.yFromScreen(e.clientX, e.clientY);
-    let invLut = [...perm.invLut];
-    let move = invLut[fromIdx];
-    invLut.splice(fromIdx, 1);
-    invLut.splice(toIdx, 0, move);
-    let newPerm = new Permutation(invLut);
-    newPerm.invert();
-    setPerm(newPerm);
-  }
-
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
-    let fromIdx = dragSource;
-    let toIdx = grid.yFromScreen(e.clientX, e.clientY);
-
-    console.log(e.dataTransfer.getData("outputIdx"), "is", fromIdx, toIdx);
-    e.preventDefault();
-    e.clientY;
-
-    if (toIdx < fromIdx) {
-      setActiveDropIndicator(toIdx);
-    } else if (toIdx > fromIdx) {
-      setActiveDropIndicator(toIdx + 1);
-    } else {
-      setActiveDropIndicator(-1);
-    }
-  }
-
   return <div className="flex items-stretch w-full h-full p-1" style={{ background: backgroundColor, flexDirection: vertical ? "column" : "row"}}>
     <div className="flex grow items-stretch p-1">
-      <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden" onDragOver={handleDragOver} onDragLeave={() => setActiveDropIndicator(-1)} onDrop={handleDrop}>
+      <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden">
         {svg}
         {labels}
-      </div>
+        {doRouting &&
+        <PermWidget perm={perm} onPermChanged={setPerm} vertical={vertical} xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
+        }
+        </div>
     </div>
   </div>
     ;

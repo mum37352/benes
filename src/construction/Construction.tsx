@@ -1,139 +1,11 @@
 import useResizeObserver from "@react-hook/resize-observer";
 import * as d3 from "d3";
 import { useLayoutEffect, useReducer, useRef, useState } from "react";
-import Permutation from "../common/Permutation";
-import { assert } from "console";
-import { backgroundColor, inputColor, midColor, outputColor } from "../common/Colors";
+import Permutation, { correctIdx } from "../common/Permutation";
+import { backgroundColor, getColorScale, inputColor, midColor, outputColor } from "../common/Colors";
+import PermWidget, { Vec2 } from "@/common/PermWidget";
+import { Graph, GraphEdge, GraphNode, GraphNodeType, height, width } from "./Graph";
 
-let width = 928;
-let height = 680;
-
-enum GraphNodeType {
-  Input,
-  Output,
-  Internal
-}
-
-interface GraphNode extends d3.SimulationNodeDatum {
-  type: GraphNodeType,
-  key: string
-}
-
-type GraphEdge = d3.SimulationLinkDatum<GraphNode>;
-
-class Graph {
-  constructor(ioHeight: number) {
-    this.xScale = d3.scaleLinear([-6, +6], [0, width]);
-    this.yScale = d3.scaleLinear([-1, ioHeight], [0, height]);
-
-    this.ioHeight = ioHeight;
-
-    this.inputs = [];
-    for (let inputIdx = 0; inputIdx < ioHeight; inputIdx++) {
-      let node : GraphNode = {key: "in_"+inputIdx, type: GraphNodeType.Input, fy: this.yScale(inputIdx), fx: this.xScale(-5)};
-      this.inputs.push(node);
-    }
-    this.outputs = [];
-    for (let outputIdx = 0; outputIdx < ioHeight; outputIdx++) {
-      let node : GraphNode = {key: "out_"+outputIdx, type: GraphNodeType.Output, fy: this.yScale(outputIdx), fx: this.xScale(+5)};
-      this.outputs.push(node);
-    }
-
-    this.nextId = 0;
-
-    let nodeA : GraphNode = {key: "r", type: GraphNodeType.Internal};
-    let nodeB : GraphNode = {key: "j", type: GraphNodeType.Internal};
-    this.nodes = [...this.inputs, ...this.outputs, nodeA, nodeB, {key: "k", type: GraphNodeType.Internal}];
-    this.edges = [{source: nodeA, target: nodeB}];
-  }
-
-  routePermutation(perm: Permutation) {
-    let paths: GraphNode[][] = [];
-    let visitedVerts = new Set<GraphNode>();
-    let success = this.routePermutation_recurse(perm, 0, paths, visitedVerts);
-
-    return success ? paths : null;
-  }
-
-  routePermutation_recurse(perm: Permutation, pathIdx: number, paths: GraphNode[][], visitedVerts: Set<GraphNode>) {
-    let dst = this.outputs[perm.lut[pathIdx]];
-
-    let newPath : GraphNode[] = [];
-    type StackEntry = {node: GraphNode, pathIdx: number};
-    let stack : StackEntry[] = [{node: this.inputs[pathIdx], pathIdx: 0}];
-
-    for (;;) {
-      let atEntry = stack.pop();
-
-      if (!atEntry) {
-        break;
-      }
-
-      // Truncate.
-      newPath.length = atEntry.pathIdx;
-      newPath.push(atEntry.node);
-
-      if (visitedVerts.has(atEntry.node)) {
-        continue;
-      }
-
-      visitedVerts.add(atEntry.node);
-
-      if (atEntry.node === dst) {
-        paths.push(newPath);
-
-        if (pathIdx < this.ioHeight - 1) {
-          if (this.routePermutation_recurse(perm, pathIdx + 1, paths, visitedVerts)) {
-            return true;
-          }
-
-          paths.pop();
-        } else {
-          return true;
-        }
-      }
-
-      newPath.push();
-
-      let neighbors = this.adjacentVerts(atEntry.node);
-      for (let neighbor of neighbors) {
-        stack.push({node: neighbor, pathIdx: newPath.length});
-      }
-    }
-
-    // Could not find a path.
-    return false;
-  }
-
-  adjacentVerts(node: GraphNode) {
-    let result = [];
-
-    for (let edge of this.edges) {
-      if (edge.source === node) {
-        result.push(edge.source);
-      } else if (edge.target === node) {
-        result.push(edge.target);
-      }
-    }
-
-    return result;
-  }
-
-  getNextId() {
-    return this.nextId++;
-  }
-
-  nextId: number;
-
-  xScale: d3.ScaleLinear<number, number>;
-  yScale: d3.ScaleLinear<number, number>;
-
-  ioHeight: number;
-  inputs: GraphNode[];
-  outputs: GraphNode[];
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
 
 type AddEdgeInteraction = {
   fromNode: GraphNode,
@@ -142,8 +14,9 @@ type AddEdgeInteraction = {
 };
 
 export default function Construction({
-  ioHeight
-} : {ioHeight: number})
+  ioHeight,
+  perm
+} : {ioHeight: number, perm: Permutation | null})
 {
   let ref = useRef<HTMLDivElement>(null);
   let dummyRectRef = useRef<SVGRectElement>(null);
@@ -154,13 +27,24 @@ export default function Construction({
 
   // TODO: This will execute the constructor every time we render.
   let [graph, setGraph] = useState<Graph>(new Graph(ioHeight));
+  
+  // HACK: Have some default value for our graph.
+  if (graph.edges.length === 0) {
+    let graph = Graph.makeCompleteBipartiteGraph(ioHeight);
+    setGraph(graph);
+  }
+
+  let [editPerm, setEditPerm] = useState<Permutation>(new Permutation([...Array(ioHeight).keys()]));
+
+  if (perm == null) {
+    perm = editPerm;
+  }
 
   let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
   let [, forceUpdate] = useReducer(x => x + 1, 0);
   
   let screenWidth = size?.width || 0;
   let screenHeight = size?.height || 0;
-
 
   let vertical = false;
 
@@ -184,8 +68,25 @@ export default function Construction({
     useResizeObserver(ref, entry => setSize(entry.contentRect));
   }
 
-  function getEventPoint(e: React.MouseEvent) {
-    let svgPoint = new DOMPoint(e.clientX, e.clientY);
+  function svgToClient(x: number, y: number) : Vec2 {
+    let svgPoint = new DOMPoint(x, y);
+    let xform = dummyRectRef.current?.getScreenCTM();
+    if (!xform) {
+      return [0, 0];
+    }
+
+    svgPoint = svgPoint.matrixTransform(xform);
+    let clientRect = ref.current?.getBoundingClientRect();
+    if (clientRect) {
+      svgPoint.x -= clientRect.left;
+      svgPoint.y -= clientRect.top;
+    }
+
+    return [svgPoint.x, svgPoint.y];
+  }
+
+  function clientToSvg(x: number, y: number) {
+    let svgPoint = new DOMPoint(x, y);
     //console.log("client", svgPoint);
     svgPoint = svgPoint.matrixTransform(dummyRectRef.current?.getScreenCTM()?.inverse());
     //console.log("xform", svgPoint);
@@ -193,6 +94,16 @@ export default function Construction({
     //svgPoint.y = graph.yScale.invert(svgPoint.y);
     //console.log("scale", svgPoint);
     return [svgPoint.x, svgPoint.y];
+  }
+
+  function clientToIdx(x: number, y: number) {
+    let [svgX, svgY] = clientToSvg(x, y);
+    let scaleY = graph.yScale.invert(svgY);
+    return correctIdx(scaleY, height);
+  }
+
+  function getEventPoint(e: React.MouseEvent) {
+    return clientToSvg(e.clientX, e.clientY);
   }
 
   function reheat() {
@@ -207,6 +118,7 @@ export default function Construction({
       let newNode: GraphNode = { type: GraphNodeType.Internal, key: "usrnd_" + graph.getNextId(), y: ey, x: ex };
 
       graph.nodes.push(newNode);
+      graph.routeAllPermutations();
       reheat();
       e.stopPropagation();
     } else if (e.altKey) {
@@ -257,13 +169,12 @@ export default function Construction({
 
     if (edgeInteraction) {
       if (node) {
-        console.log("Adding new edge");
         let newEdge: GraphEdge = {
           source: edgeInteraction.fromNode,
           target: node
         };
         graph.edges.push(newEdge);
-        console.log(graph.edges);
+        graph.routeAllPermutations();
       }
 
       reheat();
@@ -277,9 +188,23 @@ export default function Construction({
       let src = edge.source as GraphNode;
       let tgt = edge.target as GraphNode;
 
-      let line = <line key={edge.index} x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke="white" strokeWidth={4} />;
+      let line = <line key={edge.index} x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke="white" strokeWidth={2} />;
 
       canvas.push(line);
+    }
+
+    var colorScale = getColorScale(ioHeight);
+    let paths = graph.routingLut.get(perm.lut.toString());
+    if (paths) {
+      for (let [pathIdx, path] of paths.entries()) {
+        for (let nodeIdx = 0; nodeIdx < path.length - 1; nodeIdx++) {
+          let src = path[nodeIdx];
+          let tgt = path[nodeIdx + 1];
+
+          let line = <line x1={src.x} y1={src.y} x2={tgt.x} y2={tgt.y} stroke={colorScale(pathIdx)} strokeWidth={5} />;
+          canvas.push(line);
+        }
+      }
     }
 
     if (edgeInteraction) {
@@ -308,16 +233,22 @@ export default function Construction({
   let graphCanvas : React.JSX.Element[] = [];
   drawGraph(graphCanvas);
 
-  let svg = <svg className="absolute" width={screenWidth} height={screenHeight} viewBox={`0 0 ${width} ${height}`} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
+  let svg = <svg className="absolute" width={screenWidth} height={screenHeight} viewBox={`0 0 ${width} ${height}`} >
     <rect ref={dummyRectRef} opacity={0} x="0" y="0" width="0" height="0" stroke="none" fill="none" />
     {graphCanvas}
   </svg>;
 
+  function handlePermChange(newPerm: Permutation) {
+    setEditPerm(newPerm);
+  }
+
   return <div className="flex items-stretch w-full h-full p-1" style={{ background: backgroundColor, flexDirection: vertical ? "column" : "row"}}>
-    <div className="flex grow items-stretch p-1">
+    <div className="flex grow items-stretch p-1" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden" >
         {svg}
+        <PermWidget perm={perm} onPermChanged={handlePermChange} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
       </div>
+      
     </div>
   </div>
 }
