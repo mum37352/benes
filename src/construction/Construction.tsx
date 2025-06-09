@@ -5,6 +5,7 @@ import Permutation, { correctIdx } from "../common/Permutation";
 import { backgroundColor, getColorScale, inputColor, midColor, outputColor } from "../common/Colors";
 import PermWidget, { Vec2 } from "@/common/PermWidget";
 import { Graph, GraphEdge, GraphNode, GraphNodeType, height, width } from "./Graph";
+import { useFlushingResizeObserver } from "@/common/resizeObserver";
 
 
 type AddEdgeInteraction = {
@@ -20,7 +21,8 @@ export default function Construction({
 {
   let ref = useRef<HTMLDivElement>(null);
   let dummyRectRef = useRef<SVGRectElement>(null);
-  let [size, setSize] = useState<DOMRect|undefined>();
+  
+  let {size, enableTransition} = useFlushingResizeObserver(ref);
 
   let [draggedNode, setDraggedNode] = useState<GraphNode>();
   let [edgeInteraction, setEdgeInteraction] = useState<AddEdgeInteraction>();
@@ -53,8 +55,6 @@ export default function Construction({
   }
   
   useLayoutEffect(() => {
-    setSize(ref.current?.getBoundingClientRect());
-
     let sim = d3.forceSimulation(graph.nodes)
 
     sim.on("tick", ticked);
@@ -63,10 +63,6 @@ export default function Construction({
 
     setSimulation(sim);
   }, [ref]);
-
-  if (typeof window !== "undefined") {
-    useResizeObserver(ref, entry => setSize(entry.contentRect));
-  }
 
   function svgToClient(x: number, y: number) : Vec2 {
     let svgPoint = new DOMPoint(x, y);
@@ -246,7 +242,7 @@ export default function Construction({
     <div className="flex grow items-stretch p-1" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden" >
         {svg}
-        <PermWidget perm={perm} onPermChanged={handlePermChange} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
+        <PermWidget enableTransition={enableTransition} perm={perm} onPermChanged={handlePermChange} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
       </div>
       
     </div>

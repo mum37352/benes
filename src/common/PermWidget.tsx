@@ -12,9 +12,10 @@ type PermWidgetProps = {
   // Warning: This is currently being called with fractional idx for the
   // drop indicators.
   idxToXY: (idx: number) => Vec2,
+  enableTransition: boolean,
 }
 
-export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx, idxToXY} : PermWidgetProps)
+export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx, idxToXY, enableTransition} : PermWidgetProps)
 {
   let overlayRef = useRef<HTMLDivElement>(null);
   let [activeDropIndicator, setActiveDropIndicator] = useState<number>(-1);
@@ -100,11 +101,11 @@ export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx
       prescriptions.push(
         <div
           key={"ob_" + preimage.toString()}
-          className="absolute flex transition-transform duration-200"
+          className={`absolute flex  ${enableTransition ? "transition-transform duration-200" : ""}`}
           style={labelStyle(x, y)}>
           {predrop}
           <div
-            className="flex items-center bg-white/0 hover:bg-white/30 pushed:bg-white/50 transition rounded-sm cursor-grab p-1 active:cursor-grabbing"
+            className={`flex items-center bg-white/0 hover:bg-white/30 pushed:bg-white/50 transition rounded-sm cursor-grab p-1 active:cursor-grabbing`}
             draggable="true"
             onDragStart={(e: any) => {
               // HACK: Chrome aborts the drag when we change styles right away. (Firefox does not)

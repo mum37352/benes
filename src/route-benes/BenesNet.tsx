@@ -7,6 +7,7 @@ import { backgroundColor, bottomColor, getColorScale, inputColor, midColor, outp
 import { KI } from "../common/katex";
 import Permutation, { correctIdx } from "../common/Permutation";
 import PermWidget, { Vec2 } from "@/common/PermWidget";
+import { useFlushingResizeObserver } from "@/common/resizeObserver";
 
 class Box {
   constructor(left: number, top: number, right: number, bottom: number) {
@@ -301,9 +302,9 @@ export default function BenesNet({
 {
   let numInputs = 2**order;
   let ref = useRef<HTMLDivElement>(null);
-  let [size, setSize] = useState<DOMRect|undefined>();
   let [perm, setPerm] = useState(new Permutation([...Array(numInputs).keys()]));
 
+  let {size, enableTransition} = useFlushingResizeObserver(ref);
 
   let marginTop = 50,
   marginRight = 50,
@@ -328,15 +329,6 @@ export default function BenesNet({
     setPrevK(order);
     setPerm(new Permutation([...Array(numInputs).keys()]));
     return <></>;
-  }
-
-
-  useLayoutEffect(() => {
-    setSize(ref.current?.getBoundingClientRect());
-  }, [ref]);
-
-  if (typeof window !== "undefined") {
-    useResizeObserver(ref, entry => setSize(entry.contentRect));
   }
 
   let circles: any[] = [];
@@ -578,7 +570,7 @@ export default function BenesNet({
         {svg}
         {labels}
         {doRouting &&
-        <PermWidget perm={perm} onPermChanged={setPerm} vertical={vertical} xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
+        <PermWidget enableTransition={enableTransition} perm={perm} onPermChanged={setPerm} vertical={vertical} xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
         }
         </div>
     </div>
