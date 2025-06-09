@@ -16,7 +16,7 @@
         "email": "iggy@ivstudio.com",
         "url": "https://github.com/ivstudio"
     },
-    "homepage": "https://ivstudio.github.io/react-typescript-tailwindcss-webpack5-starter",
+    "homepage": "https://mum37352.github.io/benes",
     "scripts": {
         "start": "cross-env NODE_OPTIONS='--loader=ts-node/esm' webpack serve --config webpack/webpack.dev.ts",
         "test": "jest",
