@@ -9,8 +9,6 @@ import NoSsr from "../common/NoSsr";
 import { Splitter, SplitterPanel } from 'primereact/splitter';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { PrimeReactProvider } from 'primereact/api';
-import "primereact/resources/themes/lara-dark-teal/theme.css";
-import "primereact/resources/primereact.css";
 import { InputSwitch, InputSwitchChangeEvent } from "primereact/inputswitch";
 import { SelectButton } from "primereact/selectbutton";
 import { initMacros, KI } from "../common/katex";
