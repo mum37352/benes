@@ -19,6 +19,7 @@
     "homepage": "https://mum37352.github.io/benes",
     "scripts": {
         "start": "cross-env NODE_OPTIONS='--loader=ts-node/esm' webpack serve --config webpack/webpack.dev.ts",
+        "start-prod": "cross-env NODE_OPTIONS='--loader=ts-node/esm' webpack serve --config webpack/webpack.prod.ts",
         "test": "jest",
         "analyze": "ANALYZE=true npm run build",
         "build": "cross-env NODE_OPTIONS='--loader=ts-node/esm' npx webpack --config webpack/webpack.prod.ts",
