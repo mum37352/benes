@@ -26,7 +26,7 @@ function Main()
   for (let perm of perms) {
     console.log(perm.toString());
     permCards.push(
-      <div className="w-full h-96">
+      <div className="w-full h-96 pointer-events-none">
         <Construction ioHeight={ioHeight} perm={perm} />
       </div>
     );
