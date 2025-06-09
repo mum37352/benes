@@ -15,6 +15,8 @@ import { initMacros, KI } from "../common/katex";
 import Construction from "./Construction";
 import Permutation, { allPerms } from "../common/Permutation";
 import { inputColor, outputColor } from "../common/Colors";
+import { Toolbar } from 'primereact/toolbar';
+import GraphToolbar from './Toolbar';
 
 function Main()
 {
@@ -32,9 +34,16 @@ function Main()
     );
   }
 
+  let startContent = <>
+
+  </>
+
   return <Splitter className="h-dvh w-full">
     <SplitterPanel size={60} className="overflow-hidden">
       <div className="w-full h-full">
+        <GraphToolbar onChange={(mode, action) => {
+          console.log(mode, action);
+        }} />
         <Construction perm={null} ioHeight={ioHeight} />
       </div>
     </SplitterPanel>
