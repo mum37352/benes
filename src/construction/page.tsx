@@ -19,11 +19,13 @@ import { Toolbar } from 'primereact/toolbar';
 import GraphToolbar, { ConstructionAction, ConstructionMode } from './Toolbar';
 import { Graph, GraphNode } from './Graph';
 import * as d3 from "d3";
+import { Card } from 'primereact/card';
 
 function Main()
 {
   let [ioHeight, setIoHeight] = useState<number>(4);
   let [perms, setPerms] = useState<Permutation[]>(allPerms(ioHeight));
+  let [perm, setPerm] = useState<Permutation>(new Permutation([...Array(ioHeight).keys()]));
 
   let [mode, setMode] = useState<ConstructionMode>('nodes');
   let [action, setAction] = useState<ConstructionAction>('insert');
@@ -46,7 +48,9 @@ function Main()
 
     sim.on("tick", ticked);
     sim.force("charge", d3.forceManyBody());
-    sim.force("springs", d3.forceLink(graph.edges))
+    sim.force("springs", d3.forceLink(graph.edges));
+    sim.force("x", d3.forceX(graph.centerX()));
+    sim.force("y", d3.forceY(graph.centerY()));
 
     setSimulation(sim);
   }, [ref]);
@@ -64,11 +68,18 @@ function Main()
 
   let permCards: React.JSX.Element[] = [];
 
-  for (let perm of perms) {
-    console.log(perm.toString());
+  for (let atPerm of perms) {
+    console.log(atPerm.toString());
     permCards.push(
-      <div className="w-full h-96 pointer-events-none">
-        <Construction graph={graph} ioHeight={ioHeight} perm={perm} />
+      <div className={`h-64 cursor-pointer rounded-lg p-1 shadow-md hover:shadow-xl active:bg-gray-900 hover:bg-gray-400/10 transition text-white
+            ${atPerm.lut.toString() === perm.lut.toString()
+              ? "bg-gray-700"
+              : "bg-gray-700/10"}
+            ${graph.routingLut.get(atPerm.lut.toString()) ? "":"border border-red-500"}
+          `}
+          onClick={() => setPerm(atPerm)}
+          key={atPerm.lut.toString()}>
+        <Construction graph={graph} ioHeight={ioHeight} perm={atPerm} />
       </div>
     );
   }
@@ -80,7 +91,7 @@ function Main()
           setMode(mode);
           setAction(action);
         }} />
-        <Construction mode={mode} action={action} graph={graph} perm={null} ioHeight={ioHeight} onChange={reheat} />
+        <Construction mode={mode} action={action} graph={graph} perm={perm} ioHeight={ioHeight} onChange={reheat} onPermChanged={setPerm} />
       </div>
     </SplitterPanel>
     <SplitterPanel size={40} className="">
@@ -92,9 +103,9 @@ function Main()
           }
         }} mode="decimal" showButtons min={1} max={5} />
 
-        <h1>Permutations</h1>
-
-        {permCards}
+        <div className="grid grid-cols-[repeat(auto-fit,_minmax(300px,_1fr))] gap-4 p-4">
+          {permCards}
+        </div>
       </div>
     </SplitterPanel>
   </Splitter>;

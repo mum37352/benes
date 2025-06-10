@@ -7,7 +7,7 @@ export type Vec2 = [number, number];
 type PermWidgetProps = {
   vertical: boolean,
   perm: Permutation,
-  onPermChanged: (newPerm: Permutation) => void,
+  onPermChanged: null | ((newPerm: Permutation) => void),
   xyToIdx: (x: number, y: number) => number,
   // Warning: This is currently being called with fractional idx for the
   // drop indicators.
@@ -33,8 +33,10 @@ export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx
     let newPerm = new Permutation(invLut);
     newPerm.invert();
     setDragSource(-1);
-    overlayRef.current?.classList.add("pointer-events-none")
-    onPermChanged(newPerm);
+    overlayRef.current?.classList.add("pointer-events-none");
+    if (onPermChanged) {
+      onPermChanged(newPerm);
+    }
   }
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
@@ -144,8 +146,7 @@ export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx
   return <>
     {prescriptions}
     {dropIndicators}
-    <div ref={overlayRef} className={`absolute top-0 left-0 w-full h-full pointer-events-none`} onDragOver={handleDragOver} onDragLeave={() => setActiveDropIndicator(-1)} onDrop={handleDrop}
-    >
+    <div ref={overlayRef} className={`absolute top-0 left-0 w-full h-full pointer-events-none`} onDragOver={handleDragOver} onDragLeave={() => setActiveDropIndicator(-1)} onDrop={handleDrop}>
     </div>
   </>;
 }

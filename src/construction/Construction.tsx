@@ -2,9 +2,9 @@ import useResizeObserver from "@react-hook/resize-observer";
 import * as d3 from "d3";
 import { act, useLayoutEffect, useReducer, useRef, useState } from "react";
 import Permutation, { correctIdx } from "../common/Permutation";
-import { backgroundColor, getColorScale, inputColor, midColor, outputColor } from "../common/Colors";
+import { backgroundColor, getColorScale, inputColor, midColor, outputColor, topColor } from "../common/Colors";
 import PermWidget, { Vec2 } from "@/common/PermWidget";
-import { Graph, GraphEdge, GraphNode, GraphNodeType, height, width } from "./Graph";
+import { Graph, GraphEdge, GraphNode, GraphNodeType, Guideline, height, width } from "./Graph";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { ConstructionAction, ConstructionMode } from "./Toolbar";
 
@@ -19,8 +19,9 @@ export default function Construction({
   graph,
   onChange = (() => {}),
   mode='nodes',
-  action='drag'
-} : {ioHeight: number, perm: Permutation | null, graph: Graph, onChange?: Function, mode?: ConstructionMode, action?: ConstructionAction})
+  action='drag',
+  onPermChanged=null
+} : {ioHeight: number, perm: Permutation | null, graph: Graph, onChange?: Function, mode?: ConstructionMode, action?: ConstructionAction, onPermChanged?: null | ((newPerm: Permutation) => void)})
 {
   let ref = useRef<HTMLDivElement>(null);
   let dummyRectRef = useRef<SVGRectElement>(null);
@@ -28,15 +29,10 @@ export default function Construction({
   let {size, enableTransition} = useFlushingResizeObserver(ref);
 
   let [draggedNode, setDraggedNode] = useState<GraphNode>();
+  let [draggedGuideline, setDraggedGuideline] = useState<Guideline>();
   let [edgeInteraction, setEdgeInteraction] = useState<AddEdgeInteraction>();
   let [mousePos, setMousePos] = useState<Vec2>();
 
-  let [editPerm, setEditPerm] = useState<Permutation>(new Permutation([...Array(ioHeight).keys()]));
-
-  if (perm == null) {
-    perm = editPerm;
-  }
-  
   let screenWidth = size?.width || 0;
   let screenHeight = size?.height || 0;
 
@@ -81,17 +77,20 @@ export default function Construction({
     return clientToSvg(e.clientX, e.clientY);
   }
 
-  function handleMouseDown(e: React.MouseEvent, node?: GraphNode, edge?: GraphEdge) {
+  function handleMouseDown(e: React.MouseEvent, node?: GraphNode, edge?: GraphEdge, guideline?: Guideline) {
     let [ex, ey] = getEventPoint(e);
 
     if (mode === 'nodes') {
       if (action === 'insert') {
-        let newNode: GraphNode = { type: GraphNodeType.Internal, key: "usrnd_" + graph.getNextId(), y: ey, x: ex };
+        let guideline = graph.snapToGuideline(ex);
+        if (guideline !== null) {
+          let newNode: GraphNode = { type: GraphNodeType.Internal, key: "usrnd_" + graph.getNextId(), y: ey, fx: guideline?.x, guideline };
 
-        graph.nodes.push(newNode);
-        graph.routeAllPermutations();
-        onChange();
-        e.stopPropagation();
+          graph.nodes.push(newNode);
+          graph.routeAllPermutations();
+          onChange();
+          e.stopPropagation();
+        }
       } else if (action === 'drag') {
         if (node?.type === GraphNodeType.Internal) {
           setDraggedNode(node);
@@ -105,7 +104,7 @@ export default function Construction({
           e.stopPropagation();
         }
       }
-    } else if (mode ==='edges') {
+    } else if (mode === 'edges') {
       if (action === 'insert') {
         if (node) {
           setEdgeInteraction({
@@ -118,6 +117,23 @@ export default function Construction({
           graph.deleteEdge(edge);
           graph.routeAllPermutations();
           onChange();
+          e.stopPropagation();
+        }
+      }
+    } else if (mode === 'guidelines') {
+      if (action === 'insert') {
+        let newGuideline: Guideline = { x: ex, key: "usrgd_" + graph.getNextId() };
+
+        graph.addGuideline(newGuideline);
+        e.stopPropagation();
+      } else if (action === 'delete') {
+        if (guideline) {
+          graph.deleteGuideline(guideline);
+        }
+      } else if (action === 'drag') {
+        if (guideline) {
+          setDraggedGuideline(guideline);
+          e.stopPropagation();
         }
       }
     }
@@ -127,8 +143,15 @@ export default function Construction({
     let [ex, ey] = getEventPoint(e);
 
     if (draggedNode) {
-      draggedNode.fx = ex;
-      draggedNode.fy = ey;
+      let guideline = graph.snapToGuideline(ex);
+      if (guideline) {
+        draggedNode.guideline = guideline;
+        draggedNode.fx = guideline ? guideline.x : ex;
+        draggedNode.fy = ey;
+        onChange();
+      }
+    } else if (draggedGuideline) {
+      graph.setGuidelineX(draggedGuideline, ex);
       onChange();
     } else if (edgeInteraction) {
       setEdgeInteraction({
@@ -144,11 +167,22 @@ export default function Construction({
     let [ex, ey] = getEventPoint(e);
 
     if (draggedNode) {
-      draggedNode.fx = draggedNode.fy = undefined;
-      draggedNode.x = ex;
-      draggedNode.y = ey;
+      let guideline = graph.snapToGuideline(ex);
+      if (guideline) {
+        draggedNode.fy = undefined;
+        draggedNode.fx = guideline ? guideline.x : ex;
+        draggedNode.guideline = guideline;
+        draggedNode.y = ey;
+        onChange();
+        setDraggedNode(undefined);
+        e.stopPropagation();
+      }
+    }
+
+    if (draggedGuideline) {
+      graph.setGuidelineX(draggedGuideline, ex);
       onChange();
-      setDraggedNode(undefined);
+      setDraggedGuideline(undefined);
       e.stopPropagation();
     }
 
@@ -169,6 +203,24 @@ export default function Construction({
   }
 
   function drawGraph(canvas: React.JSX.Element[]) {
+    for (let guideline of graph.guidelines) {
+      let className = "";
+      if (mode === 'guidelines') {
+        if (action === 'drag') {
+          className += "cursor-ew-resize";
+        } else if (action === 'delete') {
+          className += "cursor-pointer";
+        }
+      }
+      let line = <line key={guideline.key} className={className} x1={guideline.x} x2={guideline.x} y1={0} y2={height} stroke={"black"} strokeWidth={4} onMouseDown={e => handleMouseDown(e, undefined, undefined, guideline)} />
+      canvas.push(line);
+    }
+
+    if (mode === 'guidelines' && action === 'insert' && mousePos) {
+      let line = <line x1={mousePos[0]} x2={mousePos[0]} y1={0} y2={height} stroke={"black"} strokeWidth={4} opacity={0.5} />
+      canvas.push(line);
+    }
+
     for (let edge of graph.edges) {
       let src = edge.source as GraphNode;
       let tgt = edge.target as GraphNode;
@@ -200,8 +252,8 @@ export default function Construction({
     }
 
     if (mode === 'nodes' && action==="insert" && mousePos) {
-      let circ = <circle key="ghostCirc" cx={mousePos[0]} cy={mousePos[1]} r={10} fill={midColor} fillOpacity={0.5}
-    />
+      let guideline = graph.snapToGuideline(mousePos[0]);
+      let circ = <circle key="ghostCirc" cx={guideline ? guideline.x : mousePos[0]} cy={mousePos[1]} r={10} fill={midColor} fillOpacity={0.5} />
       canvas.push(circ);
     }
 
@@ -235,15 +287,11 @@ export default function Construction({
     {graphCanvas}
   </svg>;
 
-  function handlePermChange(newPerm: Permutation) {
-    setEditPerm(newPerm);
-  }
-
-  return <div className="flex items-stretch w-full h-full p-1" style={{ background: backgroundColor, flexDirection: vertical ? "column" : "row"}}>
+  return <div className="flex items-stretch w-full h-full p-1" style={{ flexDirection: vertical ? "column" : "row"}}>
     <div className="flex grow items-stretch p-1" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden" >
         {svg}
-        <PermWidget enableTransition={enableTransition} perm={perm} onPermChanged={handlePermChange} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
+        <PermWidget enableTransition={enableTransition} perm={perm} onPermChanged={onPermChanged} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
       </div>
       
     </div>

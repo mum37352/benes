@@ -10,9 +10,15 @@ export enum GraphNodeType {
   Internal
 }
 
+export type Guideline = {
+  x: number,
+  key: string
+};
+
 export interface GraphNode extends d3.SimulationNodeDatum {
   type: GraphNodeType,
-  key: string
+  key: string,
+  guideline: Guideline
 }
 
 export type GraphEdge = d3.SimulationLinkDatum<GraphNode>;
@@ -24,17 +30,22 @@ export class Graph {
 
     this.ioHeight = ioHeight;
 
+    let inputGuideline: Guideline = {x: this.xScale(-5), key: "ingd"};
+    let outputGuideline: Guideline = {x: this.xScale(+5), key: "outgd"};
+
+    this.guidelines = [inputGuideline, outputGuideline];
+
     this.inputs = [];
     for (let inputIdx = 0; inputIdx < ioHeight; inputIdx++) {
       let [x, y] = this.getInputPos(inputIdx);
-      let node : GraphNode = {key: "in_"+inputIdx, type: GraphNodeType.Input, fx: x, fy: y};
+      let node : GraphNode = {key: "innd_"+inputIdx, type: GraphNodeType.Input, fx: x, fy: y, guideline: inputGuideline};
       this.inputs.push(node);
     }
 
     this.outputs = [];
     for (let outputIdx = 0; outputIdx < ioHeight; outputIdx++) {
       let [x, y] = this.getOutputPos(outputIdx);
-      let node : GraphNode = {key: "out_"+outputIdx, type: GraphNodeType.Output, fx: x, fy: y};
+      let node : GraphNode = {key: "outnd_"+outputIdx, type: GraphNodeType.Output, fx: x, fy: y, guideline: outputGuideline};
       this.outputs.push(node);
     }
 
@@ -45,6 +56,14 @@ export class Graph {
 
     // Totally valid since we have no edges.
     this.routingLut = new Map();
+  }
+  
+  centerX() {
+    return this.xScale(0);
+  }
+
+  centerY() {
+    return height/2;
   }
 
   static makeCompleteBipartiteGraph(ioHeight: number) {
@@ -64,6 +83,63 @@ export class Graph {
     graph.routeAllPermutations();
 
     return graph;
+  }
+
+  addGuideline(newGuideline: Guideline) {
+    this.guidelines.push(newGuideline);
+    // Maybe not the most efficient way, but whatever.
+    this.guidelines.sort((a, b) => a.x - b.x);
+  }
+
+  deleteGuideline(guideline: Guideline) {
+    // Eliminate nodes on this guideline. Might not be the best approach.
+    for (;;) {
+      // Check if there is a node on the guideline.
+      let nodeOnGuideline = null;
+      for (let node of this.nodes) {
+        if (node.guideline === guideline) {
+          nodeOnGuideline = node;
+          break;
+        }
+      }
+
+      if (nodeOnGuideline) {
+        this.deleteNode(nodeOnGuideline);
+      } else {
+        break;
+      }
+    }
+
+    
+    for (let i = this.guidelines.length - 1; i >= 0; i--) {
+      if (this.guidelines[i] === guideline) {
+        this.guidelines.splice(i, 1);
+      }
+    }
+  }
+
+  setGuidelineX(guideline: Guideline, x: number) {
+      guideline.x = x;
+      for (let node of this.nodes) {
+        if (node.guideline === guideline) {
+          node.fx = x;
+        }
+      }
+  }
+
+  snapToGuideline(x: number): Guideline|null {
+    let closestDist = Infinity;
+    let closestGuideline: Guideline|null = null;
+
+    for (let guideline of this.guidelines) {
+      let dist = Math.abs(x - guideline.x);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestGuideline = guideline;
+      }
+    }
+    
+    return closestGuideline;
   }
 
   getInputPos(outputIdx: number): Vec2 {
@@ -373,6 +449,9 @@ export class Graph {
   outputs: GraphNode[];
   nodes: GraphNode[];
   edges: GraphEdge[];
+
+  // Vertical lines.
+  guidelines: Guideline[];
 
   routingLut: Map<string, GraphNode[][]>;
 }
