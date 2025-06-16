@@ -3,10 +3,11 @@ import * as d3 from "d3";
 import { act, useLayoutEffect, useReducer, useRef, useState } from "react";
 import Permutation, { correctIdx } from "../common/Permutation";
 import { backgroundColor, getColorScale, inputColor, midColor, outputColor, topColor } from "../common/Colors";
-import PermWidget, { Vec2 } from "@/common/PermWidget";
+import PermWidget from "@/common/PermWidget";
 import { Graph, GraphEdge, GraphNode, GraphNodeType, Guideline, height, width } from "./Graph";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { ConstructionAction, ConstructionMode } from "./Toolbar";
+import { Vec2 } from "@/common/Grid";
 
 
 type AddEdgeInteraction = {
@@ -14,14 +15,13 @@ type AddEdgeInteraction = {
 };
 
 export default function Construction({
-  ioHeight,
   perm,
   graph,
   onChange = (() => {}),
   mode='nodes',
   action='drag',
   onPermChanged=null
-} : {ioHeight: number, perm: Permutation | null, graph: Graph, onChange?: Function, mode?: ConstructionMode, action?: ConstructionAction, onPermChanged?: null | ((newPerm: Permutation) => void)})
+} : {perm: Permutation | undefined, graph: Graph, onChange?: Function, mode?: ConstructionMode, action?: ConstructionAction, onPermChanged?: null | ((newPerm: Permutation) => void)})
 {
   let ref = useRef<HTMLDivElement>(null);
   let dummyRectRef = useRef<SVGRectElement>(null);
@@ -230,9 +230,9 @@ export default function Construction({
       canvas.push(line);
     }
 
-    var colorScale = getColorScale(ioHeight);
-    let paths = graph.routingLut.get(perm.lut.toString());
+    let paths = perm ? graph.routingLut.get(perm.lut.toString()) : null;
     if (paths) {
+      var colorScale = getColorScale(paths.length);
       for (let [pathIdx, path] of paths.entries()) {
         for (let nodeIdx = 0; nodeIdx < path.length - 1; nodeIdx++) {
           let src = path[nodeIdx];
@@ -291,8 +291,10 @@ export default function Construction({
     <div className="flex grow items-stretch p-1" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden" >
         {svg}
+        {perm && 
         <PermWidget enableTransition={enableTransition} zoom={1} perm={perm} onPermChanged={onPermChanged} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
-      </div>
+        }
+        </div>
       
     </div>
   </div>

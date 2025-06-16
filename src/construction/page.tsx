@@ -22,21 +22,78 @@ import * as d3 from "d3";
 import { Card } from 'primereact/card';
 import { Check, X } from 'lucide-react';
 
+type Config = {
+  ioHeight: number,
+  perms: Permutation[],
+  selPerm: Permutation,
+  graph: Graph
+}
 
+function configFromIoHeight(ioHeight: number): Config {
+  return {
+    ioHeight,
+    perms: allPerms(ioHeight),
+    selPerm: new Permutation([...Array(ioHeight).keys()]),
+    graph: new Graph(ioHeight)
+  }
+}
+
+function PermLists({config, setConfig}: {config: Config, setConfig: Function} ) {
+  let selPerm = config.selPerm;
+
+  function drawPermList(perm: Permutation, perms: Permutation[]) {
+    let items = perms.map((atPerm) => (
+      <div className={`text-center w-full cursor-pointer rounded-lg p-1 shadow-md hover:shadow-xl active:bg-gray-900 hover:bg-gray-400/10 transition text-white
+            ${atPerm.lut.toString() === perm.lut.toString()
+          ? "bg-gray-700"
+          : "bg-gray-700/10"}
+            ${config.graph.routingLut.get(atPerm.lut.toString()) ? "" : "border border-red-500"}
+          `}
+        onClick={() => setConfig({...config, selPerm: atPerm})}
+        key={atPerm.lut.toString()}>
+        <KI>{atPerm.toLatex()}</KI>
+      </div>));
+
+      return <div className="grid grid-cols-[repeat(auto-fit,_minmax(150px,_1fr))] gap-4 p-4">
+        {items}
+      </div>
+  }
+  
+  let goodPerms = [];
+  let badPerms = [];
+  for (let atPerm of config.perms) {
+    let routing = config.graph.routingLut.get(atPerm.lut.toString());
+
+    if (routing) {
+      goodPerms.push(atPerm);
+    } else {
+      badPerms.push(atPerm);
+    }
+  }
+
+  return <>
+        <span className="text-sm mb-1 flex row font-bold">
+          <X className="text-red-500" /> Unroutable permutations:
+        </span>
+        {selPerm && badPerms.length > 0 ? drawPermList(selPerm, badPerms) : "None!"}
+
+        <span className="text-sm flex row mb-1 font-bold">
+          <Check className="text-green-500" /> Routable permutations:
+        </span>
+        {selPerm && goodPerms.length > 0 ? drawPermList(selPerm, goodPerms) : "None, get to work!"}
+  </>;
+}
 
 function Main()
 {
-  let [ioHeight, setIoHeight] = useState<number>(4);
-  let [perms, setPerms] = useState<Permutation[]>(allPerms(ioHeight));
-  let [perm, setPerm] = useState<Permutation>(new Permutation([...Array(ioHeight).keys()]));
+  let [config, setConfig] = useState<Config>(() => configFromIoHeight(3));
+  let graph = config.graph;
 
   let [numGuidelines, setNumGuidelines] = useState<number>(4);
 
   let [mode, setMode] = useState<ConstructionMode>('nodes');
   let [action, setAction] = useState<ConstructionAction>('insert');
 
-  // TODO: This will execute the constructor every time we render.
-  let [graph, setGraph] = useState<Graph>(new Graph(ioHeight));
 
   let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
 
@@ -46,24 +103,6 @@ function Main()
 
   function ticked() {
     forceUpdate();
-  }
-
-  function drawPermList(perm: Permutation, perms: Permutation[]) {
-    let items = perms.map((atPerm) => (
-      <div className={`text-center w-full cursor-pointer rounded-lg p-1 shadow-md hover:shadow-xl active:bg-gray-900 hover:bg-gray-400/10 transition text-white
-            ${atPerm.lut.toString() === perm.lut.toString()
-          ? "bg-gray-700"
-          : "bg-gray-700/10"}
-            ${graph.routingLut.get(atPerm.lut.toString()) ? "" : "border border-red-500"}
-          `}
-        onClick={() => setPerm(atPerm)}
-        key={atPerm.lut.toString()}>
-        <KI>{atPerm.toLatex()}</KI>
-      </div>));
-
-      return <div className="grid grid-cols-[repeat(auto-fit,_minmax(150px,_1fr))] gap-4 p-4">
-        {items}
-      </div>
   }
 
   useLayoutEffect(() => {
@@ -78,45 +117,30 @@ function Main()
     setSimulation(sim);
   }, [ref]);
 
-  function reheat() {
+  function reheat(graph: Graph) {
     simulation?.nodes(graph.nodes).alpha(1).restart();
     forceUpdate();
   }
 
-  // HACK: Have some default value for our graph.
-  if (graph.edges.length === 0) {
-    let graph = Graph.makeCompleteBipartiteGraph(ioHeight);
-    setGraph(graph);
-  }
-
+  // Old card rendering code (drew the entire graph).
+  /*
   let permCards: React.JSX.Element[] = [];
 
   for (let atPerm of perms) {
     permCards.push(
       <div className={`h-64 cursor-pointer rounded-lg p-1 shadow-md hover:shadow-xl active:bg-gray-900 hover:bg-gray-400/10 transition text-white
-            ${atPerm.lut.toString() === perm.lut.toString()
+            ${atPerm.lut.toString() === selPerm.lut.toString()
               ? "bg-gray-700"
               : "bg-gray-700/10"}
             ${graph.routingLut.get(atPerm.lut.toString()) ? "":"border border-red-500"}
           `}
-          onClick={() => setPerm(atPerm)}
+          onClick={() => setSelPerm(atPerm)}
           key={atPerm.lut.toString()}>
         <Construction graph={graph} ioHeight={ioHeight} perm={atPerm} />
       </div>
     );
   }
-
-  let goodPerms = [];
-  let badPerms = [];
-  for (let atPerm of perms) {
-    let routing = graph.routingLut.get(atPerm.lut.toString());
-
-    if (routing) {
-      goodPerms.push(atPerm);
-    } else {
-      badPerms.push(atPerm);
-    }
-  }
+    */
 
   return <Splitter className="h-dvh w-full" ref={ref}>
     <SplitterPanel size={60} className="overflow-hidden">
@@ -125,7 +149,7 @@ function Main()
           setMode(mode);
           setAction(action);
         }} />
-        <Construction mode={mode} action={action} graph={graph} perm={perm} ioHeight={ioHeight} onChange={reheat} onPermChanged={setPerm} />
+        <Construction mode={mode} action={action} graph={graph} perm={config.selPerm} onChange={reheat} onPermChanged={(newPerm) => setConfig({...config, selPerm: newPerm})} />
       </div>
     </SplitterPanel>
     <SplitterPanel size={40} className="">
@@ -148,17 +172,19 @@ function Main()
         <div className="text-sm">
           <label className="block mb-1 font-bold" htmlFor="inputHeight">Height <KI>n</KI>:</label>
 
-          <InputNumber className="" name="inputHeight" value={ioHeight} onValueChange={(e: InputNumberValueChangeEvent) => {
+          <InputNumber className="" name="inputHeight" value={config.ioHeight} onValueChange={(e: InputNumberValueChangeEvent) => {
             let val = e.value;
             if (val && !isNaN(val)) {
-              setIoHeight(val)
+              let newConfig = configFromIoHeight(val);
+              setConfig(newConfig);
+              reheat(newConfig.graph);
             }
           }} mode="decimal" showButtons min={1} max={5} />
         </div>
 
         <p>
           This playground lets you construct "good" communication networks (Even though it may be a good warm-up to construct a bad one first.)
-          Your current network has <KI>{`${graph.nodes.length} \\geq 2n=${2*ioHeight}`}</KI> nodes and <KI>{`${graph.edges.length}`}</KI> edges.
+          Your current network has <KI>{`${graph.nodes.length} \\geq 2n=${2*config.ioHeight}`}</KI> nodes and <KI>{`${graph.edges.length}`}</KI> edges.
         </p>
 
         <p>
@@ -176,15 +202,7 @@ function Main()
           }} mode="decimal" showButtons min={1} max={8} />
         </div>
 
-        <span className="text-sm mb-1 flex row font-bold">
-          <X className="text-red-500" /> Unroutable permutations:
-        </span>
-        {badPerms.length > 0 ? drawPermList(perm, badPerms) : "None!"}
-
-        <span className="text-sm flex row mb-1 font-bold">
-          <Check className="text-green-500" /> Routable permutations:
-        </span>
-        {goodPerms.length > 0 ? drawPermList(perm, goodPerms) : "None, get to work!"}
+        <PermLists config={config} setConfig={setConfig} />
         </div>
     </SplitterPanel>
   </Splitter>;

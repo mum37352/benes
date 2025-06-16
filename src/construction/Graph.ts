@@ -1,4 +1,4 @@
-import { Vec2 } from "@/common/PermWidget";
+import { Vec2 } from "@/common/Grid";
 import * as d3 from "d3";
 
 export let width = 928;
