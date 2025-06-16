@@ -20,12 +20,17 @@ import GraphToolbar, { ConstructionAction, ConstructionMode } from './Toolbar';
 import { Graph, GraphNode } from './Graph';
 import * as d3 from "d3";
 import { Card } from 'primereact/card';
+import { Check, X } from 'lucide-react';
+
+
 
 function Main()
 {
   let [ioHeight, setIoHeight] = useState<number>(4);
   let [perms, setPerms] = useState<Permutation[]>(allPerms(ioHeight));
   let [perm, setPerm] = useState<Permutation>(new Permutation([...Array(ioHeight).keys()]));
+
+  let [numGuidelines, setNumGuidelines] = useState<number>(4);
 
   let [mode, setMode] = useState<ConstructionMode>('nodes');
   let [action, setAction] = useState<ConstructionAction>('insert');
@@ -41,6 +46,24 @@ function Main()
 
   function ticked() {
     forceUpdate();
+  }
+
+  function drawPermList(perm: Permutation, perms: Permutation[]) {
+    let items = perms.map((atPerm) => (
+      <div className={`text-center w-full cursor-pointer rounded-lg p-1 shadow-md hover:shadow-xl active:bg-gray-900 hover:bg-gray-400/10 transition text-white
+            ${atPerm.lut.toString() === perm.lut.toString()
+          ? "bg-gray-700"
+          : "bg-gray-700/10"}
+            ${graph.routingLut.get(atPerm.lut.toString()) ? "" : "border border-red-500"}
+          `}
+        onClick={() => setPerm(atPerm)}
+        key={atPerm.lut.toString()}>
+        <KI>{atPerm.toLatex()}</KI>
+      </div>));
+
+      return <div className="grid grid-cols-[repeat(auto-fit,_minmax(150px,_1fr))] gap-4 p-4">
+        {items}
+      </div>
   }
 
   useLayoutEffect(() => {
@@ -83,6 +106,18 @@ function Main()
     );
   }
 
+  let goodPerms = [];
+  let badPerms = [];
+  for (let atPerm of perms) {
+    let routing = graph.routingLut.get(atPerm.lut.toString());
+
+    if (routing) {
+      goodPerms.push(atPerm);
+    } else {
+      badPerms.push(atPerm);
+    }
+  }
+
   return <Splitter className="h-dvh w-full" ref={ref}>
     <SplitterPanel size={60} className="overflow-hidden">
       <div className="w-full h-full">
@@ -107,11 +142,11 @@ function Main()
 
         <p>
           Any bijection <KI>\pi \in S_n</KI> from its <span style={{color: inputColor}}><KI>n</KI> input nodes</span> to its <span style={{color: outputColor}}><KI>n</KI> output nodes</span> can be realized by vertex-disjoint paths.
-          You can click and drag the permutation arrows to modify the permutation, or alternatively, dial one of the permutations in the list below. Try it!
+          A set of such paths(or routes) is called a routing. You can click and drag the permutation arrows to modify the permutation, or alternatively, dial one of the permutations in the list below. Try it!
         </p>
 
         <div className="text-sm">
-          <label className="block mb-1 font-bold" htmlFor="benesOrder">Height <KI>n</KI>:</label>
+          <label className="block mb-1 font-bold" htmlFor="inputHeight">Height <KI>n</KI>:</label>
 
           <InputNumber className="" name="inputHeight" value={ioHeight} onValueChange={(e: InputNumberValueChangeEvent) => {
             let val = e.value;
@@ -126,10 +161,31 @@ function Main()
           Your current network has <KI>{`${graph.nodes.length} \\geq 2n=${2*ioHeight}`}</KI> nodes and <KI>{`${graph.edges.length}`}</KI> edges.
         </p>
 
-        <div className="grid grid-cols-[repeat(auto-fit,_minmax(300px,_1fr))] gap-4 p-4">
-          {permCards}
+        <p>
+          For convenience, nodes snap to vertical equispaced guidelines. You can set the number of guidelines below.
+        </p>
+        
+        <div className="text-sm">
+          <label className="block mb-1 font-bold" htmlFor="inputHeight">Number of guidelines:</label>
+
+          <InputNumber className="" name="inputHeight" value={numGuidelines} onValueChange={(e: InputNumberValueChangeEvent) => {
+            let val = e.value;
+            if (val && !isNaN(val)) {
+              setNumGuidelines(val)
+            }
+          }} mode="decimal" showButtons min={1} max={8} />
         </div>
-      </div>
+
+        <span className="text-sm mb-1 flex row font-bold">
+          <X className="text-red-500" /> Unroutable permutations:
+        </span>
+        {badPerms.length > 0 ? drawPermList(perm, badPerms) : "None!"}
+
+        <span className="text-sm flex row mb-1 font-bold">
+          <Check className="text-green-500" /> Routable permutations:
+        </span>
+        {goodPerms.length > 0 ? drawPermList(perm, goodPerms) : "None, get to work!"}
+        </div>
     </SplitterPanel>
   </Splitter>;
 }

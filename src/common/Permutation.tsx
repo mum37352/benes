@@ -15,6 +15,16 @@ export default class Permutation {
     this.lut = swap;
   }
 
+  toLatex() {
+    let domain = this.lut.map((_, i) => i + 1);
+    let image = this.lut.map(i => i + 1);
+
+    let topRow = domain.join(' & ');
+    let bottomRow = image.join(' & ');
+
+    return `\\begin{pmatrix}\n${topRow} \\\\\n${bottomRow}\n\\end{pmatrix}`;
+  }
+
   lut: number[];
   invLut: number[];
 }
