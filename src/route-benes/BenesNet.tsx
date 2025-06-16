@@ -145,18 +145,6 @@ export default function BenesNet({
 
   let {size, enableTransition} = useFlushingResizeObserver(ref);
 
-  let marginTop = 50,
-  marginRight = 50,
-  marginBottom = 50,
-  marginLeft = 50;
-
-  if (doRouting) {
-    if (vertical) {
-      marginBottom += 50;
-    } else {
-      marginRight += 50;
-    }
-  }
   let width = size?.width || 0;
   let height = size?.height || 0;
 

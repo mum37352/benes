@@ -89,7 +89,7 @@ function Main()
   let [config, setConfig] = useState<Config>(() => configFromIoHeight(3));
   let graph = config.graph;
 
-  let [numGuidelines, setNumGuidelines] = useState<number>(4);
+  let [numGuidelines, setNumGuidelines] = useState<number>(3);
 
   let [mode, setMode] = useState<ConstructionMode>('nodes');
   let [action, setAction] = useState<ConstructionAction>('insert');
