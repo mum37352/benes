@@ -36,6 +36,12 @@ export default function Construction({
   let screenWidth = size?.width || 0;
   let screenHeight = size?.height || 0;
 
+
+  //let gridWidths = computeGridLayout(width, [marginWidth, subnet.width, marginWidth]);
+  //let gridHeights = computeGridLayout(height, [marginHeight, subnet.height, marginHeight]);
+
+  //let gridBox = new Box(gridWidths[0], gridHeights[0], gridWidths[0] + gridWidths[1], gridHeights[0] + gridHeights[1]);
+
   let vertical = false;
 
 

@@ -153,8 +153,8 @@ export default function BenesNet({
   let marginHeight = 1.0;
 
   let subnet = new Subnet(order, 0, 0, "dummy");
-  let gridWidths = computeGridLayout(width, [marginWidth, subnet.width, marginWidth + (doRouting&&!vertical ? 0.5 : 0)]);
-  let gridHeights = computeGridLayout(height, [marginHeight, subnet.height, marginHeight + (doRouting&&vertical ? 0.5 : 0)]);
+  let gridWidths = computeGridLayout(width, [marginWidth, subnet.width-1, marginWidth + (doRouting&&!vertical ? 0.5 : 0)]);
+  let gridHeights = computeGridLayout(height, [marginHeight, subnet.height-1, marginHeight + (doRouting&&vertical ? 0.5 : 0)]);
 
   let gridBox = new Box(gridWidths[0], gridHeights[0], gridWidths[0] + gridWidths[1], gridHeights[0] + gridHeights[1]);
 
