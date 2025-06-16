@@ -69,7 +69,6 @@ function Main()
   let permCards: React.JSX.Element[] = [];
 
   for (let atPerm of perms) {
-    console.log(atPerm.toString());
     permCards.push(
       <div className={`h-64 cursor-pointer rounded-lg p-1 shadow-md hover:shadow-xl active:bg-gray-900 hover:bg-gray-400/10 transition text-white
             ${atPerm.lut.toString() === perm.lut.toString()
@@ -95,13 +94,37 @@ function Main()
       </div>
     </SplitterPanel>
     <SplitterPanel size={40} className="">
-      <div className="overflow-auto w-full">
-        <InputNumber className="" name="benesOrder" value={ioHeight} onValueChange={(e: InputNumberValueChangeEvent) => {
-          let val = e.value;
-          if (val && !isNaN(val)) {
-            setIoHeight(val)
-          }
-        }} mode="decimal" showButtons min={1} max={5} />
+      <div className="pl-7 pr-7 space-y-4 overflow-auto">
+        <h1 className="text-xl font-bold my-4 font-italic">Communication Network Construction</h1>
+
+        <p>
+          A communication network is an undirected, simple graph; but with special nodes: <span style={{ color: inputColor }}><KI>n</KI> "input nodes"</span> and <span style={{ color: outputColor }}>"output nodes"</span>
+        </p>
+
+        <p>
+          We refer to <KI>n</KI> as the height of the communication network.
+        </p>
+
+        <p>
+          Any bijection <KI>\pi \in S_n</KI> from its <span style={{color: inputColor}}><KI>n</KI> input nodes</span> to its <span style={{color: outputColor}}><KI>n</KI> output nodes</span> can be realized by vertex-disjoint paths.
+          You can click and drag the permutation arrows to modify the permutation, or alternatively, dial one of the permutations in the list below. Try it!
+        </p>
+
+        <div className="text-sm">
+          <label className="block mb-1 font-bold" htmlFor="benesOrder">Height <KI>n</KI>:</label>
+
+          <InputNumber className="" name="inputHeight" value={ioHeight} onValueChange={(e: InputNumberValueChangeEvent) => {
+            let val = e.value;
+            if (val && !isNaN(val)) {
+              setIoHeight(val)
+            }
+          }} mode="decimal" showButtons min={1} max={5} />
+        </div>
+
+        <p>
+          This playground lets you construct "good" communication networks (Even though it may be a good warm-up to construct a bad one first.)
+          Your current network has <KI>{`${graph.nodes.length} \\geq 2n=${2*ioHeight}`}</KI> nodes and <KI>{`${graph.edges.length}`}</KI> edges.
+        </p>
 
         <div className="grid grid-cols-[repeat(auto-fit,_minmax(300px,_1fr))] gap-4 p-4">
           {permCards}
