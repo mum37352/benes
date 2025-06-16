@@ -4,9 +4,12 @@ import { KI } from "./katex";
 
 export type Vec2 = [number, number];
 
+export let refFontSize = 15;
+
 type PermWidgetProps = {
   vertical: boolean,
   perm: Permutation,
+  zoom: number,
   onPermChanged: null | ((newPerm: Permutation) => void),
   xyToIdx: (x: number, y: number) => number,
   // Warning: This is currently being called with fractional idx for the
@@ -15,7 +18,7 @@ type PermWidgetProps = {
   enableTransition: boolean,
 }
 
-export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx, idxToXY, enableTransition} : PermWidgetProps)
+export default function PermWidget({vertical=false, perm, zoom, onPermChanged, xyToIdx, idxToXY, enableTransition} : PermWidgetProps)
 {
   let overlayRef = useRef<HTMLDivElement>(null);
   let [activeDropIndicator, setActiveDropIndicator] = useState<number>(-1);
@@ -43,7 +46,6 @@ export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx
     let fromIdx = dragSource;
     let toIdx = xyToIdx(e.clientX, e.clientY);
 
-    console.log(e.dataTransfer.getData("outputIdx"), "is", fromIdx, toIdx);
     e.preventDefault();
     e.clientY;
 
@@ -57,8 +59,7 @@ export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx
   }
 
   let height = perm.lut.length;
-  console.log("PermWidget perm", perm);
-  let labelOffset = 20;
+  let labelOffset = zoom*20;
 
   function drawPermArrows(prescriptions: any[], dropIndicators: any[]) {
     for (let preimage = 0; preimage < height; preimage++) {
@@ -100,11 +101,14 @@ export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx
         };  
       }
 
+      console.log("fontSize", refFontSize*zoom);
+
       prescriptions.push(
         <div
           key={"ob_" + preimage.toString()}
           className={`absolute flex  ${enableTransition ? "transition-transform duration-200" : ""}`}
-          style={labelStyle(x, y)}>
+          style={labelStyle(x, y)}
+        >
           {predrop}
           <div
             className={`flex items-center bg-white/0 hover:bg-white/30 pushed:bg-white/50 transition rounded-sm cursor-grab p-1 active:cursor-grabbing`}
@@ -115,7 +119,8 @@ export default function PermWidget({vertical=false, perm, onPermChanged, xyToIdx
               setTimeout(() => overlayRef.current?.classList.remove("pointer-events-none"), 0);
               setDragSource(outputIdx);
             }}
-            style={{ flexDirection: vertical ? "column" : "row" }}>
+            style={{ fontSize: refFontSize*zoom, flexDirection: vertical ? "column" : "row" }}
+          >
             <div className={`px-1 ${vertical ? "-rotate-90" : "rotate-180"}`}><KI>{`\\mapsto`}</KI></div>
             <KI>{`${preimage + 1}`}</KI>
           </div>

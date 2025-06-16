@@ -291,7 +291,7 @@ export default function Construction({
     <div className="flex grow items-stretch p-1" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden" >
         {svg}
-        <PermWidget enableTransition={enableTransition} perm={perm} onPermChanged={onPermChanged} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
+        <PermWidget enableTransition={enableTransition} zoom={1} perm={perm} onPermChanged={onPermChanged} vertical={false} idxToXY={idx => svgToClient(...graph.getOutputPos(idx))} xyToIdx={(x, y) => clientToIdx(x, y)}/>
       </div>
       
     </div>

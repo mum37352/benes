@@ -6,7 +6,7 @@ import * as d3 from "d3";
 import { backgroundColor, bottomColor, getColorScale, inputColor, midColor, outputColor, topColor } from "../common/Colors";
 import { KI } from "../common/katex";
 import Permutation, { correctIdx } from "../common/Permutation";
-import PermWidget, { Vec2 } from "@/common/PermWidget";
+import PermWidget, { refFontSize, Vec2 } from "@/common/PermWidget";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 
 class Box {
@@ -142,6 +142,14 @@ class Grid {
     let result = this.vertical ? this.xScale.invert(screenX) : this.yScale.invert(screenY);
     result = correctIdx(result, this.rootSubnet.height)
     return result;
+  }
+
+  cellWidth() {
+    return this.xScale(1) - this.xScale(0);
+  }
+
+  cellHeight() {
+    return this.yScale(1) - this.yScale(0);
   }
 
   rootSubnet: Subnet;
@@ -291,6 +299,17 @@ function DraggableCircle(props: {onDrag: Function | undefined, onDragStart: Func
   return <circle ref={ref} {...props} />
 }
 
+function computeGridLayout(totalSize: number, relativeSizes: number[]): number[] {
+  let sum = relativeSizes.reduce((acc, addend) => {
+    return acc + addend;
+  }, 0);
+
+  let ratio = totalSize / sum;
+
+  let result = relativeSizes.map(x => x * ratio);
+  return result;
+}
+
 export default function BenesNet({
   order,
   vertical = true,
@@ -320,9 +339,22 @@ export default function BenesNet({
   }
   let width = size?.width || 0;
   let height = size?.height || 0;
-  let screenBox = new Box(marginLeft, marginTop, width - marginRight, height - marginBottom);
-  let grid = new Grid(order, vertical, screenBox);
 
+  // The size of the margin relative to the cell size.
+  let marginWidth = 0.5;
+  let marginHeight = 1.0;
+
+  let subnet = new Subnet(order, 0, 0, "dummy");
+  let gridWidths = computeGridLayout(width, [marginWidth, subnet.width, marginWidth + (doRouting&&!vertical ? 0.5 : 0)]);
+  let gridHeights = computeGridLayout(height, [marginHeight, subnet.height, marginHeight + (doRouting&&vertical ? 0.5 : 0)]);
+
+  let gridBox = new Box(gridWidths[0], gridHeights[0], gridWidths[0] + gridWidths[1], gridHeights[0] + gridHeights[1]);
+
+
+  //let screenBox = new Box(marginLeft, marginTop, width - marginRight, height - marginBottom);
+  let grid = new Grid(order, vertical, gridBox);
+
+  let zoom = Math.min(grid.cellWidth(), grid.cellHeight()) / 100;
 
   let [prevK, setPrevK] = useState(order);
   if (prevK != order) {
@@ -337,7 +369,7 @@ export default function BenesNet({
   // so we offset the input and output circles by a small terminal bias.
   function applyTerminalBias(screenX: number, screenY: number, isInput: boolean) {
     let [x, y] = grid.verticalitySwap(screenX, screenY);
-    x += isInput ? -13 : 13;
+    x += (isInput ? -13 : 13)*zoom;
     return grid.verticalitySwap(x, y);
   }
 
@@ -355,12 +387,11 @@ export default function BenesNet({
         [screenX, screenY] = applyTerminalBias(screenX, screenY, isInput);
       }
 
-
       circles.push(<circle
         key={gridX + ',' + gridY}
         cx={screenX} cy={screenY}
         stroke="none"
-        r={isTerminal ? 15 : 8} fill={color}  />)
+        r={(isTerminal ? 15 : 8)*zoom} fill={color}  />)
     }
   }
 
@@ -376,7 +407,7 @@ export default function BenesNet({
 
     function putLine(postfix: string, fromX: number, fromY: number, toX: number, toY: number, stroke: string) {
       let [x1, y1] = grid.toScreen(fromX, fromY), [x2, y2] = grid.toScreen(toX, toY);
-      lines.push(<line key={prefix+postfix} {...{ x1, y1, x2, y2 }} strokeOpacity={0.5} stroke={stroke} strokeWidth={2} />);
+      lines.push(<line key={prefix+postfix} {...{ x1, y1, x2, y2 }} strokeOpacity={0.5} stroke={stroke} strokeWidth={zoom*2} />);
     }
 
     // Top line.
@@ -397,7 +428,7 @@ export default function BenesNet({
       let bottomSubnet = subnet.bottomSubnet();
 
       // TODO: Scale this adaptively.
-      let padAmount = 20;
+      let padAmount = zoom*20;
 
       let topBox = grid.toScreenBox(topSubnet.extent());
       let bottomBox = grid.toScreenBox(bottomSubnet.extent());
@@ -408,8 +439,8 @@ export default function BenesNet({
       //benesRects.push(<rect key={"ar"+topSubnet.id} rx={10} ry={10} x={topBox.left} y={topBox.top} width={topBox.right - topBox.left} height={topBox.bottom - topBox.top} stroke={"none"} fill={backgroundColor} fillOpacity={0.8} />)
       //benesRects.push(<rect key={"ar"+bottomSubnet.id} rx={10} ry={10} x={bottomBox.left} y={bottomBox.top} width={bottomBox.right - bottomBox.left} height={bottomBox.bottom - bottomBox.top} stroke={"none"} fill={backgroundColor} fillOpacity={0.8} />)
 
-      benesRects.push(<rect key={"br"+topSubnet.id} rx={10} ry={10} x={topBox.left} y={topBox.top} width={topBox.right - topBox.left} height={topBox.bottom - topBox.top} stroke={"none"} fill={"url('#topGrad')"} fillOpacity={0.2} />)
-      benesRects.push(<rect key={"br"+bottomSubnet.id} rx={10} ry={10} x={bottomBox.left} y={bottomBox.top} width={bottomBox.right - bottomBox.left} height={bottomBox.bottom - bottomBox.top} stroke={"none"} fill={"url('#botGrad')"} fillOpacity={0.2} />)
+      benesRects.push(<rect key={"br"+topSubnet.id} rx={zoom*10} ry={zoom*10} x={topBox.left} y={topBox.top} width={topBox.right - topBox.left} height={topBox.bottom - topBox.top} stroke={"none"} fill={"url('#topGrad')"} fillOpacity={0.2} />)
+      benesRects.push(<rect key={"br"+bottomSubnet.id} rx={zoom*10} ry={zoom*10} x={bottomBox.left} y={bottomBox.top} width={bottomBox.right - bottomBox.left} height={bottomBox.bottom - bottomBox.top} stroke={"none"} fill={"url('#botGrad')"} fillOpacity={0.2} />)
 
       // Top subnet.
       connectBenes(benesLines, benesRects, topSubnet);
@@ -470,7 +501,7 @@ export default function BenesNet({
           key={`rt_${inputIdx}_${edgeIdx}`}
           x1={x1} y1={y1} x2={x2} y2={y2}
           fill="none"
-          strokeWidth="6"
+          strokeWidth={6*zoom}
           strokeDasharray={dottedLines ? "10,30" : ""}
           stroke={lineColor}
         >
@@ -502,6 +533,7 @@ export default function BenesNet({
         className="absolute pointer-events-none bold"
         key={"il_" + inputIdx}
         style={{
+          fontSize: refFontSize*zoom,
           transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
           color: backgroundColor
         }}>
@@ -521,6 +553,7 @@ export default function BenesNet({
         key={"ol_" + preimage.toString()}
         className="absolute pointer-events-none" 
         style={{
+          fontSize: 15*zoom,
           transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
           color: backgroundColor
         }}>
@@ -570,7 +603,7 @@ export default function BenesNet({
         {svg}
         {labels}
         {doRouting &&
-        <PermWidget enableTransition={enableTransition} perm={perm} onPermChanged={setPerm} vertical={vertical} xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
+        <PermWidget zoom={zoom} enableTransition={enableTransition} perm={perm} onPermChanged={setPerm} vertical={vertical} xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
         }
         </div>
     </div>
