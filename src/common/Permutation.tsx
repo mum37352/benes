@@ -29,8 +29,12 @@ export default class Permutation {
   invLut: number[];
 }
 
+export function clipToRange(x: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, x));
+}
+
 export function correctIdx(rawIdx: number, height: number) {
-  return Math.min(height - 1, Math.max(0, Math.round(rawIdx)));
+  return clipToRange(Math.round(rawIdx), 0, height - 1);
 }
 
 function allPerms_recurse(unusedNums: Set<number>, lut: number[], n: number, perms: Permutation[]) {

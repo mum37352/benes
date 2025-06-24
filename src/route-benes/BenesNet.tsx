@@ -7,8 +7,9 @@ import { backgroundColor, bottomColor, getColorScale, inputColor, midColor, outp
 import { KI } from "../common/katex";
 import Permutation, { correctIdx } from "../common/Permutation";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
-import { BenesGrid, Box, computeGridLayout, Subnet } from "@/common/Grid";
+import { BenesGrid, Box, computeGridLayout, computeGridMargins, Subnet } from "@/common/Grid";
 import PermWidget, { refFontSize } from "@/common/PermWidget";
+import { applyTerminalBias, drawNode } from "@/common/NodeDrawing";
 
 
 function benesTwin(k: number, idx: number) {
@@ -148,13 +149,12 @@ export default function BenesNet({
   let width = size?.width || 0;
   let height = size?.height || 0;
 
-  // The size of the margin relative to the cell size.
-  let marginWidth = 0.5;
-  let marginHeight = 1.0;
-
   let subnet = new Subnet(order, 0, 0, "dummy");
-  let gridWidths = computeGridLayout(width, [marginWidth, subnet.width-1, marginWidth + (doRouting&&!vertical ? 0.5 : 0)]);
-  let gridHeights = computeGridLayout(height, [marginHeight, subnet.height-1, marginHeight + (doRouting&&vertical ? 0.5 : 0)]);
+
+  let margin = computeGridMargins(doRouting, vertical);
+
+  let gridWidths = computeGridLayout(width, [margin.left, subnet.width-1, margin.right]);
+  let gridHeights = computeGridLayout(height, [margin.top, subnet.height-1, margin.bottom]);
 
   let gridBox = new Box(gridWidths[0], gridHeights[0], gridWidths[0] + gridWidths[1], gridHeights[0] + gridHeights[1]);
 
@@ -172,34 +172,15 @@ export default function BenesNet({
   }
 
   let circles: any[] = [];
-
-  // Connecting the lines to the center of the circle makes them hard to follow,
-  // so we offset the input and output circles by a small terminal bias.
-  function applyTerminalBias(screenX: number, screenY: number, isInput: boolean) {
-    let [x, y] = grid.verticalitySwap(screenX, screenY);
-    x += (isInput ? -13 : 13)*zoom;
-    return grid.verticalitySwap(x, y);
-  }
-
+  let labels: any[] = [];
 
   // Draw grid circles.
   for (let gridX = 0; gridX < grid.rootSubnet.width; gridX++) {
-    let isInput = grid.rootSubnet.isInput(gridX);
-    let isTerminal = grid.rootSubnet.isTerminal(gridX);
+    let type = grid.rootSubnet.type(gridX);
+    let subType = grid.rootSubnet.subType(gridX);
 
-    let color = grid.rootSubnet.isSubOutput(gridX) ? outputColor : inputColor;
     for (let gridY = 0; gridY < grid.rootSubnet.height; gridY++) {
-      let [screenX, screenY] = grid.toScreen(gridX, gridY);
-
-      if (isTerminal) {
-        [screenX, screenY] = applyTerminalBias(screenX, screenY, isInput);
-      }
-
-      circles.push(<circle
-        key={gridX + ',' + gridY}
-        cx={screenX} cy={screenY}
-        stroke="none"
-        r={(isTerminal ? 15 : 8)*zoom} fill={color}  />)
+      drawNode(zoom, grid, type, subType, gridX, gridY, circles, labels);
     }
   }
 
@@ -332,52 +313,6 @@ export default function BenesNet({
   let routingLines: any[] = [];
   drawRouting(routingLines, routing, order);
 
-  function drawInputLabels(inputLabels: any[]) {
-    for (let inputIdx = 0; inputIdx < grid.rootSubnet.height; inputIdx++) {
-      let [x, y] = applyTerminalBias(...grid.toScreen(0, inputIdx), true);
-
-      inputLabels.push(
-        <div 
-        className="absolute pointer-events-none bold"
-        key={"il_" + inputIdx}
-        style={{
-          fontSize: refFontSize*zoom,
-          transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
-          color: backgroundColor
-        }}>
-          <KI>{`${inputIdx+1}`}</KI>
-        </div>);
-    }
-  }
-
-  function drawOutputLabels(outputLabels: any[]) {
-    for (let preimage = 0; preimage < grid.rootSubnet.height; preimage++) {
-      let outputIdx = perm.lut[preimage];
-      let [x, y] = applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, outputIdx), false);
-
-
-      outputLabels.push(
-        <div 
-        key={"ol_" + preimage.toString()}
-        className="absolute pointer-events-none" 
-        style={{
-          fontSize: 15*zoom,
-          transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
-          color: backgroundColor
-        }}>
-          <KI>{`${outputIdx+1}`}</KI>
-        </div>);
-    }
-  }
-
-  let labels: any[] = [];
-  let prescriptions: any[] = [];
-  drawInputLabels(labels);
-  drawOutputLabels(labels);
-  if (doRouting) {
-    labels.push(...prescriptions);
-  }
-
   let svg = <svg className="absolute" width={width} height={height}>
     <filter id='noiseFilter'>
       <feTurbulence
@@ -405,14 +340,17 @@ export default function BenesNet({
     </g>
   </svg>;
 
+  let permWidget = <PermWidget 
+    zoom={zoom} enableTransition={enableTransition} perm={perm} onPermChanged={setPerm} vertical={vertical} 
+    xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(zoom, grid, ...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
+        
+
   return <div className="flex items-stretch w-full h-full p-1" style={{ background: backgroundColor, flexDirection: vertical ? "column" : "row"}}>
     <div className="flex grow items-stretch p-1">
       <div ref={ref} className="relative flex grow p-0 m-0 overflow-hidden">
         {svg}
         {labels}
-        {doRouting &&
-        <PermWidget zoom={zoom} enableTransition={enableTransition} perm={perm} onPermChanged={setPerm} vertical={vertical} xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
-        }
+        {doRouting && permWidget}
         </div>
     </div>
   </div>

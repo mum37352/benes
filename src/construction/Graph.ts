@@ -1,51 +1,32 @@
 import { Vec2 } from "@/common/Grid";
+import { GraphNodeType } from "@/common/NodeDrawing";
 import * as d3 from "d3";
-
-export let width = 928;
-export let height = 680;
-
-export enum GraphNodeType {
-  Input,
-  Output,
-  Internal
-}
-
-export type Guideline = {
-  x: number,
-  key: string
-};
 
 export interface GraphNode extends d3.SimulationNodeDatum {
   type: GraphNodeType,
   key: string,
-  guideline: Guideline
+  guideline?: number|undefined
 }
 
 export type GraphEdge = d3.SimulationLinkDatum<GraphNode>;
 
 export class Graph {
   constructor(ioHeight: number) {
-    this.xScale = d3.scaleLinear([-6, +6], [0, width]);
-    this.yScale = d3.scaleLinear([-1, ioHeight], [0, height]);
+    this.numGuidelines = 3;
 
     this.ioHeight = ioHeight;
-
-    let inputGuideline: Guideline = {x: this.xScale(-5), key: "ingd"};
-    let outputGuideline: Guideline = {x: this.xScale(+5), key: "outgd"};
-
-    this.guidelines = [inputGuideline, outputGuideline];
 
     this.inputs = [];
     for (let inputIdx = 0; inputIdx < ioHeight; inputIdx++) {
       let [x, y] = this.getInputPos(inputIdx);
-      let node : GraphNode = {key: "innd_"+inputIdx, type: GraphNodeType.Input, fx: x, fy: y, guideline: inputGuideline};
+      let node : GraphNode = {key: "innd_"+inputIdx, type: GraphNodeType.Input, fx: x, fy: y };
       this.inputs.push(node);
     }
 
     this.outputs = [];
     for (let outputIdx = 0; outputIdx < ioHeight; outputIdx++) {
       let [x, y] = this.getOutputPos(outputIdx);
-      let node : GraphNode = {key: "outnd_"+outputIdx, type: GraphNodeType.Output, fx: x, fy: y, guideline: outputGuideline};
+      let node : GraphNode = {key: "outnd_"+outputIdx, type: GraphNodeType.Output, fx: x, fy: y };
       this.outputs.push(node);
     }
 
@@ -56,14 +37,6 @@ export class Graph {
 
     // Totally valid since we have no edges.
     this.routingLut = new Map();
-  }
-  
-  centerX() {
-    return this.xScale(0);
-  }
-
-  centerY() {
-    return height/2;
   }
 
   static makeCompleteBipartiteGraph(ioHeight: number) {
@@ -85,48 +58,29 @@ export class Graph {
     return graph;
   }
 
-  addGuideline(newGuideline: Guideline) {
-    this.guidelines.push(newGuideline);
-    // Maybe not the most efficient way, but whatever.
-    this.guidelines.sort((a, b) => a.x - b.x);
+  snapToGuideline(x: number): null {
+    return null;
   }
 
-  deleteGuideline(guideline: Guideline) {
-    // Eliminate nodes on this guideline. Might not be the best approach.
-    for (;;) {
-      // Check if there is a node on the guideline.
-      let nodeOnGuideline = null;
-      for (let node of this.nodes) {
-        if (node.guideline === guideline) {
-          nodeOnGuideline = node;
-          break;
-        }
-      }
+  setNumGuidelines(newNum: number) {
+    this.numGuidelines = newNum;
 
-      if (nodeOnGuideline) {
-        this.deleteNode(nodeOnGuideline);
-      } else {
-        break;
+    for (let [i, node] of this.inputs.entries()) {
+      [node.fx, node.fy] = this.getInputPos(i);
+    }
+    for (let [i, node] of this.outputs.entries()) {
+      [node.fx, node.fy] = this.getOutputPos(i);
+    }
+    for (let i = this.nodes.length - 1; i >= 0; i--) {
+      let node = this.nodes[i];
+      if (node.type === GraphNodeType.Internal && node.guideline && node.guideline >= newNum) {
+        this.deleteNode(node);
       }
     }
-
-    
-    for (let i = this.guidelines.length - 1; i >= 0; i--) {
-      if (this.guidelines[i] === guideline) {
-        this.guidelines.splice(i, 1);
-      }
-    }
+    this.routeAllPermutations();
   }
 
-  setGuidelineX(guideline: Guideline, x: number) {
-      guideline.x = x;
-      for (let node of this.nodes) {
-        if (node.guideline === guideline) {
-          node.fx = x;
-        }
-      }
-  }
-
+  /*
   snapToGuideline(x: number): Guideline|null {
     let closestDist = Infinity;
     let closestGuideline: Guideline|null = null;
@@ -141,13 +95,21 @@ export class Graph {
     
     return closestGuideline;
   }
-
-  getInputPos(outputIdx: number): Vec2 {
-    return [this.xScale(-5), this.yScale(outputIdx)];
+*/
+  getInputPos(inputIdx: number): Vec2 {
+    return [0, inputIdx];
   }
 
   getOutputPos(outputIdx: number): Vec2 {
-    return [this.xScale(+5), this.yScale(outputIdx)];
+    return [this.numGuidelines+1, outputIdx];
+  }
+
+  centerX() {
+    return (this.numGuidelines+1)/2;
+  }
+
+  centerY() {
+    return (this.ioHeight-1)/2;
   }
 
   foreachEdgeSubset(doSomething: Function) {
@@ -441,9 +403,6 @@ export class Graph {
 
   nextId: number;
 
-  xScale: d3.ScaleLinear<number, number>;
-  yScale: d3.ScaleLinear<number, number>;
-
   ioHeight: number;
   inputs: GraphNode[];
   outputs: GraphNode[];
@@ -451,7 +410,8 @@ export class Graph {
   edges: GraphEdge[];
 
   // Vertical lines.
-  guidelines: Guideline[];
+  //guidelines: Guideline[];
+  numGuidelines: number;
 
   routingLut: Map<string, GraphNode[][]>;
 }

@@ -1,7 +1,8 @@
 import { Dropdown } from "primereact/dropdown";
 import { Toolbar } from "primereact/toolbar";
 import { useState } from "react";
-import { Pencil, MousePointerClick, Trash, Move, Share2, Ruler } from 'lucide-react';
+import { Pencil, MousePointerClick, Trash, Move, Share2, Ruler, Eraser } from 'lucide-react';
+import { Button } from "primereact/button";
 
 export type ConstructionMode = 'nodes' | 'edges' | 'guidelines';
 export type ConstructionAction = 'insert' | 'delete' | 'drag';
@@ -29,7 +30,7 @@ const actionOptions = {
   ]
 };
 
-export default function GraphToolbar({
+export function OldToolbar({
   onChange, mode, action
 }: {
   onChange: (mode: ConstructionMode, action: ConstructionAction) => void, mode: ConstructionMode, action: ConstructionAction
@@ -98,4 +99,41 @@ export default function GraphToolbar({
   );
 
   return <Toolbar start={startContents} center={centerContents} />;
+}
+
+export type ToolSel = 'insert' | 'delete' | 'drag';
+
+type Tool = {
+  name: string;
+  icon: React.JSX.Element;
+  hotkey: string;
+};
+
+// Tool definitions
+const tools: Tool[] = [
+  { name: 'insert', icon: <Pencil size={18} />, hotkey: 'default' },
+  { name: 'delete', icon: <Eraser size={18} />, hotkey: 'Alt' },
+  { name: 'drag', icon: <Move size={18} />, hotkey: 'Ctrl' },
+];
+
+
+export function GraphToolbar({ activeTool, onChange }: {activeTool: string, onChange: Function}) {
+  let centerContents = (
+    <div className="flex gap-2 p-2 rounded shadow">
+      {tools.map(tool => (
+        <Button
+          key={tool.name}
+          className={`p-button-rounded p-button-text ${
+            activeTool === tool.name ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white' : ''
+          }`}
+          onClick={() => onChange(tool.name)}
+          tooltip={`${tool.name[0].toUpperCase() + tool.name.slice(1)} (Hotkey: ${tool.hotkey})`}
+        >
+          {tool.icon}
+          </Button>
+      ))}
+    </div>
+  );
+
+  return <Toolbar center={centerContents} />;
 }

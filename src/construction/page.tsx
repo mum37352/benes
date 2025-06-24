@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom/client';
 
 import '@/styles/index.css';
 import { useState } from "react";
-import BenesNet from "../route-benes/BenesNet";
-import NoSsr from "../common/NoSsr";
 import { Splitter, SplitterPanel } from 'primereact/splitter';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { PrimeReactProvider } from 'primereact/api';
@@ -16,11 +14,12 @@ import Construction from "./Construction";
 import Permutation, { allPerms } from "../common/Permutation";
 import { inputColor, outputColor } from "../common/Colors";
 import { Toolbar } from 'primereact/toolbar';
-import GraphToolbar, { ConstructionAction, ConstructionMode } from './Toolbar';
+import { ConstructionAction, ConstructionMode, GraphToolbar, ToolSel } from './Toolbar';
 import { Graph, GraphNode } from './Graph';
 import * as d3 from "d3";
 import { Card } from 'primereact/card';
 import { Check, X } from 'lucide-react';
+import { ProgressBar } from 'primereact/progressbar';
 
 type Config = {
   ioHeight: number,
@@ -34,7 +33,7 @@ function configFromIoHeight(ioHeight: number): Config {
     ioHeight,
     perms: allPerms(ioHeight),
     selPerm: new Permutation([...Array(ioHeight).keys()]),
-    graph: new Graph(ioHeight)
+    graph: new Graph(ioHeight)// Graph.makeCompleteBipartiteGraph(ioHeight) ///
   }
 }
 
@@ -72,15 +71,21 @@ function PermLists({config, setConfig}: {config: Config, setConfig: Function} ) 
   }
 
   return <>
-        <span className="text-sm mb-1 flex row font-bold">
-          <X className="text-red-500" /> Unroutable permutations:
-        </span>
-        {selPerm && badPerms.length > 0 ? drawPermList(selPerm, badPerms) : "None!"}
+    <span className="text-sm mb-1 flex row font-bold">
+      <X className="text-red-500" /> Unroutable permutations:
+    </span>
+    {selPerm && badPerms.length > 0 ? drawPermList(selPerm, badPerms) : "None!"}
 
-        <span className="text-sm flex row mb-1 font-bold">
-          <Check className="text-green-500" /> Routable permutations:
-        </span>
-        {selPerm && goodPerms.length > 0 ? drawPermList(selPerm, goodPerms) : "None, get to work!"}
+    <span className="text-sm flex row mb-1 font-bold">
+      <Check className="text-green-500" /> Routable permutations:
+    </span>
+    <div className="relative w-full">
+      <ProgressBar value={100 * goodPerms.length / config.perms.length} className="h-6" showValue={false} />
+      <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-white drop-shadow-[0_0_2px_black]">
+        <KI>{`${goodPerms.length} / ${config.perms.length}=${config.ioHeight}!`}</KI>
+      </span>
+    </div>
+    {selPerm && goodPerms.length > 0 ? drawPermList(selPerm, goodPerms) : "None, get to work!"}
   </>;
 }
 
@@ -89,11 +94,7 @@ function Main()
   let [config, setConfig] = useState<Config>(() => configFromIoHeight(3));
   let graph = config.graph;
 
-  let [numGuidelines, setNumGuidelines] = useState<number>(3);
-
-  let [mode, setMode] = useState<ConstructionMode>('nodes');
-  let [action, setAction] = useState<ConstructionAction>('insert');
-
+  let [tool, setTool] = useState<ToolSel>('insert');
 
   let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
 
@@ -141,15 +142,24 @@ function Main()
     );
   }
     */
+let divRef = useRef<HTMLDivElement>(null);
 
   return <Splitter className="h-dvh w-full" ref={ref}>
     <SplitterPanel size={60} className="overflow-hidden">
-      <div className="w-full h-full">
-        <GraphToolbar mode={mode} action={action} onChange={(mode, action) => {
-          setMode(mode);
-          setAction(action);
-        }} />
-        <Construction mode={mode} action={action} graph={graph} perm={config.selPerm} onChange={reheat} onPermChanged={(newPerm) => setConfig({...config, selPerm: newPerm})} />
+      <div ref={divRef} className="flex flex-col w-full h-full"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Control') {setTool("drag"); e.preventDefault();}
+        if (e.key === 'Alt') {setTool("delete"); e.preventDefault();}
+      }}
+      onKeyUp={(e) => { setTool("insert");e.preventDefault();}}
+      onMouseEnter={() => divRef.current?.focus()}
+      onMouseLeave={() => divRef.current?.blur()}>
+        <GraphToolbar activeTool={tool} onChange={setTool} />
+
+        <div className="flex-1">
+          <Construction tool={tool} graph={graph} perm={config.selPerm} onChange={reheat} onPermChanged={(newPerm) => setConfig({ ...config, selPerm: newPerm })} />
+        </div>
       </div>
     </SplitterPanel>
     <SplitterPanel size={40} className="">
@@ -157,7 +167,7 @@ function Main()
         <h1 className="text-xl font-bold my-4 font-italic">Communication Network Construction</h1>
 
         <p>
-          A communication network is an undirected, simple graph; but with special nodes: <span style={{ color: inputColor }}><KI>n</KI> "input nodes"</span> and <span style={{ color: outputColor }}>"output nodes"</span>
+          A communication network is an graph with special nodes: <span style={{ color: inputColor }}><KI>n</KI> "input nodes"</span> and <span style={{ color: outputColor }}>"output nodes"</span>
         </p>
 
         <p>
@@ -165,7 +175,7 @@ function Main()
         </p>
 
         <p>
-          Any bijection <KI>\pi \in S_n</KI> from its <span style={{color: inputColor}}><KI>n</KI> input nodes</span> to its <span style={{color: outputColor}}><KI>n</KI> output nodes</span> can be realized by vertex-disjoint paths.
+          We say it is uncongested if any bijection <KI>\pi \in S_n</KI> from its <span style={{color: inputColor}}><KI>n</KI> input nodes</span> to its <span style={{color: outputColor}}><KI>n</KI> output nodes</span> can be realized by vertex-disjoint paths.
           A set of such paths(or routes) is called a routing. You can click and drag the permutation arrows to modify the permutation, or alternatively, dial one of the permutations in the list below. Try it!
         </p>
 
@@ -183,7 +193,7 @@ function Main()
         </div>
 
         <p>
-          This playground lets you construct "good" communication networks (Even though it may be a good warm-up to construct a bad one first.)
+          This playground lets you construct "good" uncongested communication networks (Even though it may be a good warm-up to construct a bad one first.)
           Your current network has <KI>{`${graph.nodes.length} \\geq 2n=${2*config.ioHeight}`}</KI> nodes and <KI>{`${graph.edges.length}`}</KI> edges.
         </p>
 
@@ -194,10 +204,12 @@ function Main()
         <div className="text-sm">
           <label className="block mb-1 font-bold" htmlFor="inputHeight">Number of guidelines:</label>
 
-          <InputNumber className="" name="inputHeight" value={numGuidelines} onValueChange={(e: InputNumberValueChangeEvent) => {
+          <InputNumber className="" name="inputHeight" value={graph.numGuidelines} onValueChange={(e: InputNumberValueChangeEvent) => {
             let val = e.value;
             if (val && !isNaN(val)) {
-              setNumGuidelines(val)
+              graph.setNumGuidelines(val);
+              reheat(graph);
+              setConfig({...config});
             }
           }} mode="decimal" showButtons min={1} max={8} />
         </div>

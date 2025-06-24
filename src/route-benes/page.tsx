@@ -5,11 +5,10 @@ import '@/styles/index.css';
 
 import { useState } from "react";
 import BenesNet from "./BenesNet";
-import NoSsr from "../common/NoSsr";
 import { Splitter, SplitterPanel } from 'primereact/splitter';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { PrimeReactProvider } from 'primereact/api';
-import { InputSwitch, InputSwitchChangeEvent } from "primereact/inputswitch";
+import { InputSwitch } from "primereact/inputswitch";
 import { SelectButton } from "primereact/selectbutton";
 import { initMacros, KI } from "../common/katex";
 import { inputColor, outputColor } from "../common/Colors";

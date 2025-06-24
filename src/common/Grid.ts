@@ -1,6 +1,7 @@
 export type Vec2 = [number, number];
 import * as d3 from "d3";
 import { correctIdx } from "./Permutation";
+import { GraphNodeType } from "./NodeDrawing";
 
 export class Box {
   constructor(left: number, top: number, right: number, bottom: number) {
@@ -50,6 +51,7 @@ export class Subnet {
     this.id = id;
   }
 
+
   isInput(localX: number) {
     return localX == 0;
   }
@@ -58,8 +60,22 @@ export class Subnet {
     return localX == this.width - 1;
   }
 
+  type(localX: number) {
+    if (this.isInput(localX)) {
+      return GraphNodeType.Input;
+    } else if (this.isOutput(localX)) {
+      return GraphNodeType.Output; 
+    } else {
+      return GraphNodeType.Internal;
+    }
+  }
+
   isSubOutput(localX: number) {
     return localX >= this.width/2;
+  }
+
+  subType(localX: number) {
+    return this.isSubOutput(localX) ? GraphNodeType.Input : GraphNodeType.Output;
   }
 
   isTerminal(localX: number) {
@@ -99,12 +115,10 @@ export class Subnet {
   left: number;
 }
 
-export class BenesGrid {
-  constructor(order: number, vertical: boolean, screenBox: Box) {
-    this.rootSubnet = new Subnet(order, 0, 0, "");
-    let extent = this.rootSubnet.extent();
-
+export class Grid {
+  constructor(extent: Box, vertical: boolean, screenBox: Box) {
     this.vertical = vertical;
+    this.extent = extent;
 
     let [xExtent, yExtent] = this.verticalitySwap([extent.left, extent.right], [extent.top, extent.bottom]);
     this.xScale = d3.scaleLinear(xExtent, [screenBox.left, screenBox.right]);
@@ -131,9 +145,21 @@ export class BenesGrid {
     return result;
   }
 
-  yFromScreen(screenX: number, screenY: number) {
+  xFromScreen(screenX: number, screenY: number, roundToInt: boolean = true) {
+    let result = !this.vertical ? this.xScale.invert(screenX) : this.yScale.invert(screenY);
+    if (roundToInt) {
+      // TODO: This fails if extent.left is not 0.
+      result = correctIdx(result, this.extent.right + 1)
+    }
+    return result;
+  }
+
+  yFromScreen(screenX: number, screenY: number, roundToInt: boolean = true) {
     let result = this.vertical ? this.xScale.invert(screenX) : this.yScale.invert(screenY);
-    result = correctIdx(result, this.rootSubnet.height)
+    if (roundToInt) {
+      // TODO: This fails if extent.top is not 0.
+      result = correctIdx(result, this.extent.bottom + 1);
+    }
     return result;
   }
 
@@ -145,10 +171,20 @@ export class BenesGrid {
     return this.yScale(1) - this.yScale(0);
   }
 
-  rootSubnet: Subnet;
+  extent: Box;
   vertical: boolean;
   xScale: d3.ScaleLinear<number, number>;
   yScale: d3.ScaleLinear<number, number>;
+}
+
+export class BenesGrid extends Grid {
+  constructor(order: number, vertical: boolean, screenBox: Box) {
+    let rootSubnet = new Subnet(order, 0, 0, "");
+    super(rootSubnet.extent(), vertical, screenBox);
+    this.rootSubnet = rootSubnet;
+  }
+
+  rootSubnet: Subnet;
 }
 
 export function computeGridLayout(totalSize: number, relativeSizes: number[]): number[] {
@@ -160,4 +196,31 @@ export function computeGridLayout(totalSize: number, relativeSizes: number[]): n
 
   let result = relativeSizes.map(x => x * ratio);
   return result;
+}
+
+export type Margin = {
+  left: number,
+  right: number,
+  top: number,
+  bottom: number
+};
+
+// Compute the size of the margin relative to the cell size.
+export function computeGridMargins(doRouting: boolean, vertical: boolean): Margin {
+  let margin = {
+    left: 0.5,
+    top: 1.0,
+    right: 0.5,
+    bottom: 1.0
+  }
+
+  if (doRouting) {
+    if (vertical) {
+      margin.bottom += 0.5;
+    } else {
+      margin.right += 0.5;
+    }
+  }
+
+  return margin;
 }
