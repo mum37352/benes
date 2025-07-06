@@ -80,6 +80,9 @@ export default function Construction({
     return clientToSvg(e.clientX, e.clientY);
   }
 
+  // NOTE: Calling e.preventDefault is necessary in the mouse handlers, to avoid
+  // Firefox from removing the keyboard focus from the parent interceptor.
+
   function handleMouseDown(e: React.MouseEvent, node?: GraphNode, edge?: GraphEdge) {
     let [ex, ey] = getEventPoint(e);
 
@@ -90,6 +93,7 @@ export default function Construction({
           fromNode: node
         });
         e.stopPropagation();
+        e.preventDefault();
       } else {
         // Add a node.
         let x = clipToRange(grid.xFromScreen(ex, ey, true), 1, graph.numGuidelines);
@@ -100,6 +104,7 @@ export default function Construction({
         graph.routeAllPermutations();
         onChange(graph);
         e.stopPropagation();
+        e.preventDefault();
       }
     } else if (tool === 'delete') {
       if (node?.type === GraphNodeType.Internal) {
@@ -107,62 +112,21 @@ export default function Construction({
         graph.routeAllPermutations();
         onChange(graph);
         e.stopPropagation();
+        e.preventDefault();
       } else if (edge) {
         graph.deleteEdge(edge);
         graph.routeAllPermutations();
         onChange(graph);
         e.stopPropagation();
+        e.preventDefault();
       }
     } else if (tool === 'drag') {
       if (node?.type === GraphNodeType.Internal) {
         setDraggedNode(node);
         e.stopPropagation();
+        e.preventDefault();
       }
     }
-
-    /*
-    if (mode === 'nodes') {
-      if (action === 'insert') {
-        let guideline = graph.snapToGuideline(ex);
-        if (guideline !== null) {
-          
-          let newNode: GraphNode = { type: GraphNodeType.Internal, key: "usrnd_" + graph.getNextId(), y: ey, fx: guideline?.x, guideline };
-
-          graph.nodes.push(newNode);
-          graph.routeAllPermutations();
-          onChange();
-          e.stopPropagation();
-        }
-      } else if (action === 'drag') {
-        if (node?.type === GraphNodeType.Internal) {
-          setDraggedNode(node);
-          e.stopPropagation();
-        }
-      } else if (action === 'delete') {
-        if (node?.type === GraphNodeType.Internal) {
-          graph.deleteNode(node);
-          graph.routeAllPermutations();
-          onChange();
-          e.stopPropagation();
-        }
-      }
-    } else if (mode === 'edges') {
-      if (action === 'insert') {
-        if (node) {
-          setEdgeInteraction({
-            fromNode: node
-          });
-          e.stopPropagation();
-        }
-      } else if (action === 'delete') {
-        if (edge) {
-          graph.deleteEdge(edge);
-          graph.routeAllPermutations();
-          onChange();
-          e.stopPropagation();
-        }
-      }
-    }*/
   }
 
   function handleMouseMove(e: React.MouseEvent) {
@@ -182,6 +146,7 @@ export default function Construction({
         fromNode: edgeInteraction.fromNode
       });
       e.stopPropagation();
+      e.preventDefault();
     }
 
     setMousePos([ex, ey]);
@@ -201,6 +166,7 @@ export default function Construction({
       onChange(graph);
       setDraggedNode(undefined);
       e.stopPropagation();
+      e.preventDefault();
     }
 
     if (edgeInteraction) {
@@ -216,6 +182,7 @@ export default function Construction({
       onChange(graph);
       setEdgeInteraction(undefined);
       e.stopPropagation();
+      e.preventDefault();
     }
   }
 
