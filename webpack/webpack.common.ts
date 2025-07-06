@@ -13,6 +13,7 @@ const commonConfig: webpack.Configuration = {
         index: './src/index.tsx',
         benes: './src/route-benes/page.tsx',
         construction: './src/construction/page.tsx',
+        article: './src/article/page.tsx',
     },
     output: {
         path: path.resolve(__dirname, '../dist'),
@@ -88,6 +89,11 @@ const commonConfig: webpack.Configuration = {
             template: './public/benes.html',
             filename: 'benes.html',
             chunks: ['benes'],
+        }),
+        new HtmlWebpackPlugin({
+            template: './public/article.html',
+            filename: 'article.html',
+            chunks: ['article'],
         }),
         new CleanWebpackPlugin(),
         new MiniCssExtractPlugin({
