@@ -48,6 +48,8 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
     e.preventDefault();
     e.clientY;
 
+    console.log(toIdx);
+
     if (toIdx < fromIdx) {
       setActiveDropIndicator(toIdx);
     } else if (toIdx > fromIdx) {
@@ -56,19 +58,31 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
       setActiveDropIndicator(-1);
     }
   }
+  console.log("drop ind", activeDropIndicator);
 
   let height = perm.lut.length;
   let labelOffset = zoom*20;
 
   function drawPermArrows(prescriptions: any[], dropIndicators: any[]) {
     for (let preimage = 0; preimage < height; preimage++) {
+      let dropIndicatorDims: React.CSSProperties = {};
+
+      if (vertical) {
+        dropIndicatorDims.height = 60 * zoom;
+        dropIndicatorDims.width = 2 * zoom;
+      } else {
+        dropIndicatorDims.width = 60 * zoom;
+        dropIndicatorDims.height = 2 * zoom;
+      }
+
       let outputIdx = perm.lut[preimage];
       let [x, y] = idxToXY(outputIdx);
 
 
       let dropIdx = (outputIdx===0 ? 0 : height);
       let dropStyle: React.CSSProperties = {
-        opacity: (activeDropIndicator === dropIdx) ? 1 : 0
+        opacity: (activeDropIndicator === dropIdx) ? 1 : 0,
+        ...dropIndicatorDims
       };
       
       dropStyle[vertical?"left":"top"] = `${outputIdx===0?"-":""}10px`;
@@ -130,11 +144,16 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
       // Drop indicator
       if (outputIdx < height - 1) {
         [x, y] = idxToXY(outputIdx + 0.5);
-        dropIdx = outputIdx+1;
-        dropIndicators.push(<div key={`drop_${dropIdx}`} data-before={outputIdx}
-          className={`absolute transition bg-cyan-400 shrink-0 ${vertical ? "h-12" : "w-12"} ${vertical ? "w-0.5" : "h-0.5"}`}
+        dropIdx = outputIdx + 1;
+        let style = {
+          opacity: activeDropIndicator === outputIdx + 1 ? 1 : 0, ...labelStyle(x, y),
+          ...dropIndicatorDims
+        };
 
-          style={{opacity: activeDropIndicator === outputIdx+1 ? 1 : 0, ...labelStyle(x, y)}}
+        dropIndicators.push(<div key={`drop_${dropIdx}`} data-before={outputIdx}
+          className={`absolute transition bg-cyan-400 shrink-0`}
+
+          style={style}
         />);
       }
     }
