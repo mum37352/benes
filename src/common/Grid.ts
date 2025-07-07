@@ -160,6 +160,8 @@ export class Grid {
       // TODO: This fails if extent.top is not 0.
       result = correctIdx(result, this.extent.bottom + 1);
     }
+
+    console.log(screenY);
     return result;
   }
 

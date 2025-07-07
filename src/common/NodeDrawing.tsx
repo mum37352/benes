@@ -17,7 +17,32 @@ export enum GraphNodeType {
   Internal
 }
 
-export function drawNode(zoom: number, grid: Grid, type: GraphNodeType, colorType: GraphNodeType, gridX: number, gridY: number, svgList: any[], overlayList: any[], props: object = {}) {
+export function graphNodeTypeToColor(colorType: GraphNodeType) {
+  let color = midColor;
+  if (colorType === GraphNodeType.Input) {
+    color = inputColor;
+  } else if (colorType === GraphNodeType.Output) {
+    color = outputColor;
+  }
+
+  return color;
+}
+
+// Despite its name, this has nothing to do w/ the new Master's program (oof).
+export function CenteredKI({x, y, key, zoom, children, color}: {x: number, y: number, key: string, zoom: number, children: React.ReactNode, color?: string}) {
+  return <div
+        key={"lab_" + key}
+        className="absolute pointer-events-none"
+        style={{
+          fontSize: 15 * zoom,
+          transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
+          color: color
+        }}>
+        <KI>{children}</KI>
+      </div>;
+}
+
+export function drawNode(zoom: number, grid: Grid, type: GraphNodeType, color: string, gridX: number, gridY: number, svgList: any[], overlayList: any[], props: object = {}) {
   let [screenX, screenY] = grid.toScreen(gridX, gridY);
   let isTerminal = (type !== GraphNodeType.Internal);
 
@@ -25,12 +50,6 @@ export function drawNode(zoom: number, grid: Grid, type: GraphNodeType, colorTyp
     [screenX, screenY] = applyTerminalBias(zoom, grid, screenX, screenY, type === GraphNodeType.Input);
   }
 
-  let color = midColor;
-  if (colorType === GraphNodeType.Input) {
-    color = inputColor;
-  } else if (colorType === GraphNodeType.Output) {
-    color = outputColor;
-  }
 
   let key = gridX + ',' + gridY;
 
@@ -42,16 +61,6 @@ export function drawNode(zoom: number, grid: Grid, type: GraphNodeType, colorTyp
 
   if (isTerminal) {
     let number = gridY + 1;
-    overlayList.push(
-      <div
-        key={"lab_" + key}
-        className="absolute pointer-events-none"
-        style={{
-          fontSize: 15 * zoom,
-          transform: `translate(-50%, -50%) translate(${screenX}px, ${screenY}px)`,
-          color: backgroundColor
-        }}>
-        <KI>{`${number}`}</KI>
-      </div>);
+    overlayList.push(<CenteredKI color={backgroundColor} x={screenX} y={screenY} key={"lab_" + key} zoom={zoom}>{`${number}`}</CenteredKI>);
   }
 }

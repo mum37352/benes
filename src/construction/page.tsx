@@ -14,8 +14,8 @@ import Construction from "./Construction";
 import Permutation, { allPerms } from "../common/Permutation";
 import { inputColor, outputColor } from "../common/Colors";
 import { Toolbar } from 'primereact/toolbar';
-import { ConstructionAction, ConstructionMode, GraphToolbar, ToolSel } from './Toolbar';
-import { Graph, GraphNode } from './Graph';
+import { ConstructionAction, ConstructionMode, GraphToolbar, ToolSel } from '../common/Toolbar';
+import { CommGraph, CommGraphNode } from './CommGraph';
 import * as d3 from "d3";
 import { Card } from 'primereact/card';
 import { Check, X } from 'lucide-react';
@@ -25,7 +25,7 @@ type Config = {
   ioHeight: number,
   perms: Permutation[],
   selPerm: Permutation,
-  graph: Graph
+  graph: CommGraph
 }
 
 function configFromIoHeight(ioHeight: number): Config {
@@ -33,7 +33,7 @@ function configFromIoHeight(ioHeight: number): Config {
     ioHeight,
     perms: allPerms(ioHeight),
     selPerm: new Permutation([...Array(ioHeight).keys()]),
-    graph: new Graph(ioHeight)// Graph.makeCompleteBipartiteGraph(ioHeight) ///
+    graph: new CommGraph(ioHeight)// Graph.makeCompleteBipartiteGraph(ioHeight) ///
   }
 }
 
@@ -96,7 +96,7 @@ function Main()
 
   let [tool, setTool] = useState<ToolSel>('insert');
 
-  let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
+  let [simulation, setSimulation] = useState<d3.Simulation<CommGraphNode, undefined>>();
 
   let [, forceUpdate] = useReducer(x => x + 1, 0);
 
@@ -118,7 +118,7 @@ function Main()
     setSimulation(sim);
   }, [ref]);
 
-  function reheat(graph: Graph) {
+  function reheat(graph: CommGraph) {
     simulation?.nodes(graph.nodes).alpha(1).restart();
     forceUpdate();
   }

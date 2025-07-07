@@ -15,19 +15,30 @@ type PermWidgetProps = {
   // drop indicators.
   idxToXY: (idx: number) => Vec2,
   enableTransition: boolean,
+  onHover: (pathIdx: number) => void,
+  onLeave: (pathIdx: number) => void
 }
 
-export default function PermWidget({vertical=false, perm, zoom, onPermChanged, xyToIdx, idxToXY, enableTransition} : PermWidgetProps)
+export default function PermWidget({vertical=false, perm, zoom, onPermChanged, xyToIdx, idxToXY, enableTransition, onHover, onLeave} : PermWidgetProps)
 {
   let overlayRef = useRef<HTMLDivElement>(null);
   let [activeDropIndicator, setActiveDropIndicator] = useState<number>(-1);
   let [dragSource, setDragSource] = useState<number>(-1);
 
+  function getRelCoords(x: number, y: number): [number, number] {
+    let clientRect = overlayRef.current?.getBoundingClientRect();
+    if (clientRect) {
+      x -= clientRect.left;
+      y -= clientRect.top;
+    }
+    return [x, y];
+  }
+
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     setActiveDropIndicator(-1);
 
     let fromIdx = dragSource;
-    let toIdx = xyToIdx(e.clientX, e.clientY);
+    let toIdx = xyToIdx(...getRelCoords(e.clientX, e.clientY));
     let invLut = [...perm.invLut];
     let move = invLut[fromIdx];
     invLut.splice(fromIdx, 1);
@@ -39,11 +50,13 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
     if (onPermChanged) {
       onPermChanged(newPerm);
     }
+
+    onHover(fromIdx);
   }
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     let fromIdx = dragSource;
-    let toIdx = xyToIdx(e.clientX, e.clientY);
+    let toIdx = xyToIdx(...getRelCoords(e.clientX, e.clientY));
 
     e.preventDefault();
     e.clientY;
@@ -111,7 +124,7 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
           transform: vertical ? `translate(-50%, 0) translate(${x}px, ${y + labelOffset}px)` :
           `translate(0, -50%) translate(${x + labelOffset}px, ${y}px)`,
           flexDirection: vertical ? "row" : "column"
-        };  
+        };
       }
 
       console.log("fontSize", refFontSize*zoom);
@@ -132,6 +145,8 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
               setTimeout(() => overlayRef.current?.classList.remove("pointer-events-none"), 0);
               setDragSource(outputIdx);
             }}
+            onMouseEnter={() => onHover(preimage)}
+            onMouseLeave={() => onLeave(preimage)}
             style={{ fontSize: refFontSize*zoom, flexDirection: vertical ? "column" : "row" }}
           >
             <div className={`px-1 ${vertical ? "-rotate-90" : "rotate-180"}`}><KI>{`\\mapsto`}</KI></div>

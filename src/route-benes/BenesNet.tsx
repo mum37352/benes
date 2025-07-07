@@ -9,7 +9,7 @@ import Permutation, { correctIdx } from "../common/Permutation";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { BenesGrid, Box, computeGridLayout, computeGridMargins, Subnet } from "@/common/Grid";
 import PermWidget, { refFontSize } from "@/common/PermWidget";
-import { applyTerminalBias, drawNode } from "@/common/NodeDrawing";
+import { applyTerminalBias, drawNode, graphNodeTypeToColor } from "@/common/NodeDrawing";
 
 
 function benesTwin(k: number, idx: number) {
@@ -31,7 +31,7 @@ enum EdgeColor {
 
 type BenesPath = {
   edgeColors: EdgeColor[],
-  // Vertex indices (not coords!) as indexed from the whole net.
+  // Vertex row indices (not coords!) as indexed from the whole net.
   verts: number[]
 }
 
@@ -144,6 +144,26 @@ export default function BenesNet({
   let ref = useRef<HTMLDivElement>(null);
   let [perm, setPerm] = useState(new Permutation([...Array(numInputs).keys()]));
 
+  // Every path gets an integer tracking the number of reasons why it might be hovered.
+  // This is hopefully more robust when paths are close together and if we cannot control
+  // the order in which the events get handled.
+  let [hoveredPath, setHoveredPath] = useState<number>(-1);
+
+  if (hoveredPath >= numInputs) {
+    setHoveredPath(-1);
+  }
+
+  function hoverPath(pathIdx: number) {
+    setHoveredPath(pathIdx);
+  }
+
+  function leavePath(pathIdx: number) {
+    // Hopefully this additional check improves robustness.
+    if (hoveredPath === pathIdx) {
+      setHoveredPath(-1);
+    }
+  }
+
   let {size, enableTransition} = useFlushingResizeObserver(ref);
 
   let width = size?.width || 0;
@@ -180,7 +200,7 @@ export default function BenesNet({
     let subType = grid.rootSubnet.subType(gridX);
 
     for (let gridY = 0; gridY < grid.rootSubnet.height; gridY++) {
-      drawNode(zoom, grid, type, subType, gridX, gridY, circles, labels);
+      drawNode(zoom, grid, type, graphNodeTypeToColor(subType), gridX, gridY, circles, labels);
     }
   }
 
@@ -209,6 +229,9 @@ export default function BenesNet({
     putLine("r", extent.left, extent.bottom, extent.right, extent.top, colRise);
   }
 
+  // TODO: Don't recompute the routing on every render.
+  let routing = routePermutation(order, perm);
+
   function connectBenes(benesLines: any[], benesRects: any[], subnet: Subnet) {
     if (subnet.order === 1) {
       connectButterfly(benesLines, subnet.id+"but", subnet.extent(), midColor, midColor, false);
@@ -222,14 +245,29 @@ export default function BenesNet({
       let topBox = grid.toScreenBox(topSubnet.extent());
       let bottomBox = grid.toScreenBox(bottomSubnet.extent());
 
+      let topOpacity = 0.2;
+      let bottomOpacity = 0.2;
+      if (hoveredPath >= 0) {
+        let path = routing[hoveredPath];
+        if (subnet.extent().top <= path.verts[subnet.extent().left] &&
+            subnet.extent().bottom >= path.verts[subnet.extent().left] )
+        if (path.edgeColors[topSubnet.extent().left - 1] === EdgeColor.Top) {
+          topOpacity = 0.3;
+        } else {
+          bottomOpacity = 0.3;
+        }
+      }
+
       topBox.pad(padAmount);
       bottomBox.pad(padAmount);
 
       //benesRects.push(<rect key={"ar"+topSubnet.id} rx={10} ry={10} x={topBox.left} y={topBox.top} width={topBox.right - topBox.left} height={topBox.bottom - topBox.top} stroke={"none"} fill={backgroundColor} fillOpacity={0.8} />)
       //benesRects.push(<rect key={"ar"+bottomSubnet.id} rx={10} ry={10} x={bottomBox.left} y={bottomBox.top} width={bottomBox.right - bottomBox.left} height={bottomBox.bottom - bottomBox.top} stroke={"none"} fill={backgroundColor} fillOpacity={0.8} />)
 
-      benesRects.push(<rect key={"br"+topSubnet.id} rx={zoom*10} ry={zoom*10} x={topBox.left} y={topBox.top} width={topBox.right - topBox.left} height={topBox.bottom - topBox.top} stroke={"none"} fill={"url('#topGrad')"} fillOpacity={0.2} />)
-      benesRects.push(<rect key={"br"+bottomSubnet.id} rx={zoom*10} ry={zoom*10} x={bottomBox.left} y={bottomBox.top} width={bottomBox.right - bottomBox.left} height={bottomBox.bottom - bottomBox.top} stroke={"none"} fill={"url('#botGrad')"} fillOpacity={0.2} />)
+
+      benesRects.push(<rect className="transition" key={"br"+topSubnet.id} rx={zoom*10} ry={zoom*10} x={topBox.left} y={topBox.top} width={topBox.right - topBox.left} height={topBox.bottom - topBox.top} stroke={"none"} fill={"url('#topGrad')"} fillOpacity={topOpacity} />)
+      
+      benesRects.push(<rect className="transition" key={"br"+bottomSubnet.id} rx={zoom*10} ry={zoom*10} x={bottomBox.left} y={bottomBox.top} width={bottomBox.right - bottomBox.left} height={bottomBox.bottom - bottomBox.top} stroke={"none"} fill={"url('#botGrad')"} fillOpacity={bottomOpacity} />)
 
       // Top subnet.
       connectBenes(benesLines, benesRects, topSubnet);
@@ -285,16 +323,23 @@ export default function BenesNet({
           lineColor = bottomColor;
         }
 
+        let dottedLine = dottedLines;
+        if (hoveredPath == inputIdx) {
+          dottedLine = !dottedLine;
+        }
+
         routingLines.push(<line
           stroke-linecap="round"
           key={`rt_${inputIdx}_${edgeIdx}`}
           x1={x1} y1={y1} x2={x2} y2={y2}
           fill="none"
           strokeWidth={6*zoom}
-          strokeDasharray={dottedLines ? "10,30" : ""}
+          strokeDasharray={dottedLine ? "10,30" : ""}
           stroke={lineColor}
+          onMouseEnter={() => hoverPath(inputIdx)}
+          onMouseLeave={() => leavePath(inputIdx)}
         >
-          {dottedLines &&
+          {dottedLine &&
             <animate
               attributeName="stroke-dashoffset"
               values="40;0"
@@ -308,7 +353,6 @@ export default function BenesNet({
   }
 
 
-  let routing = routePermutation(order, perm);
 
   let routingLines: any[] = [];
   drawRouting(routingLines, routing, order);
@@ -341,6 +385,7 @@ export default function BenesNet({
   </svg>;
 
   let permWidget = <PermWidget 
+    onHover={pathIdx => hoverPath(pathIdx)} onLeave={pathIdx => leavePath(pathIdx)}
     zoom={zoom} enableTransition={enableTransition} perm={perm} onPermChanged={setPerm} vertical={vertical} 
     xyToIdx={(x, y) => grid.yFromScreen(x, y)} idxToXY={idx => applyTerminalBias(zoom, grid, ...grid.toScreen(grid.rootSubnet.extent().right, idx), false)} />
         

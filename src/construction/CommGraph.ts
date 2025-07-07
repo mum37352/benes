@@ -2,15 +2,15 @@ import { Vec2 } from "@/common/Grid";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import * as d3 from "d3";
 
-export interface GraphNode extends d3.SimulationNodeDatum {
+export interface CommGraphNode extends d3.SimulationNodeDatum {
   type: GraphNodeType,
   key: string,
   guideline?: number|undefined
 }
 
-export type GraphEdge = d3.SimulationLinkDatum<GraphNode>;
+export type CommGraphEdge = d3.SimulationLinkDatum<CommGraphNode>;
 
-export class Graph {
+export class CommGraph {
   constructor(ioHeight: number) {
     this.numGuidelines = 3;
 
@@ -19,14 +19,14 @@ export class Graph {
     this.inputs = [];
     for (let inputIdx = 0; inputIdx < ioHeight; inputIdx++) {
       let [x, y] = this.getInputPos(inputIdx);
-      let node : GraphNode = {key: "innd_"+inputIdx, type: GraphNodeType.Input, fx: x, fy: y };
+      let node : CommGraphNode = {key: "innd_"+inputIdx, type: GraphNodeType.Input, fx: x, fy: y };
       this.inputs.push(node);
     }
 
     this.outputs = [];
     for (let outputIdx = 0; outputIdx < ioHeight; outputIdx++) {
       let [x, y] = this.getOutputPos(outputIdx);
-      let node : GraphNode = {key: "outnd_"+outputIdx, type: GraphNodeType.Output, fx: x, fy: y };
+      let node : CommGraphNode = {key: "outnd_"+outputIdx, type: GraphNodeType.Output, fx: x, fy: y };
       this.outputs.push(node);
     }
 
@@ -40,12 +40,12 @@ export class Graph {
   }
 
   static makeCompleteBipartiteGraph(ioHeight: number) {
-    let graph = new Graph(ioHeight);
+    let graph = new CommGraph(ioHeight);
 
     
     for (let inputIdx = 0; inputIdx < ioHeight; inputIdx++) {
       for (let outputIdx = 0; outputIdx < ioHeight; outputIdx++) {
-        let newEdge: GraphEdge = {
+        let newEdge: CommGraphEdge = {
           source: graph.inputs[inputIdx],
           target: graph.outputs[outputIdx]
         };
@@ -56,10 +56,6 @@ export class Graph {
     graph.routeAllPermutations();
 
     return graph;
-  }
-
-  snapToGuideline(x: number): null {
-    return null;
   }
 
   setNumGuidelines(newNum: number) {
@@ -80,22 +76,6 @@ export class Graph {
     this.routeAllPermutations();
   }
 
-  /*
-  snapToGuideline(x: number): Guideline|null {
-    let closestDist = Infinity;
-    let closestGuideline: Guideline|null = null;
-
-    for (let guideline of this.guidelines) {
-      let dist = Math.abs(x - guideline.x);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestGuideline = guideline;
-      }
-    }
-    
-    return closestGuideline;
-  }
-*/
   getInputPos(inputIdx: number): Vec2 {
     return [0, inputIdx];
   }
@@ -141,7 +121,7 @@ export class Graph {
   hasNoValence3Nodes(edgeSubset: Array<boolean>) {
     let nodeValences = new Map();
 
-    function bumpValence(node: GraphNode) {
+    function bumpValence(node: CommGraphNode) {
       let current = nodeValences.get(node);
       if (!current) {
         current = 1;
@@ -157,8 +137,8 @@ export class Graph {
       if (edgeSubset[edgeIdx]) {
         let edge = this.edges[edgeIdx];
 
-        let valenceA = bumpValence(edge.source as GraphNode);
-        let valenceB = bumpValence(edge.target as GraphNode);
+        let valenceA = bumpValence(edge.source as CommGraphNode);
+        let valenceB = bumpValence(edge.target as CommGraphNode);
 
         if (valenceA > 2 || valenceB > 2) {
           return null;
@@ -169,9 +149,9 @@ export class Graph {
     return nodeValences;
   }
 
-  routeAllPermutations(): Map<string, GraphNode[][]> {
+  routeAllPermutations(): Map<string, CommGraphNode[][]> {
     // Indexed by stringified permutation luts.
-    let routingLut = new Map<string, GraphNode[][]>();
+    let routingLut = new Map<string, CommGraphNode[][]>();
     this.foreachEdgeSubset((edgeSubset: Array<boolean>) => {
       let isVertical = true;
       for (let edgeIdx = 0; edgeIdx < edgeSubset.length; edgeIdx++) {
@@ -212,11 +192,11 @@ export class Graph {
       let permutationLut = [];
       let permutationPaths = [];
       for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
-        let path: GraphNode[] = [this.inputs[inputIdx]];
+        let path: CommGraphNode[] = [this.inputs[inputIdx]];
         // Each iteration of the loop adds one node to the path.
         for (;;) {
           // Find all edges incident w/ the last node in the path.
-          let lastNode = path.at(-1) as GraphNode;
+          let lastNode = path.at(-1) as CommGraphNode;
           let penultimateNode = path.at(-2);
           let incidentEdgeIndices = this.incidentEdgeIndices(lastNode);
 
@@ -246,7 +226,7 @@ export class Graph {
         let pathIsSane = false;
         for (let outputIdx = 0; outputIdx < this.ioHeight; outputIdx++) {
           let node = this.outputs[outputIdx];
-          let lastNode = path.at(-1) as GraphNode;
+          let lastNode = path.at(-1) as CommGraphNode;
           if (lastNode === node) {
             permutationLut.push(outputIdx);
             pathIsSane = true;
@@ -272,11 +252,11 @@ export class Graph {
     return routingLut;
   }
 
-  getOppositeEdgeNode(edge: GraphEdge, node: GraphNode): GraphNode {
+  getOppositeEdgeNode(edge: CommGraphEdge, node: CommGraphNode): CommGraphNode {
     if (edge.source === node) {
-      return edge.target as GraphNode;
+      return edge.target as CommGraphNode;
     } else {
-      return edge.source as GraphNode;
+      return edge.source as CommGraphNode;
     }
   }
 
@@ -343,8 +323,8 @@ export class Graph {
     */
 
   // WARNING: Expensive, linear in the # of edges.
-  adjacentVerts(node: GraphNode) : GraphNode[] {
-    let result: GraphNode[] = [];
+  adjacentVerts(node: CommGraphNode) : CommGraphNode[] {
+    let result: CommGraphNode[] = [];
 
     for (let edge of this.edges) {
       if (edge.source === node) {
@@ -358,7 +338,7 @@ export class Graph {
   }
 
   // WARNING: Expensive, linear in the # of edges.
-  incidentEdgeIndices(node: GraphNode) : number[] {
+  incidentEdgeIndices(node: CommGraphNode) : number[] {
     let result: number[] = [];
 
     for (let edgeIdx = 0; edgeIdx < this.edges.length; edgeIdx++) {
@@ -377,7 +357,7 @@ export class Graph {
     return this.nextId++;
   }
 
-  deleteNode(node: GraphNode) {
+  deleteNode(node: CommGraphNode) {
     // Delete edges containing the node.
     // Remove all elements greater than 3, in-place
     for (let i = this.edges.length - 1; i >= 0; i--) {
@@ -393,7 +373,7 @@ export class Graph {
     }
   }
 
-  deleteEdge(edge: GraphEdge) {
+  deleteEdge(edge: CommGraphEdge) {
     for (let i = this.edges.length - 1; i >= 0; i--) {
       if (this.edges[i] === edge) {
         this.edges.splice(i, 1);
@@ -404,14 +384,14 @@ export class Graph {
   nextId: number;
 
   ioHeight: number;
-  inputs: GraphNode[];
-  outputs: GraphNode[];
-  nodes: GraphNode[];
-  edges: GraphEdge[];
+  inputs: CommGraphNode[];
+  outputs: CommGraphNode[];
+  nodes: CommGraphNode[];
+  edges: CommGraphEdge[];
 
   // Vertical lines.
   //guidelines: Guideline[];
   numGuidelines: number;
 
-  routingLut: Map<string, GraphNode[][]>;
+  routingLut: Map<string, CommGraphNode[][]>;
 }
