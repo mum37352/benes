@@ -83,7 +83,7 @@ function Main()
     </SplitterPanel>
     <SplitterPanel size={30} className="overflow-hidden">
       <div ref={divRef} className="flex flex-col w-full h-full">
-        <KB>{"X\\text{(Placeholder)}"}</KB>
+        <KB>{"G'\\text{(Placeholder)}"}</KB>
         <div className="flex-1">
           <BenesNet order={3} />
         </div>
