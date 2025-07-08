@@ -16,3 +16,10 @@ function interpolatePalette(palette : string[]) {
 export function getColorScale(resolution: number) {
   return d3.scaleSequential().domain([0,resolution]).interpolator(interpolatePalette(["#fa7970", "#ecf2f8", "#faa356", "#7ce38b", "#a2d2fb", "#77bdfb", "#cea5fb"]));
 }
+
+export function MainGradient({color, id}: {color: string, id: string}) {
+  return <linearGradient id={id} x1="10%" y1="100%" x2="90%" y2="0%">
+      <stop offset="10%" stopColor={color} stopOpacity={0.8} />
+      <stop offset="90%" stopColor={color} stopOpacity={0.2} />
+    </linearGradient>;
+}

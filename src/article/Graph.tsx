@@ -38,11 +38,13 @@ export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
 }
 
 export class Graph {
-  constructor() {
+  constructor(cliqueSize: number) {
     this.nextId = 0;
 
     this.nodes = [];
     this.edges = [];
+
+    this.cliqueSize = cliqueSize;
   }
 
   foreachEdgeSubset(doSomething: Function) {
@@ -170,6 +172,8 @@ export class Graph {
   }
 
   nextId: number;
+
+  cliqueSize: number;
 
   nodes: GraphNode[];
   edges: GraphEdge[];

@@ -13,24 +13,23 @@ import { ProgressBar } from 'primereact/progressbar';
 import GraphEditor from './GraphEditor';
 import { Graph, GraphNode } from './Graph';
 import { GraphToolbar, ToolSel } from '@/common/Toolbar';
-import { KI } from '@/common/katex';
+import { KB, KI } from '@/common/katex';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
+import BenesNet from '@/route-benes/BenesNet';
 
 type Config = {
-  graph: Graph,
-  cliqueSize: number
+  graph: Graph
 }
 
-function configFromIoHeight(ioHeight: number): Config {
+function configFromCliqueSize(cliqueSize: number): Config {
   return {
-    graph: new Graph(),
-    cliqueSize: 4
+    graph: new Graph(cliqueSize)
   }
 }
 
 function Main()
 {
-  let [config, setConfig] = useState<Config>(() => configFromIoHeight(3));
+  let [config, setConfig] = useState<Config>(() => configFromCliqueSize(3));
   let graph = config.graph;
 
   let [tool, setTool] = useState<ToolSel>('insert');
@@ -65,7 +64,7 @@ function Main()
   let divRef = useRef<HTMLDivElement>(null);
 
   return <Splitter className="h-dvh w-full" ref={ref}>
-    <SplitterPanel size={60} className="overflow-hidden">
+    <SplitterPanel size={30} className="overflow-hidden">
       <div ref={divRef} className="flex flex-col w-full h-full"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -76,25 +75,33 @@ function Main()
       onMouseEnter={() => divRef.current?.focus()}
       onMouseLeave={() => divRef.current?.blur()}>
         <GraphToolbar activeTool={tool} onChange={setTool} />
-
+        <KB>G</KB>
         <div className="flex-1">
           <GraphEditor tool={tool} graph={graph} onChange={reheat} />
         </div>
       </div>
     </SplitterPanel>
-    <SplitterPanel size={40} className="">
+    <SplitterPanel size={30} className="overflow-hidden">
+      <div ref={divRef} className="flex flex-col w-full h-full">
+        <KB>{"X\\text{(Placeholder)}"}</KB>
+        <div className="flex-1">
+          <BenesNet order={3} />
+        </div>
+      </div>
+    </SplitterPanel>
+    <SplitterPanel size={20} className="">
       <div className="pl-7 pr-7 space-y-4 overflow-auto">
         <h1 className="text-xl font-bold my-4 font-italic">Cliques</h1>
 
         <div className="text-sm">
           <label className="block mb-1 font-bold" htmlFor="inputHeight">Clique-size <KI>k</KI>:</label>
 
-          <InputNumber className="" name="inputHeight" value={config.cliqueSize} onValueChange={(e: InputNumberValueChangeEvent) => {
+          <InputNumber className="" name="inputHeight" value={config.graph.cliqueSize} onValueChange={(e: InputNumberValueChangeEvent) => {
             let val = e.value;
             if (val && !isNaN(val)) {
-              let newConfig = configFromIoHeight(val);
-              setConfig({...config, cliqueSize: val});
-              reheat(newConfig.graph);
+              config.graph.cliqueSize = val;
+              setConfig({...config});
+              reheat(config.graph);
             }
           }} mode="decimal" showButtons min={1} max={5} />
         </div>

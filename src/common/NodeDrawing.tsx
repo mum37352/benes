@@ -28,8 +28,8 @@ export function graphNodeTypeToColor(colorType: GraphNodeType) {
   return color;
 }
 
-// Despite its name, this has nothing to do w/ the new Master's program (oof).
-export function CenteredKI({x, y, key, zoom, children, color}: {x: number, y: number, key: string, zoom: number, children: React.ReactNode, color?: string}) {
+export function CenteredKI({x, y, key, zoom, children, color}: 
+  {x: number, y: number, key: string, zoom: number, children: React.ReactNode, color?: string, transform?: string}) {
   return <div
         key={"lab_" + key}
         className="absolute pointer-events-none"

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect,useRef, useState } from "react";
 import useResizeObserver from "@react-hook/resize-observer";
 import * as d3 from "d3";
 
-import { backgroundColor, bottomColor, getColorScale, inputColor, midColor, outputColor, topColor } from "../common/Colors";
+import { backgroundColor, bottomColor, getColorScale, inputColor, MainGradient, midColor, outputColor, topColor } from "../common/Colors";
 import { KI } from "../common/katex";
 import Permutation, { correctIdx } from "../common/Permutation";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
@@ -366,14 +366,9 @@ export default function BenesNet({
         stitchTiles='stitch' />
     </filter>
     <defs>
-    <linearGradient id="topGrad" x1="10%" y1="100%" x2="90%" y2="0%">
-      <stop offset="10%" stopColor={topColor} stopOpacity={0.8} />
-      <stop offset="90%" stopColor={topColor} stopOpacity={0.2} />
-    </linearGradient>
-    <linearGradient id="botGrad" x1="10%" y1="100%" x2="90%" y2="0%">
-      <stop offset="10%" stopColor={bottomColor} stopOpacity={0.8} />
-      <stop offset="90%" stopColor={bottomColor} stopOpacity={0.2} />
-    </linearGradient>
+    <MainGradient color={topColor} id="topGrad" />
+    <MainGradient color={bottomColor} id="botGrad" />
+
   </defs>
 
     {drawBoxes && benesRects}

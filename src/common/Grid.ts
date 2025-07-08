@@ -1,7 +1,17 @@
-export type Vec2 = [number, number];
 import * as d3 from "d3";
 import { correctIdx } from "./Permutation";
 import { GraphNodeType } from "./NodeDrawing";
+
+export type Vec2 = [number, number];
+
+export function length2d(x: number, y: number) {
+  return Math.sqrt(x*x+y*y);
+}
+
+export function normalize2d(x: number, y: number): Vec2 {
+  let length = length2d(x, y);
+  return [x/length, y/length];
+}
 
 export class Box {
   constructor(left: number, top: number, right: number, bottom: number) {
@@ -133,9 +143,25 @@ export class Grid {
     }
   }
 
+  toScreenDims(width: number, height: number): Vec2 {
+    let [X, Y] = this.toScreen(width, height);
+    let [x, y] = this.toScreen(0, 0);
+    return [X-x, Y-y];
+  }
+
   toScreen(gridX: number, gridY: number): Vec2 {
     let [swappedX, swappedY] = this.verticalitySwap(gridX, gridY);
     return [this.xScale(swappedX), this.yScale(swappedY)];
+  }
+
+  toScreenCss(): string {
+    let xoff = this.xScale(0);
+    let yoff = this.yScale(0);
+
+    let xfac = this.xScale(1) - xoff;
+    let yfac = this.yScale(1) - yoff;
+
+    return `translate(${xoff} ${yoff}) scale(${xfac} ${yfac})`;
   }
 
   toScreenBox(box: Box): Box {

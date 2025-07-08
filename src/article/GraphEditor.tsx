@@ -4,10 +4,10 @@ import useResizeObserver from "@react-hook/resize-observer";
 import * as d3 from "d3";
 import { act, MouseEvent, useLayoutEffect, useReducer, useRef, useState } from "react";
 import Permutation, { clipToRange, correctIdx } from "../common/Permutation";
-import { backgroundColor, getColorScale, inputColor, midColor, outputColor, topColor } from "../common/Colors";
+import { backgroundColor, getColorScale, inputColor, MainGradient, midColor, outputColor, topColor } from "../common/Colors";
 import PermWidget from "@/common/PermWidget";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
-import { Box, computeGridLayout as computeWeightedLayout, computeGridMargins, Vec2, Grid } from "@/common/Grid";
+import { Box, computeGridLayout as computeWeightedLayout, computeGridMargins, Vec2, Grid, normalize2d } from "@/common/Grid";
 import { applyTerminalBias, CenteredKI, drawNode, GraphNodeType } from "@/common/NodeDrawing";
 import { EdgeType, Graph, GraphEdge, GraphNode, TriadColor, triadColorToColor } from "./Graph";
 import { ToolSel } from "@/common/Toolbar";
@@ -15,6 +15,33 @@ import { ToolSel } from "@/common/Toolbar";
 type AddEdgeInteraction = {
   fromNode: GraphNode,
 };
+
+// Imagine a vertical ice cone at the origin (more precisely, a V shape in 2D)
+// Given the left edge of the cone as a unit vector (Y up), find
+// the radius of a ball around (0, 1) that is inscribed precisely by the cone.
+// I think we had to do this using rulers and compasses in Gymnasium.
+function fitCircleIntoIceCone(coneX: number, coneY: number) {
+  // Compute cosine using the dot product.
+  let cosine = coneY;
+
+  return Math.sqrt(1 - cosine*cosine);
+}
+
+// Just like the circle fitting, except our ellipse now has an aspect ratio.
+// Returns rx and ry of the ellipse. 
+function fitEllipseIntoIceCone(asp: number, angle: number): Vec2 {
+  // First, compute the unit normal vector representation for the
+  // left side of the V shape.
+  let coneX = -Math.sin(angle);
+  let coneY = Math.cos(angle);
+
+  // Stretch the problem vertically so it reduces to the familiar circle problem.
+  coneY *= asp;
+
+  let rx = fitCircleIntoIceCone(...normalize2d(coneX, coneY));
+
+  return [rx, rx/asp];
+}
 
 export default function GraphEditor({
   graph,
@@ -34,19 +61,19 @@ export default function GraphEditor({
   let screenWidth = size?.width || 0;
   let screenHeight = size?.height || 0;
 
-  let margin = computeGridMargins(true, false);
+  let coreCircleDiam = Math.max(1, (Math.sqrt(graph.cliqueSize*1.6)));
 
-  let gridSquareSize = Math.max(1, Math.ceil(Math.sqrt(graph.nodes.length)));
+  let margin = computeGridMargins(false, false);
 
   // For fence post reasons, we add 1 to the numGuidelines instead of adding 2. Same for inputs
-  let gridWidths = computeWeightedLayout(screenWidth, [margin.left, gridSquareSize, margin.right]);
-  let gridHeights = computeWeightedLayout(screenHeight, [margin.top, gridSquareSize, margin.bottom]);
+  let gridWidths = computeWeightedLayout(screenWidth, [margin.left, 2*coreCircleDiam, margin.right]);
+  let gridHeights = computeWeightedLayout(screenHeight, [margin.top, 2*coreCircleDiam, margin.bottom]);
 
   let graphBox = new Box(gridWidths[0], gridHeights[0], gridWidths[0] + gridWidths[1], gridHeights[0] + gridHeights[1]);
 
-  let grid = new Grid(new Box(0, 0, gridSquareSize, gridSquareSize), false, graphBox);
+  let grid = new Grid(new Box(-1.5*coreCircleDiam, -1.5*coreCircleDiam, 1.5*coreCircleDiam, 1.5*coreCircleDiam), false, graphBox);
 
-  let zoom = Math.min(gridWidths[1]/gridSquareSize, gridHeights[1]/gridSquareSize) / 100;
+  let zoom = Math.min(gridWidths[1]/(2*coreCircleDiam), gridHeights[1]/(2*coreCircleDiam)) / 100;
 
   let vertical = false;
 
@@ -162,6 +189,37 @@ export default function GraphEditor({
   }
 
   function drawGraph(canvas: React.JSX.Element[], labels: React.JSX.Element[]) {
+    function gradientId(cliqueIdx: number) {
+      return "grad_"+cliqueIdx;
+    }
+    let colorScale = getColorScale(graph.cliqueSize);
+
+    //canvas.push(<rect x={graphBox.left} y={graphBox.top} width={graphBox.width()} height={graphBox.height()} />)
+    { // Draw the core circle/ellipse
+      let [x, y] = grid.toScreen(0, 0);
+      let [rx, ry] = grid.toScreenDims(coreCircleDiam, coreCircleDiam);
+      //canvas.push(<ellipse cx={x} cy={y} rx={rx} ry={ry} strokeWidth={1} stroke="white" fill="none" />);
+    }
+
+    let mainAngle = 2*Math.PI / graph.cliqueSize;
+    let ellipseAsp = 2.0;
+    let coneAngle = Math.min(mainAngle*0.8, 0.3*Math.PI);
+    let [rx, ry] = fitEllipseIntoIceCone(ellipseAsp, coneAngle);
+    rx *= coreCircleDiam;
+    ry *= coreCircleDiam;
+
+    for (let i = 0; i < graph.cliqueSize; i++) {
+      let centerAngle = i*mainAngle;
+
+      canvas.push(<MainGradient id={gradientId(i)} color={colorScale(i)} />);
+
+      let rotString = `rotate(${(centerAngle*180)/Math.PI})`;
+      let [x, y] = grid.toScreen(coreCircleDiam*Math.sin(centerAngle), -coreCircleDiam*Math.cos(centerAngle));
+
+      canvas.push(<ellipse cx={0} cy={-coreCircleDiam} rx={rx} ry={ry} fill={`url('#${gradientId(i)}')`} transform={`${grid.toScreenCss()} ${rotString}`} />);
+      labels.push(<CenteredKI key={"bucketlab_"+i} zoom={zoom} color={backgroundColor} x={x} y={y}>{`V_{${i+1}}`}</CenteredKI>)
+    }
+
     for (let edge of graph.edges) {
       let src = edge.source as GraphNode;
       let tgt = edge.target as GraphNode;
