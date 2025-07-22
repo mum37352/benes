@@ -50,3 +50,58 @@ export class Box {
   left: number;
   right: number;
 }
+
+export function foreachNaryString(length: number, base: number, doSomething: (digits: number[])=>boolean): boolean {
+  let digits = new Array(length).fill(0);
+
+  // Foreach subset.
+  for (;;) {
+    if (doSomething(digits)) {
+      // The operation succeeded, we can stop.
+      return true;
+    }
+
+    // Try to increment the counter.
+    let incSucc = false;
+    for (let i = 0; i < length && !incSucc; i++) {
+      if (digits[i] < base) {
+        incSucc = true;
+        digits[i]++;
+      } else {
+        digits[i] = 0;
+      }
+    }
+    if (!incSucc) {
+      // The counter overflowed, we have seen all subsets.
+      return false;
+    }
+  }
+}
+
+export function sampleUniformUnitDisk(): [number, number] {
+  let u = Math.random();
+  let v = Math.random();
+
+  // The joint cartesian PDF is p'(x,y)=1/pi. After applying
+  // a change of variables, the polar PDF is p(r, theta) = r/pi.
+  // Therefore, the marginal density is p(r) = 2r and the conditional
+  // density is p(theta|r) = 1/(2*pi).
+  // The CDFs are therefore P(r) = r^2 and P(theta|r) = theta/(2*pi).
+  // Use P^-1(r) to sample r,
+  let r = Math.sqrt(u);
+  // and use P^-1(theta|r) to sample theta
+  let theta = 2*Math.PI*v;
+
+  return [r, theta];
+}
+
+// Y down, but counterclockwise (sigh).
+export function rotatePoint(x: number, y: number, angleRadians: number): Vec2 {
+  const cos = Math.cos(angleRadians);
+  const sin = -Math.sin(angleRadians);
+
+  const xNew = x * cos - y * sin;
+  const yNew = x * sin + y * cos;
+
+  return [xNew, yNew];
+}

@@ -11,7 +11,7 @@ import * as d3 from "d3";
 import { Check, Frame, X } from 'lucide-react';
 import { ProgressBar } from 'primereact/progressbar';
 import GraphEditor from './GraphEditor';
-import { Graph, GraphNode } from './Graph';
+import { ColGraph, GraphNode } from './Graph';
 import { GraphToolbar, ToolSel } from '@/common/Toolbar';
 import { KB, KI } from '@/common/katex';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
@@ -19,12 +19,12 @@ import BenesNet from '@/route-benes/BenesNet';
 import CompatibilityGraph from './CompatibilityGraph';
 
 type Config = {
-  graph: Graph
+  graph: ColGraph
 }
 
 function configFromCliqueSize(cliqueSize: number): Config {
   return {
-    graph: new Graph(cliqueSize)
+    graph: new ColGraph(cliqueSize)
   }
 }
 
@@ -57,7 +57,7 @@ function Main()
     setSimulation(sim);
   }, [ref]);
 
-  function reheat(graph: Graph) {
+  function reheat(graph: ColGraph) {
     simulation?.nodes(graph.nodes).alpha(1).restart();
     forceUpdate();
   }

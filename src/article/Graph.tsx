@@ -2,6 +2,8 @@
 import { bottomColor, midColor, topColor } from "@/common/Colors";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import * as d3 from "d3";
+import { Graph } from "graphlib";
+
 
 export enum TriadColor {
   Col1, Col2, Col3
@@ -36,7 +38,7 @@ export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
   type: EdgeType
 }
 
-export class Graph {
+export class ColGraph {
   constructor(cliqueSize: number) {
     this.nextId = 0;
 
@@ -44,102 +46,6 @@ export class Graph {
     this.edges = [];
 
     this.cliqueSize = cliqueSize;
-  }
-
-  foreachEdgeSubset(doSomething: Function) {
-    let binaryCounter = new Array(this.edges.length).fill(false);
-
-    // Foreach subset.
-    for (;;) {
-      if (doSomething(binaryCounter)) {
-        // The operation succeeded, we can stop.
-        return true;
-      }
-
-      // Try to increment the counter.
-      let incSucc = false;
-      for (let i = 0; i < binaryCounter.length && !incSucc; i++) {
-        if (!binaryCounter[i]) {
-          incSucc = true;
-        }
-        binaryCounter[i] = !binaryCounter[i];
-      }
-      if (!incSucc) {
-        // The counter overflowed, we have seen all subsets.
-        return false;
-      }
-    }
-  }
-
-  // If successful, return the valences, else return null.
-  hasNoValence3Nodes(edgeSubset: Array<boolean>) {
-    let nodeValences = new Map();
-
-    function bumpValence(node: GraphNode) {
-      let current = nodeValences.get(node);
-      if (!current) {
-        current = 1;
-      } else {
-        current++;
-      }
-      nodeValences.set(node, current);
-
-      return current;
-    }
-
-    for (let edgeIdx = 0; edgeIdx < edgeSubset.length; edgeIdx++) {
-      if (edgeSubset[edgeIdx]) {
-        let edge = this.edges[edgeIdx];
-
-        let valenceA = bumpValence(edge.source as GraphNode);
-        let valenceB = bumpValence(edge.target as GraphNode);
-
-        if (valenceA > 2 || valenceB > 2) {
-          return null;
-        }
-      }
-    }
-
-    return nodeValences;
-  }
-
-  getOppositeEdgeNode(edge: GraphEdge, node: GraphNode): GraphNode {
-    if (edge.source === node) {
-      return edge.target as GraphNode;
-    } else {
-      return edge.source as GraphNode;
-    }
-  }
-
-  // WARNING: Expensive, linear in the # of edges.
-  adjacentVerts(node: GraphNode) : GraphNode[] {
-    let result: GraphNode[] = [];
-
-    for (let edge of this.edges) {
-      if (edge.source === node) {
-        result.push(edge.source);
-      } else if (edge.target === node) {
-        result.push(edge.target);
-      }
-    }
-
-    return result;
-  }
-
-  // WARNING: Expensive, linear in the # of edges.
-  incidentEdgeIndices(node: GraphNode) : number[] {
-    let result: number[] = [];
-
-    for (let edgeIdx = 0; edgeIdx < this.edges.length; edgeIdx++) {
-      let edge = this.edges[edgeIdx];
-      if (edge.source === node) {
-        result.push(edgeIdx);
-      } else if (edge.target === node) {
-        result.push(edgeIdx);
-      }
-    }
-
-    return result;
   }
 
   getNextId() {

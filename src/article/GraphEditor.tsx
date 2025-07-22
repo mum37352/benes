@@ -9,7 +9,7 @@ import PermWidget from "@/common/PermWidget";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { computeGridLayout as computeWeightedLayout, computeGridMargins, Grid } from "@/common/Grid";
 import { applyTerminalBias, CenteredKI, drawNode, GraphNodeType } from "@/common/NodeDrawing";
-import { EdgeType, Graph, GraphEdge, GraphNode, TriadColor, triadColorToColor } from "./Graph";
+import { EdgeType, ColGraph, GraphEdge, GraphNode, TriadColor, triadColorToColor } from "./Graph";
 import { ToolSel } from "@/common/Toolbar";
 import { bucketScale, computeNodeBucket, drawBuckets, fitEllipseIntoIceCone, genBucketsJsx, useBucketCanvas } from "./buckets";
 import { Vec2 } from "@/common/mathUtils";
@@ -22,7 +22,7 @@ export default function GraphEditor({
   graph,
   onChange = (() => {}),
   tool
-} : {graph: Graph, onChange?: Function, tool: ToolSel})
+} : {graph: ColGraph, onChange?: Function, tool: ToolSel})
 {
   let cnv = useBucketCanvas(graph);
 
@@ -79,7 +79,7 @@ export default function GraphEditor({
   function handleMouseMove(e: React.MouseEvent) {
     let [ex, ey] = cnv.getEventPoint(e);
 
-      console.log(draggedNode);
+    console.log(draggedNode);
     if (draggedNode) {
       let x = cnv.grid.xFromScreen(ex, ey, false);
       let y = cnv.grid.yFromScreen(ex, ey, false);

@@ -1,4 +1,4 @@
-import { Vec2 } from "@/common/mathUtils";
+import { foreachNaryString, Vec2 } from "@/common/mathUtils";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import Permutation, { allPerms } from "@/common/Permutation";
 import * as d3 from "d3";
@@ -110,33 +110,8 @@ export class CommGraph {
     return (this.ioHeight-1)/2;
   }
 
-  foreachEdgeSubset(doSomething: Function) {
-    let binaryCounter = new Array(this.edges.length).fill(false);
-
-    // Foreach subset.
-    for (;;) {
-      if (doSomething(binaryCounter)) {
-        // The operation succeeded, we can stop.
-        return true;
-      }
-
-      // Try to increment the counter.
-      let incSucc = false;
-      for (let i = 0; i < binaryCounter.length && !incSucc; i++) {
-        if (!binaryCounter[i]) {
-          incSucc = true;
-        }
-        binaryCounter[i] = !binaryCounter[i];
-      }
-      if (!incSucc) {
-        // The counter overflowed, we have seen all subsets.
-        return false;
-      }
-    }
-  }
-
-  // If successfull, return the valences, else return null.
-  hasNoValence3Nodes(edgeSubset: Array<boolean>) {
+  // If successful, return the valences, else return null.
+  hasNoValence3Nodes(edgeSubset: Array<number>) {
     let nodeValences = new Map();
 
     function bumpValence(node: CommGraphNode) {
@@ -152,7 +127,7 @@ export class CommGraph {
     }
 
     for (let edgeIdx = 0; edgeIdx < edgeSubset.length; edgeIdx++) {
-      if (edgeSubset[edgeIdx]) {
+      if (edgeSubset[edgeIdx] != 0) {
         let edge = this.edges[edgeIdx];
 
         let valenceA = bumpValence(edge.source as CommGraphNode);
@@ -402,11 +377,11 @@ export class CommGraph {
   routeAllPermutationsBruteForce(): Map<string, CommGraphNode[][]> {
     // Indexed by stringified permutation luts.
     let routingLut = new Map<string, CommGraphNode[][]>();
-    this.foreachEdgeSubset((edgeSubset: Array<boolean>) => {
+    foreachNaryString(this.edges.length, 2, (edgeSubset: Array<number>) => {
       let isVertical = true;
       for (let edgeIdx = 0; edgeIdx < edgeSubset.length; edgeIdx++) {
-        
-        if (edgeSubset[edgeIdx] !== ((edgeIdx % this.ioHeight) === Math.floor(edgeIdx / this.ioHeight))) {
+        let edgeBool = edgeSubset[edgeIdx] > 0;
+        if (edgeBool !== ((edgeIdx % this.ioHeight) === Math.floor(edgeIdx / this.ioHeight))) {
           isVertical = false;
         }
       }

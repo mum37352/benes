@@ -5,10 +5,10 @@
 import { computeGridLayout, computeGridMargins, Grid } from "@/common/Grid";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { MouseEventHandler, RefObject, useRef } from "react";
-import { Graph, GraphNode } from "./Graph";
+import { ColGraph, GraphNode } from "./Graph";
 import { backgroundColor, getColorScale, MainGradient } from "@/common/Colors";
 import { CenteredKI } from "@/common/NodeDrawing";
-import { Box, mod, normalize2d, Vec2 } from "@/common/mathUtils";
+import { Box, mod, normalize2d, rotatePoint, sampleUniformUnitDisk, Vec2 } from "@/common/mathUtils";
 
 // I think we had to do this using rulers and compasses in Gymnasium.
 function fitCircleIntoIceCone(coneX: number, coneY: number) {
@@ -34,7 +34,7 @@ export function fitEllipseIntoIceCone(asp: number, angle: number): Vec2 {
   return [rx, rx/asp];
 }
 
-type BucketCanvas = {
+export type BucketCanvas = {
   clientToSvg: (x: number, y: number) => Vec2,
   getEventPoint: (e: React.MouseEvent) => Vec2,
   grid: Grid,
@@ -45,10 +45,10 @@ type BucketCanvas = {
   ref: RefObject<HTMLDivElement|null>,
   dummyRectRef: RefObject<SVGRectElement|null>,
   vertical: boolean,
-  graph: Graph
+  graph: ColGraph
 }
 
-export function useBucketCanvas(graph: Graph) {
+export function useBucketCanvas(graph: ColGraph) {
 
   let ref = useRef<HTMLDivElement>(null);
   let dummyRectRef = useRef<SVGRectElement>(null);
@@ -119,7 +119,7 @@ export function genBucketsJsx(cnv: BucketCanvas, graphCanvas: React.ReactElement
   </div>;
 }
 
-function bucketAngle(graph: Graph) {
+function bucketAngle(graph: ColGraph) {
   return 2 * Math.PI / graph.cliqueSize;
 }
 
@@ -134,7 +134,7 @@ export function computeCanonicalBucketEllipse(cnv: BucketCanvas): Vec2 {
   return [rx, ry]
 }
 
-export function bucketScale(graph: Graph) {
+export function bucketScale(graph: ColGraph) {
   let colorScale = getColorScale(graph.cliqueSize);
   return colorScale;
 }
@@ -161,7 +161,7 @@ export function drawBuckets(cnv: BucketCanvas, canvas: React.ReactElement<SVGEle
   }
 }
 
-export function computeNodeBucket(graph: Graph, node: GraphNode) {
+export function computeNodeBucket(graph: ColGraph, node: GraphNode) {
   let x: number = node.fx!;
   let y: number = node.fy!;
 
@@ -174,4 +174,17 @@ export function computeNodeBucket(graph: Graph, node: GraphNode) {
   let sectorIdx = mod(Math.floor(-(angle - firstBoundary)/sectorAngle), graph.cliqueSize);
 
   return sectorIdx;
+}
+
+export function randomPointInBucket(cnv: BucketCanvas, bucketIdx: number) {
+  let [rx, ry] = computeCanonicalBucketEllipse(cnv);
+
+  let [r, theta] = sampleUniformUnitDisk();
+  let x = rx*r*Math.cos(theta);
+  let y = -ry*r*Math.sin(theta);
+
+  y -= cnv.coreCircleDiam;
+
+  let sectorAngle = bucketAngle(cnv.graph);
+  return rotatePoint(x, y, -bucketIdx*sectorAngle);
 }
