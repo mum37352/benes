@@ -33,7 +33,7 @@ function configFromIoHeight(ioHeight: number): Config {
     ioHeight,
     perms: allPerms(ioHeight),
     selPerm: new Permutation([...Array(ioHeight).keys()]),
-    graph: new CommGraph(ioHeight)// Graph.makeCompleteBipartiteGraph(ioHeight) ///
+    graph: CommGraph.makeCompleteBipartiteGraph(ioHeight)
   }
 }
 

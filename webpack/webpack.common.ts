@@ -75,6 +75,9 @@ const commonConfig: webpack.Configuration = {
         ],
     },
     plugins: [
+        new webpack.IgnorePlugin({
+            resourceRegExp: /^fs$|^child_process$/,
+        }),
         new HtmlWebpackPlugin({
             template: './public/index.html',
             filename: 'index.html',

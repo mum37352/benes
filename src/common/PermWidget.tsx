@@ -71,7 +71,6 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
       setActiveDropIndicator(-1);
     }
   }
-  console.log("drop ind", activeDropIndicator);
 
   let height = perm.lut.length;
   let labelOffset = zoom*20;
@@ -126,8 +125,6 @@ export default function PermWidget({vertical=false, perm, zoom, onPermChanged, x
           flexDirection: vertical ? "row" : "column"
         };
       }
-
-      console.log("fontSize", refFontSize*zoom);
 
       prescriptions.push(
         <div
