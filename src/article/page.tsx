@@ -16,6 +16,7 @@ import { GraphToolbar, ToolSel } from '@/common/Toolbar';
 import { KB, KI } from '@/common/katex';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import BenesNet from '@/route-benes/BenesNet';
+import CompatibilityGraph from './CompatibilityGraph';
 
 type Config = {
   graph: Graph
@@ -85,7 +86,7 @@ function Main()
       <div ref={divRef} className="flex flex-col w-full h-full">
         <KB>{"G'\\text{(Placeholder)}"}</KB>
         <div className="flex-1">
-          <BenesNet order={3} />
+          <CompatibilityGraph graph={graph} />
         </div>
       </div>
     </SplitterPanel>
