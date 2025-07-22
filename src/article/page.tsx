@@ -28,6 +28,8 @@ function configFromCliqueSize(cliqueSize: number): Config {
   }
 }
 
+
+
 function Main()
 {
   let [config, setConfig] = useState<Config>(() => configFromCliqueSize(3));
@@ -38,6 +40,7 @@ function Main()
   let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
 
   let [, forceUpdate] = useReducer(x => x + 1, 0);
+  let [graphVersion, bumpGraphVersion] = useReducer(x => x + 1, 0);
 
   let ref = useRef(null);
 
@@ -60,6 +63,7 @@ function Main()
   function reheat(graph: ColGraph) {
     simulation?.nodes(graph.nodes).alpha(1).restart();
     forceUpdate();
+    bumpGraphVersion();
   }
 
   let divRef = useRef<HTMLDivElement>(null);
@@ -86,7 +90,7 @@ function Main()
       <div ref={divRef} className="flex flex-col w-full h-full">
         <KB>{"G'\\text{(Placeholder)}"}</KB>
         <div className="flex-1">
-          <CompatibilityGraph graph={graph} />
+          <CompatibilityGraph graph={graph} graphVersion={graphVersion} />
         </div>
       </div>
     </SplitterPanel>

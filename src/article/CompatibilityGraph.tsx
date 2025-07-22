@@ -1,6 +1,6 @@
 import { ToolSel } from "@/common/Toolbar";
 import { ColGraph, GraphNode } from "./Graph";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { computeGridMargins } from "@/common/Grid";
 import { BucketCanvas, computeNodeBucket, drawBuckets, genBucketsJsx, randomPointInBucket, useBucketCanvas } from "./buckets";
@@ -82,17 +82,21 @@ function generateCompatGraph(cnv: BucketCanvas) {
 }
 
 export default function CompatibilityGraph({
-  graph
-} : {graph: ColGraph})
+  graph, graphVersion
+} : {graph: ColGraph, graphVersion: number})
 {
   let cnv = useBucketCanvas(graph);
 
-  function drawGraph(canvas: React.JSX.Element[], labels: React.JSX.Element[]) {
-    let compatGraph = generateCompatGraph(cnv);
+  let [compatGraph, setCompatGraph] = useState<Graph>();
 
+  useEffect(() => {
+    setCompatGraph(generateCompatGraph(cnv));
+  }, [graphVersion]);
+
+  function drawGraph(canvas: React.JSX.Element[], labels: React.JSX.Element[]) {
     drawBuckets(cnv, canvas, labels);
 
-    compatGraph.edges().forEach(edge => {
+    compatGraph?.edges().forEach(edge => {
       let src = compatGraph.node(edge.v);
       let tgt = compatGraph.node(edge.w);
 
@@ -106,7 +110,7 @@ export default function CompatibilityGraph({
       canvas.push(line);
     })
 
-    compatGraph.nodes().forEach(nodeId => {
+    compatGraph?.nodes().forEach(nodeId => {
       let node = compatGraph.node(nodeId);
 
       drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, midColor, node.x, node.y, canvas, labels);
