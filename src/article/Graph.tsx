@@ -1,6 +1,5 @@
 // TODO: Deduplicate w/ the construction page.
 import { bottomColor, midColor, topColor } from "@/common/Colors";
-import { Vec2 } from "@/common/Grid";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import * as d3 from "d3";
 
@@ -72,7 +71,7 @@ export class Graph {
     }
   }
 
-  // If successfull, return the valences, else return null.
+  // If successful, return the valences, else return null.
   hasNoValence3Nodes(edgeSubset: Array<boolean>) {
     let nodeValences = new Map();
 

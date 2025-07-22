@@ -2,12 +2,13 @@
 // Given the left edge of the cone as a unit vector (Y up), find
 // the radius of a ball around (0, 1) that is inscribed precisely by the cone.
 
-import { Box, computeGridLayout, computeGridMargins, Grid, normalize2d, Vec2 } from "@/common/Grid";
+import { computeGridLayout, computeGridMargins, Grid } from "@/common/Grid";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { MouseEventHandler, RefObject, useRef } from "react";
 import { Graph, GraphNode } from "./Graph";
 import { backgroundColor, getColorScale, MainGradient } from "@/common/Colors";
 import { CenteredKI } from "@/common/NodeDrawing";
+import { Box, mod, normalize2d, Vec2 } from "@/common/mathUtils";
 
 // I think we had to do this using rulers and compasses in Gymnasium.
 function fitCircleIntoIceCone(coneX: number, coneY: number) {
@@ -118,29 +119,37 @@ export function genBucketsJsx(cnv: BucketCanvas, graphCanvas: React.ReactElement
   </div>;
 }
 
-export function drawBuckets(cnv: BucketCanvas, canvas: React.ReactElement<SVGElement>[], labels: React.ReactElement[]) {
+function bucketAngle(graph: Graph) {
+  return 2 * Math.PI / graph.cliqueSize;
+}
 
-  function gradientId(cliqueIdx: number) {
-    return "grad_" + cliqueIdx;
-  }
-  let colorScale = getColorScale(cnv.graph.cliqueSize);
-
-  //canvas.push(<rect x={graphBox.left} y={graphBox.top} width={graphBox.width()} height={graphBox.height()} />)
-  { // Draw the core circle/ellipse
-    let [x, y] = cnv.grid.toScreen(0, 0);
-    let [rx, ry] = cnv.grid.toScreenDims(cnv.coreCircleDiam, cnv.coreCircleDiam);
-    //canvas.push(<ellipse cx={x} cy={y} rx={rx} ry={ry} strokeWidth={1} stroke="white" fill="none" />);
-  }
-
-  let mainAngle = 2 * Math.PI / cnv.graph.cliqueSize;
+export function computeCanonicalBucketEllipse(cnv: BucketCanvas): Vec2 {
+  let mainAngle = bucketAngle(cnv.graph);
   let ellipseAsp = 2.0;
   let coneAngle = Math.min(mainAngle * 0.8, 0.3 * Math.PI);
   let [rx, ry] = fitEllipseIntoIceCone(ellipseAsp, coneAngle);
   rx *= cnv.coreCircleDiam;
   ry *= cnv.coreCircleDiam;
 
+  return [rx, ry]
+}
+
+export function bucketScale(graph: Graph) {
+  let colorScale = getColorScale(graph.cliqueSize);
+  return colorScale;
+}
+
+export function drawBuckets(cnv: BucketCanvas, canvas: React.ReactElement<SVGElement>[], labels: React.ReactElement[]) {
+  let colorScale = bucketScale(cnv.graph);
+  function gradientId(cliqueIdx: number) {
+    return "grad_" + cliqueIdx;
+  }
+
+  let [rx, ry] = computeCanonicalBucketEllipse(cnv)
+  let sectorAngle = bucketAngle(cnv.graph);
+
   for (let i = 0; i < cnv.graph.cliqueSize; i++) {
-    let centerAngle = i * mainAngle;
+    let centerAngle = i * sectorAngle;
 
     canvas.push(<MainGradient id={gradientId(i)} color={colorScale(i)} />);
 
@@ -150,4 +159,19 @@ export function drawBuckets(cnv: BucketCanvas, canvas: React.ReactElement<SVGEle
     canvas.push(<ellipse cx={0} cy={-cnv.coreCircleDiam} rx={rx} ry={ry} fill={`url('#${gradientId(i)}')`} transform={`${cnv.grid.toScreenCss()} ${rotString}`} />);
     labels.push(<CenteredKI key={"bucketlab_" + i} zoom={cnv.zoom} color={backgroundColor} x={x} y={y}>{`V_{${i + 1}}`}</CenteredKI>)
   }
+}
+
+export function computeNodeBucket(graph: Graph, node: GraphNode) {
+  let x: number = node.fx!;
+  let y: number = node.fy!;
+
+  let angle = Math.atan2(-y, x);
+
+  let sectorAngle = bucketAngle(graph);
+
+  let firstBoundary = Math.PI/2 + sectorAngle/2;
+
+  let sectorIdx = mod(Math.floor(-(angle - firstBoundary)/sectorAngle), graph.cliqueSize);
+
+  return sectorIdx;
 }

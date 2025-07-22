@@ -7,9 +7,10 @@ import { backgroundColor, bottomColor, getColorScale, inputColor, MainGradient, 
 import { KI } from "../common/katex";
 import Permutation, { correctIdx } from "../common/Permutation";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
-import { BenesGrid, Box, computeGridLayout, computeGridMargins, Subnet } from "@/common/Grid";
+import { BenesGrid, computeGridLayout, computeGridMargins, Subnet } from "@/common/Grid";
 import PermWidget, { refFontSize } from "@/common/PermWidget";
 import { applyTerminalBias, drawNode, graphNodeTypeToColor } from "@/common/NodeDrawing";
+import { Box } from "@/common/mathUtils";
 
 
 function benesTwin(k: number, idx: number) {

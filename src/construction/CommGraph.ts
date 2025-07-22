@@ -1,4 +1,4 @@
-import { Vec2 } from "@/common/Grid";
+import { Vec2 } from "@/common/mathUtils";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import Permutation, { allPerms } from "@/common/Permutation";
 import * as d3 from "d3";
@@ -22,7 +22,7 @@ type LPModel = {
     };
   };
   variables: {
-    [variableName: string]: Variable;
+    [variableName: string]: any;
   };
 };
 

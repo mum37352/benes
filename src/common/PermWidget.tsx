@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import Permutation from "./Permutation";
 import { KI } from "./katex";
-import { Vec2 } from "./Grid";
+import { Vec2 } from "./mathUtils";
 
 export let refFontSize = 15;
 

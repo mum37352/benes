@@ -7,11 +7,12 @@ import Permutation, { clipToRange, correctIdx } from "../common/Permutation";
 import { backgroundColor, getColorScale, inputColor, MainGradient, midColor, outputColor, topColor } from "../common/Colors";
 import PermWidget from "@/common/PermWidget";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
-import { Box, computeGridLayout as computeWeightedLayout, computeGridMargins, Vec2, Grid, normalize2d } from "@/common/Grid";
+import { computeGridLayout as computeWeightedLayout, computeGridMargins, Grid } from "@/common/Grid";
 import { applyTerminalBias, CenteredKI, drawNode, GraphNodeType } from "@/common/NodeDrawing";
 import { EdgeType, Graph, GraphEdge, GraphNode, TriadColor, triadColorToColor } from "./Graph";
 import { ToolSel } from "@/common/Toolbar";
-import { drawBuckets, fitEllipseIntoIceCone, genBucketsJsx, useBucketCanvas } from "./buckets";
+import { bucketScale, computeNodeBucket, drawBuckets, fitEllipseIntoIceCone, genBucketsJsx, useBucketCanvas } from "./buckets";
+import { Vec2 } from "@/common/mathUtils";
 
 type AddEdgeInteraction = {
   fromNode: GraphNode,
@@ -165,6 +166,8 @@ export default function GraphEditor({
       canvas.push(circ);
     }
 
+    let colorScale = bucketScale(cnv.graph);
+
     for (let node of graph.nodes) {
       let cursor = "";
       if (tool === "drag") {
@@ -175,7 +178,10 @@ export default function GraphEditor({
         cursor = "cursor-crosshair"
       }
 
-      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, triadColorToColor(node.color), node.x || 0, node.y || 0, canvas, labels, {
+      let color = triadColorToColor(node.color);
+      color = colorScale(computeNodeBucket(graph, node));
+
+      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x || 0, node.y || 0, canvas, labels, {
         className: cursor,
         onMouseDown: (e: React.MouseEvent) => {handleMouseDown(e, node)},
         onMouseUp: (e: React.MouseEvent) => {handleMouseUp(e, node)}

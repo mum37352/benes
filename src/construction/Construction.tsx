@@ -7,8 +7,9 @@ import PermWidget from "@/common/PermWidget";
 import { CommGraph, CommGraphEdge, CommGraphNode } from "./CommGraph";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { ConstructionAction, ConstructionMode, ToolSel } from "../common/Toolbar";
-import { Box, computeGridLayout as computeWeightedLayout, computeGridMargins, Vec2, Grid } from "@/common/Grid";
+import { computeGridLayout as computeWeightedLayout, computeGridMargins, Grid } from "@/common/Grid";
 import { applyTerminalBias, drawNode, GraphNodeType, graphNodeTypeToColor } from "@/common/NodeDrawing";
+import { Box, Vec2 } from "@/common/mathUtils";
 
 type AddEdgeInteraction = {
   fromNode: CommGraphNode,
