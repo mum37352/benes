@@ -52,6 +52,21 @@ export class ColGraph {
     return this.nextId++;
   }
 
+
+  // Warning: expensive! Linear in the number of edges.
+  hasEdge(a: GraphNode, b: GraphNode) {
+    for (let edge of this.edges) {
+      if (edge.source === a && edge.target === b) {
+        return true;
+      }
+      if (edge.target === a && edge.source == b) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   deleteNode(node: GraphNode) {
     // Delete edges containing the node.
     // Remove all elements greater than 3, in-place
