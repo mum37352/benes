@@ -53,6 +53,8 @@ export class CommGraph {
     this.nodes = [...this.inputs, ...this.outputs];
     this.edges = [];
 
+    this.useIlp = false;
+
     // Totally valid since we have no edges.
     this.routingLut = new Map();
   }
@@ -354,7 +356,11 @@ export class CommGraph {
   }
 
   routeAllPermutations(): Map<string, CommGraphNode[][]> {
-    return this.routeAllPermutationsBruteForce();
+    if (this.useIlp) {
+      return this.routeAllPermutationsIlp();
+    } else {
+      return this.routeAllPermutationsBruteForce();
+    }
   }
 
   routeAllPermutationsIlp(): Map<string, CommGraphNode[][]> {
@@ -614,4 +620,6 @@ export class CommGraph {
   numGuidelines: number;
 
   routingLut: Map<string, CommGraphNode[][]>;
+
+  useIlp: boolean;
 }

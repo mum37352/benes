@@ -166,6 +166,12 @@ let divRef = useRef<HTMLDivElement>(null);
       <div className="pl-7 pr-7 space-y-4 overflow-auto">
         <h1 className="text-xl font-bold my-4 font-italic">Communication Network Construction</h1>
 
+        <div className="text-sm">
+          <label className="block mb-1 font-bold" htmlFor="vertical">Routing:</label>
+
+          <SelectButton className="w-full" value={graph.useIlp ? "ILP" : "Brute-Force"} onChange={(e: any) => {graph.useIlp = (e.value == "ILP"); setConfig({...config});}} options={["ILP", "Brute-Force"]} />
+        </div>
+
         <p>
           A communication network is an graph with special nodes: <span style={{ color: inputColor }}><KI>n</KI> "input nodes"</span> and <span style={{ color: outputColor }}>"output nodes"</span>
         </p>
