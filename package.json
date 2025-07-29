@@ -60,7 +60,7 @@
         "@types/eslint-config-prettier": "^6.11.3",
         "@types/graphlib": "^2.1.12",
         "@types/jest": "^29.5.14",
-        "@types/node": "^22.15.19",
+        "@types/node": "^24.1.0",
         "@types/react": "^19.1.2",
         "@types/react-dom": "^19.1.5",
         "@types/webpack": "^5.28.5",
