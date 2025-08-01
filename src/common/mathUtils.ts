@@ -64,11 +64,9 @@ export function foreachNaryString(length: number, base: number, doSomething: (di
     // Try to increment the counter.
     let incSucc = false;
     for (let i = 0; i < length && !incSucc; i++) {
-      if (digits[i] < base) {
+      digits[i] = (digits[i] + 1) % base;
+      if (digits[i] != 0) {
         incSucc = true;
-        digits[i]++;
-      } else {
-        digits[i] = 0;
       }
     }
     if (!incSucc) {

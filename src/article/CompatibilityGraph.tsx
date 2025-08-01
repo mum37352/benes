@@ -106,8 +106,8 @@ export default function CompatibilityGraph({
 
       let color = topColor;
 
-      let line = <line key={'edge_' + edge.v + "-" + edge.w} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom * 2} />;
-      canvas.push(line);
+      let line = <line key={'edge_' + edge.v + "-" + edge.w} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={"gray"} strokeOpacity={0.3} strokeWidth={cnv.zoom * 2} />;
+      canvas.push(line)
     })
 
     compatGraph?.nodes().forEach(nodeId => {
