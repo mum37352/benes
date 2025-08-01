@@ -15,14 +15,24 @@ export default class Permutation {
     this.lut = swap;
   }
 
-  toLatex() {
-    let domain = this.lut.map((_, i) => i + 1);
-    let image = this.lut.map(i => i + 1);
+  toLatex(asColumnVector = true) {
+    if (asColumnVector) {
+      let result = "\\begin{pmatrix}\n";
 
-    let topRow = domain.join(' & ');
-    let bottomRow = image.join(' & ');
+      for (let i = 0; i < this.lut.length; i++) {
+        result += `${this.lut[i]+1} ${i < this.lut.length - 1 ? "\\\\" : ""}\n`;
+      }
+      result += "\\end{pmatrix}";
+      return result;
+    } else {
+      let domain = this.lut.map((_, i) => i + 1);
+      let image = this.lut.map(i => i + 1);
 
-    return `\\begin{pmatrix}\n${topRow} \\\\\n${bottomRow}\n\\end{pmatrix}`;
+      let topRow = domain.join(' & ');
+      let bottomRow = image.join(' & ');
+
+      return `\\begin{pmatrix}\n${topRow} \\\\\n${bottomRow}\n\\end{pmatrix}`;
+    }
   }
 
   lut: number[];

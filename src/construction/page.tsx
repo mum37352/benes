@@ -53,7 +53,7 @@ function PermLists({config, setConfig}: {config: Config, setConfig: Function} ) 
         <KI>{atPerm.toLatex()}</KI>
       </div>));
 
-      return <div className="grid grid-cols-[repeat(auto-fit,_minmax(150px,_1fr))] gap-4 p-4">
+      return <div className="grid grid-cols-[repeat(auto-fit,_minmax(50px,_1fr))] gap-4 p-4">
         {items}
       </div>
   }
