@@ -179,7 +179,7 @@ export default function GraphEditor({
       }
 
       let color = triadColorToColor(node.color);
-      color = colorScale(computeNodeBucket(graph, node));
+      //color = colorScale(computeNodeBucket(graph, node));
 
       drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x || 0, node.y || 0, canvas, labels, {
         className: cursor,

@@ -90,7 +90,7 @@ function Main()
       <div ref={divRef} className="flex flex-col w-full h-full">
         <KB>{"G'"}</KB>
         <div className="flex-1">
-          <CompatibilityGraph graph={graph} graphVersion={graphVersion} />
+          <CompatibilityGraph graph={graph} graphVersion={graphVersion} onColoringChanged={() => forceUpdate()} />
         </div>
       </div>
     </SplitterPanel>
