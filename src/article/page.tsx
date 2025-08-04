@@ -88,7 +88,7 @@ function Main()
     </SplitterPanel>
     <SplitterPanel size={30} className="overflow-hidden">
       <div ref={divRef} className="flex flex-col w-full h-full">
-        <KB>{"G'\\text{(Placeholder)}"}</KB>
+        <KB>{"G'"}</KB>
         <div className="flex-1">
           <CompatibilityGraph graph={graph} graphVersion={graphVersion} />
         </div>
