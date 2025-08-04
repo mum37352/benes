@@ -1,6 +1,6 @@
 import { ToolSel } from "@/common/Toolbar";
 import { ColGraph, GraphNode } from "./Graph";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { computeGridMargins } from "@/common/Grid";
 import { BucketCanvas, computeNodeBucket, drawBuckets, genBucketsJsx, randomPointInBucket, useBucketCanvas } from "./buckets";
@@ -88,10 +88,10 @@ class CompatGraph {
       }
     }
 
-    this.activeColorings = new Array(this.buckets.length).fill(null);
+    this.activeSubgraph = new Array(this.buckets.length).fill(null);
     for (let bucketIdx = 0; bucketIdx < this.buckets.length; bucketIdx++) {
       let coloring = new Array(this.buckets[bucketIdx].length).fill(0);
-      this.activeColorings[bucketIdx] = this.mkNodeId(bucketIdx, coloring);
+      this.activeSubgraph[bucketIdx] = this.mkNodeId(bucketIdx, coloring);
     }
 
     this.graph = result;
@@ -102,7 +102,7 @@ class CompatGraph {
 
   // For each bucket, store a selected compatibility node.
   // Contains the node IDs.
-  activeColorings: string[];
+  activeSubgraph: string[];
 }
 
 export default function CompatibilityGraph({
@@ -112,10 +112,19 @@ export default function CompatibilityGraph({
   let cnv = useBucketCanvas(graph);
 
   let [compatGraph, setCompatGraph] = useState<CompatGraph>();
+  let [compatGraphVersion, bumpCompatGraphVersion] = useReducer(x => x + 1, 0);
 
   useEffect(() => {
     setCompatGraph(new CompatGraph(cnv));
   }, [graphVersion]);
+
+  function handleMouseDown(e: React.MouseEvent, nodeId: string) {
+    let node = compatGraph?.graph.node(nodeId);
+    if (node && compatGraph) {
+      compatGraph.activeSubgraph[node.bucketIdx] = nodeId;
+      bumpCompatGraphVersion();
+    }
+  }
 
   function drawGraph(canvas: React.JSX.Element[], labels: React.JSX.Element[]) {
     drawBuckets(cnv, canvas, labels);
@@ -138,11 +147,11 @@ export default function CompatibilityGraph({
       let node = compatGraph.graph.node(nodeId);
       let color = midColor;
 
-      if (compatGraph.activeColorings[node.bucketIdx] === nodeId) {
+      if (compatGraph.activeSubgraph[node.bucketIdx] === nodeId) {
         color = bottomColor;
       }
 
-      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x, node.y, canvas, labels);
+      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x, node.y, canvas, labels, {onMouseDown: e => handleMouseDown(e, nodeId)});
     });
 
   }
