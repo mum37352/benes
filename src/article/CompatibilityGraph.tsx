@@ -137,9 +137,17 @@ export default function CompatibilityGraph({
       let [fromX, fromY] = cnv.grid.toScreen(src.x || 0, src.y || 0);
       let [toX, toY] = cnv.grid.toScreen(tgt.x || 0, tgt.y || 0);
 
-      let color = topColor;
+      let isActive = (compatGraph.activeSubgraph[src.bucketIdx] === edge.v) && (compatGraph.activeSubgraph[tgt.bucketIdx] === edge.w);
 
-      let line = <line key={'edge_' + edge.v + "-" + edge.w} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={"gray"} strokeOpacity={0.3} strokeWidth={cnv.zoom * 2} />;
+      let color = "gray";
+      let opacity = 0.3;
+
+      if (isActive) {
+        color = bottomColor;
+        opacity = 1.0;
+      }
+
+      let line = <line key={'edge_' + edge.v + "-" + edge.w} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeOpacity={opacity} strokeWidth={cnv.zoom * 2} />;
       canvas.push(line)
     })
 
