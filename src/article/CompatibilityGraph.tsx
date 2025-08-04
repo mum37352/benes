@@ -59,7 +59,11 @@ function generateCompatGraph(cnv: BucketCanvas) {
       let dataA = result.node(nodeA);
       let dataB = result.node(nodeB);
 
-      if (dataA.proper && dataB.proper) {
+      if (dataA.bucketIdx === dataB.bucketIdx) {
+        compatible = false;
+      }
+
+      if (dataA.proper && dataB.proper && compatible) {
         let bucketA = buckets[dataA.bucketIdx];
         let bucketB = buckets[dataB.bucketIdx];
 
