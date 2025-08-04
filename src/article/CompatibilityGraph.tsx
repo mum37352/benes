@@ -159,7 +159,10 @@ export default function CompatibilityGraph({
         color = bottomColor;
       }
 
-      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x, node.y, canvas, labels, {onMouseDown: e => handleMouseDown(e, nodeId)});
+      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x, node.y, canvas, labels, {
+        onMouseDown: (e: React.MouseEvent) => handleMouseDown(e, nodeId),
+        className: "cursor-pointer"
+      });
     });
 
   }
