@@ -1,8 +1,12 @@
 
 export type Vec2 = [number, number];
 
+export function lengthSq2d(x: number, y: number) {
+  return x*x+y*y;
+}
+
 export function length2d(x: number, y: number) {
-  return Math.sqrt(x*x+y*y);
+  return Math.sqrt(lengthSq2d(x, y));
 }
 
 export function normalize2d(x: number, y: number): Vec2 {

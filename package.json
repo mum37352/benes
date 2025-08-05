@@ -36,6 +36,7 @@
         "@types/katex": "^0.16.7",
         "autoprefixer": "^10.4.21",
         "d3": "^7.9.0",
+        "fast-2d-poisson-disk-sampling": "^1.0.3",
         "graphlib": "^2.1.8",
         "javascript-lp-solver": "^0.4.24",
         "katex": "^0.16.22",

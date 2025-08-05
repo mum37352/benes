@@ -8,7 +8,8 @@ import { MouseEventHandler, RefObject, useRef } from "react";
 import { ColGraph, GraphNode } from "./Graph";
 import { backgroundColor, getColorScale, MainGradient } from "@/common/Colors";
 import { CenteredKI } from "@/common/NodeDrawing";
-import { Box, mod, normalize2d, rotatePoint, sampleUniformUnitDisk, Vec2 } from "@/common/mathUtils";
+import { Box, lengthSq2d, mod, normalize2d, rotatePoint, sampleUniformUnitDisk, Vec2 } from "@/common/mathUtils";
+import FastPoissonDiskSampling from 'fast-2d-poisson-disk-sampling';
 
 // I think we had to do this using rulers and compasses in Gymnasium.
 function fitCircleIntoIceCone(coneX: number, coneY: number) {
@@ -188,4 +189,75 @@ export function randomPointInBucket(graph: ColGraph, bucketIdx: number) {
 
   let sectorAngle = bucketAngle(graph);
   return rotatePoint(x, y, -bucketIdx*sectorAngle);
+}
+
+function ellipticPoint(rx: number, ry: number): Vec2 {
+    let [r, theta] = sampleUniformUnitDisk();
+    let x = rx * Math.cos(theta);
+    let y = -ry * Math.sin(theta);
+    return [x, y];
+}
+
+export function ellipticPoissonDiskSet(n: number, rx: number, ry: number): Vec2[] {
+  let result: Vec2[] = [];
+
+  if (n === 1) {
+    result.push(ellipticPoint(rx, ry));
+  } else {
+    // A maximal Poisson disk set is a set of points distributed so that no two points are
+    // closer than a given minimum distance r, and no more points can be added without
+    // violating this condition. In other words, it's a densely packed Poisson disk distribution.
+    //
+    // To cover an area A with such a set of N points, we must have: N * pi * r^2 >= A.
+    // This ensures that the total area "covered" by disks of radius r is at least as large as A.
+    //
+    // In particular, when r = 1, this simplifies to: N >= A / pi.
+    //
+    // In our case, we want to fill an ellipse with at least n points. The area of an ellipse
+    // with radii [r * rx, r * ry] is given by: A = pi * rx * ry * r^2.
+    //
+    // Substituting into the inequality A / pi >= n gives:
+    //
+    //     pi * rx * ry * r^2 / pi >= n
+    //     => r^2 >= n / (rx * ry)
+    //     => r >= sqrt(n / (rx * ry))
+    //
+    // This ensures N >= A/pi >= n.
+    //
+    // We define R := r * sqrt(3) to slightly increase the area. This compensates for the fact that
+    // Bridson's Poisson disk sampling algorithm uses rejection sampling and does NOT guarantee
+    // a truly maximal set - some valid points may be skipped.
+    //
+    // Therefore, to reliably fit n Poisson-distributed points in an ellipse, we allocate a grid
+    // with width R * rx and height R * ry.
+    let R = Math.sqrt(3 * n / (rx*ry));
+    let w = R*rx;
+    let h = R*ry;
+    let sampler = new FastPoissonDiskSampling({
+      shape: [w, h],
+      radius: 1
+    });
+    let points = sampler.fill();
+
+    // Apply a transform to the points so as to center them, and stretch them so the ellipse becomes a circle.
+    for (let i = 0; i < points.length; i++) {
+      points[i][0] -= w/2;
+      points[i][1] -= h/2;
+      points[i][0] /= rx;
+      points[i][1] /= ry;
+    }
+
+    points.sort((a, b) => lengthSq2d(...a) - lengthSq2d(...b)).slice(0, n);
+    
+    for (let i = 0; i < points.length; i++) {
+      result.push([points[i][0]*rx, points[i][1]*ry]);
+    }
+
+    // Finally, just to be extra safe, use a uniform random fallback.
+    while (result.length < n) {
+      result.push(ellipticPoint(rx, ry));
+    }
+  }
+
+  return result;
 }
