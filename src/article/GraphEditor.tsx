@@ -4,7 +4,7 @@ import useResizeObserver from "@react-hook/resize-observer";
 import * as d3 from "d3";
 import { act, MouseEvent, useLayoutEffect, useReducer, useRef, useState } from "react";
 import Permutation, { clipToRange, correctIdx } from "../common/Permutation";
-import { backgroundColor, getColorScale, inputColor, MainGradient, midColor, outputColor, topColor } from "../common/Colors";
+import { backgroundColor, getColorScale, inputColor, MainGradient, midColor, outputColor, redColor, topColor } from "../common/Colors";
 import PermWidget from "@/common/PermWidget";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { computeGridLayout as computeWeightedLayout, computeGridMargins, Grid } from "@/common/Grid";
@@ -152,17 +152,18 @@ export default function GraphEditor({
       let x = (fromX+toX)/2;
       let y = (fromY+toY)/2;
 
-      let color = edge.type===EdgeType.Equality ? midColor : topColor;
+      let proper = (src.color !== tgt.color);
+      let color = proper ? midColor : redColor;
 
       let cursor = "";
       if (tool === "delete") {
         cursor = "cursor-pointer";
       }
 
+
       let line = <line className={cursor} key={'edge_'+edge.index} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
 
       canvas.push(line);
-      labels.push(<CenteredKI color="white" zoom={cnv.zoom} x={x} y={y} key={'edgelab'+edge.index}>{edge.type===EdgeType.Equality ? '=' : '\\neq'}</CenteredKI>)
     }
 
     if (edgeInteraction && mousePos) {

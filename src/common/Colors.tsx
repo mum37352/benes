@@ -7,6 +7,7 @@ export let outputColor = "#a2d2fb";
 export let midColor = "#ecf2f8";
 export let topColor = "#7ce38b";
 export let bottomColor = "#cea5fb";
+export let redColor = "#fa7970";
 
 // https://observablehq.com/@harrystevens/roll-your-own-color-palette-interpolator
 function interpolatePalette(palette : string[]) {
