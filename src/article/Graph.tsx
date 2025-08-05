@@ -171,7 +171,7 @@ export class CompatGraph {
 
           for (let i = 0; i < bucketA.length && compatible; i++) {
             for (let j = 0; j < bucketB.length && compatible; j++) {
-              if (dataA.coloring[i] != dataB.coloring[j] && graph.hasEdge(bucketA[i], bucketB[j])) {
+              if (dataA.coloring[i] === dataB.coloring[j] && graph.hasEdge(bucketA[i], bucketB[j])) {
                 compatible = false;
               }
             }
