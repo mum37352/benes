@@ -10,17 +10,13 @@ import { drawNode, GraphNodeType } from "@/common/NodeDrawing";
 import { bottomColor, midColor, topColor } from "@/common/Colors";
 
 export default function CompatibilityGraph({
-  graph, graphVersion, onColoringChanged
-} : {graph: ColGraph, graphVersion: number, onColoringChanged: () => void})
+  graph, compatGraph, onColoringChanged
+} : {graph: ColGraph, compatGraph: CompatGraph, onColoringChanged: () => void})
 {
   let cnv = useBucketCanvas(graph);
 
-  let [compatGraph, setCompatGraph] = useState<CompatGraph>();
   let [, bumpCompatGraphVersion] = useReducer(x => x + 1, 0);
 
-  useEffect(() => {
-    setCompatGraph(new CompatGraph(cnv));
-  }, [graphVersion]);
 
   function handleMouseDown(e: React.MouseEvent, nodeId: string) {
     let node = compatGraph?.graph.node(nodeId);

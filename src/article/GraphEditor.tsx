@@ -9,7 +9,7 @@ import PermWidget from "@/common/PermWidget";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { computeGridLayout as computeWeightedLayout, computeGridMargins, Grid } from "@/common/Grid";
 import { applyTerminalBias, CenteredKI, drawNode, GraphNodeType } from "@/common/NodeDrawing";
-import { EdgeType, ColGraph, GraphEdge, GraphNode, TriadColor, triadColorToColor } from "./Graph";
+import { EdgeType, ColGraph, GraphEdge, GraphNode, TriadColor, triadColorToColor, CompatGraph } from "./Graph";
 import { ToolSel } from "@/common/Toolbar";
 import { bucketScale, computeNodeBucket, drawBuckets, fitEllipseIntoIceCone, genBucketsJsx, useBucketCanvas } from "./buckets";
 import { Vec2 } from "@/common/mathUtils";
@@ -20,9 +20,10 @@ type AddEdgeInteraction = {
 
 export default function GraphEditor({
   graph,
+  compatGraph,
   onChange = (() => {}),
   tool
-} : {graph: ColGraph, onChange?: Function, tool: ToolSel})
+} : {graph: ColGraph, compatGraph: CompatGraph, onChange?: (graph: ColGraph, structuralChange: boolean) => void, tool: ToolSel})
 {
   let cnv = useBucketCanvas(graph);
 
@@ -51,19 +52,19 @@ export default function GraphEditor({
         let newNode: GraphNode = { color: TriadColor.Col1, key: "usrnd_" + graph.getNextId(), fy: y, fx: x };
 
         graph.nodes.push(newNode);
-        onChange(graph);
+        onChange(graph, true);
         e.stopPropagation();
         e.preventDefault();
       }
     } else if (tool === 'delete') {
       if (node) {
         graph.deleteNode(node);
-        onChange(graph);
+        onChange(graph, true);
         e.stopPropagation();
         e.preventDefault();
       } else if (edge) {
         graph.deleteEdge(edge);
-        onChange(graph);
+        onChange(graph, true);
         e.stopPropagation();
         e.preventDefault();
       }
@@ -72,6 +73,13 @@ export default function GraphEditor({
         setDraggedNode(node);
         e.stopPropagation();
         e.preventDefault();
+      }
+    } else if (tool === 'paint') {
+      if (node) {
+        node.color = (node.color + 1) % 3;
+        let bucketIdx = computeNodeBucket(graph, node);
+        compatGraph.recomputeActiveSubgraph(bucketIdx);
+        onChange(graph, false);
       }
     }
   }
@@ -86,7 +94,7 @@ export default function GraphEditor({
 
       draggedNode.fx = x;
       draggedNode.fy = y;
-      onChange(graph);
+      onChange(graph, false);
     } else if (edgeInteraction) {
       setEdgeInteraction({
         fromNode: edgeInteraction.fromNode
@@ -108,7 +116,7 @@ export default function GraphEditor({
       draggedNode.fx = x;
       draggedNode.fy = y;
 
-      onChange(graph);
+      onChange(graph, false);
       setDraggedNode(undefined);
       e.stopPropagation();
       e.preventDefault();
@@ -124,7 +132,7 @@ export default function GraphEditor({
         graph.edges.push(newEdge);
       }
 
-      onChange(graph);
+      onChange(graph, true);
       setEdgeInteraction(undefined);
       e.stopPropagation();
       e.preventDefault();
@@ -146,7 +154,12 @@ export default function GraphEditor({
 
       let color = edge.type===EdgeType.Equality ? midColor : topColor;
 
-      let line = <line className={tool==='delete'?"cursor-pointer":""} key={'edge_'+edge.index} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
+      let cursor = "";
+      if (tool === "delete") {
+        cursor = "cursor-pointer";
+      }
+
+      let line = <line className={cursor} key={'edge_'+edge.index} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
 
       canvas.push(line);
       labels.push(<CenteredKI color="white" zoom={cnv.zoom} x={x} y={y} key={'edgelab'+edge.index}>{edge.type===EdgeType.Equality ? '=' : '\\neq'}</CenteredKI>)
@@ -172,10 +185,10 @@ export default function GraphEditor({
       let cursor = "";
       if (tool === "drag") {
         cursor = "cursor-grab";
-      } else if (tool === "delete") {
-        cursor = "cursor-pointer"
+      } else if (tool === "delete" || tool === "paint") {
+        cursor = "cursor-pointer";
       } else if (tool === "insert") {
-        cursor = "cursor-crosshair"
+        cursor = "cursor-crosshair";
       }
 
       let color = triadColorToColor(node.color);

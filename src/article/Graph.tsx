@@ -5,7 +5,6 @@ import * as d3 from "d3";
 import { Graph } from "graphlib";
 import { BucketCanvas, computeNodeBucket, randomPointInBucket } from "./buckets";
 import { foreachNaryString } from "@/common/mathUtils";
-import { createContext } from "react";
 
 
 export enum TriadColor {
@@ -96,6 +95,10 @@ export class ColGraph {
     }
   }
 
+  coreCircleDiam() {
+    return Math.max(1, (Math.sqrt(this.cliqueSize*1.6)));
+  }
+
   nextId: number;
 
   cliqueSize: number;
@@ -109,8 +112,7 @@ export class CompatGraph {
     return bucketIdx.toString() + "-" + coloring.toString();
   }
 
-  constructor(cnv: BucketCanvas) {
-    let graph = cnv.graph;
+  constructor(graph: ColGraph) {
     let result: Graph = new Graph({ multigraph: false, directed: false });
 
     this.buckets = Array.from({ length: graph.cliqueSize }, () => []);
@@ -130,7 +132,7 @@ export class CompatGraph {
       let bucket = this.buckets[bucketIdx];
 
       foreachNaryString(bucket.length, 3, (coloring: number[]) => {
-        let [x, y] = randomPointInBucket(cnv, bucketIdx);
+        let [x, y] = randomPointInBucket(graph, bucketIdx);
 
         // Check if these ternary string defines a proper 3-coloring.
         let proper = true;
@@ -189,6 +191,16 @@ export class CompatGraph {
     }
 
     this.graph = result;
+  }
+
+  recomputeActiveSubgraph(bucketIdx: number) {
+    let bucket = this.buckets[bucketIdx];
+
+    let coloring: number[] = new Array(bucket.length).fill(0);
+    for (let i = 0; i < bucket.length; i++) {
+      coloring[i] = bucket[i].color;
+    }
+    this.activeSubgraph[bucketIdx] = this.mkNodeId(bucketIdx, coloring);
   }
 
   graph: Graph;

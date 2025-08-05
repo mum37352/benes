@@ -58,7 +58,7 @@ export function useBucketCanvas(graph: ColGraph) {
   let screenWidth = size?.width || 0;
   let screenHeight = size?.height || 0;
 
-  let coreCircleDiam = Math.max(1, (Math.sqrt(graph.cliqueSize*1.6)));
+  let coreCircleDiam = graph.coreCircleDiam();
 
   let margin = computeGridMargins(false, false);
 
@@ -123,13 +123,14 @@ function bucketAngle(graph: ColGraph) {
   return 2 * Math.PI / graph.cliqueSize;
 }
 
-export function computeCanonicalBucketEllipse(cnv: BucketCanvas): Vec2 {
-  let mainAngle = bucketAngle(cnv.graph);
+export function computeCanonicalBucketEllipse(graph: ColGraph): Vec2 {
+  let mainAngle = bucketAngle(graph);
   let ellipseAsp = 2.0;
   let coneAngle = Math.min(mainAngle * 0.8, 0.3 * Math.PI);
   let [rx, ry] = fitEllipseIntoIceCone(ellipseAsp, coneAngle);
-  rx *= cnv.coreCircleDiam;
-  ry *= cnv.coreCircleDiam;
+  let coreCircleDiam = graph.coreCircleDiam();
+  rx *= coreCircleDiam;
+  ry *= coreCircleDiam;
 
   return [rx, ry]
 }
@@ -145,7 +146,7 @@ export function drawBuckets(cnv: BucketCanvas, canvas: React.ReactElement<SVGEle
     return "grad_" + cliqueIdx;
   }
 
-  let [rx, ry] = computeCanonicalBucketEllipse(cnv)
+  let [rx, ry] = computeCanonicalBucketEllipse(cnv.graph)
   let sectorAngle = bucketAngle(cnv.graph);
 
   for (let i = 0; i < cnv.graph.cliqueSize; i++) {
@@ -176,15 +177,15 @@ export function computeNodeBucket(graph: ColGraph, node: GraphNode) {
   return sectorIdx;
 }
 
-export function randomPointInBucket(cnv: BucketCanvas, bucketIdx: number) {
-  let [rx, ry] = computeCanonicalBucketEllipse(cnv);
+export function randomPointInBucket(graph: ColGraph, bucketIdx: number) {
+  let [rx, ry] = computeCanonicalBucketEllipse(graph);
 
   let [r, theta] = sampleUniformUnitDisk();
   let x = rx*r*Math.cos(theta);
   let y = -ry*r*Math.sin(theta);
 
-  y -= cnv.coreCircleDiam;
+  y -= graph.coreCircleDiam();
 
-  let sectorAngle = bucketAngle(cnv.graph);
+  let sectorAngle = bucketAngle(graph);
   return rotatePoint(x, y, -bucketIdx*sectorAngle);
 }

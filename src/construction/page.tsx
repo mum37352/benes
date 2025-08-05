@@ -14,7 +14,7 @@ import Construction from "./Construction";
 import Permutation, { allPerms } from "../common/Permutation";
 import { inputColor, outputColor } from "../common/Colors";
 import { Toolbar } from 'primereact/toolbar';
-import { ConstructionAction, ConstructionMode, GraphToolbar, ToolSel } from '../common/Toolbar';
+import { ConstructionAction, ConstructionMode, GraphToolbar, GraphToolbarPanel, ToolSel } from '../common/Toolbar';
 import { CommGraph, CommGraphNode } from './CommGraph';
 import * as d3 from "d3";
 import { Card } from 'primereact/card';
@@ -142,25 +142,15 @@ function Main()
     );
   }
     */
-let divRef = useRef<HTMLDivElement>(null);
 
   return <Splitter className="h-dvh w-full" ref={ref}>
     <SplitterPanel size={60} className="overflow-hidden">
-      <div ref={divRef} className="flex flex-col w-full h-full"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Control') {setTool("drag"); e.preventDefault();}
-        if (e.key === 'Alt') {setTool("delete"); e.preventDefault();}
-      }}
-      onKeyUp={(e) => { setTool("insert");e.preventDefault();}}
-      onMouseEnter={() => divRef.current?.focus()}
-      onMouseLeave={() => divRef.current?.blur()}>
-        <GraphToolbar activeTool={tool} onChange={setTool} />
-
+      <GraphToolbarPanel activeTool={tool} onChange={setTool}>
+        
         <div className="flex-1">
           <Construction tool={tool} graph={graph} perm={config.selPerm} onChange={reheat} onPermChanged={(newPerm) => setConfig({ ...config, selPerm: newPerm })} />
         </div>
-      </div>
+      </GraphToolbarPanel>
     </SplitterPanel>
     <SplitterPanel size={40} className="">
       <div className="pl-7 pr-7 space-y-4 overflow-auto">

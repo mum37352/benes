@@ -1,7 +1,7 @@
 import { Dropdown } from "primereact/dropdown";
 import { Toolbar } from "primereact/toolbar";
-import { useState } from "react";
-import { Pencil, MousePointerClick, Trash, Move, Share2, Ruler, Eraser } from 'lucide-react';
+import { useRef, useState } from "react";
+import { Pencil, MousePointerClick, Trash, Move, Share2, Ruler, Eraser, Paintbrush } from 'lucide-react';
 import { Button } from "primereact/button";
 
 export type ConstructionMode = 'nodes' | 'edges' | 'guidelines';
@@ -101,39 +101,69 @@ export function OldToolbar({
   return <Toolbar start={startContents} center={centerContents} />;
 }
 
-export type ToolSel = 'insert' | 'delete' | 'drag';
+export type ToolSel = 'insert' | 'delete' | 'drag' | 'paint';
 
 type Tool = {
-  name: string;
+  name: ToolSel;
   icon: React.JSX.Element;
   hotkey: string;
 };
 
 // Tool definitions
-const tools: Tool[] = [
+let allTools: Tool[] = [
   { name: 'insert', icon: <Pencil size={18} />, hotkey: 'default' },
   { name: 'delete', icon: <Eraser size={18} />, hotkey: 'Alt' },
   { name: 'drag', icon: <Move size={18} />, hotkey: 'Ctrl' },
+  { name: 'paint', icon: <Paintbrush size={18} />, hotkey: 'Shift' },
 ];
 
 
-export function GraphToolbar({ activeTool, onChange }: {activeTool: string, onChange: Function}) {
-  let centerContents = (
-    <div className="flex gap-2 p-2 rounded shadow">
-      {tools.map(tool => (
-        <Button
-          key={tool.name}
-          className={`p-button-rounded p-button-text ${
-            activeTool === tool.name ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white' : ''
-          }`}
-          onClick={() => onChange(tool.name)}
-          tooltip={`${tool.name[0].toUpperCase() + tool.name.slice(1)} (Hotkey: ${tool.hotkey})`}
-        >
-          {tool.icon}
-          </Button>
-      ))}
-    </div>
-  );
+export function GraphToolbar({ activeTool, onChange, tools }: {activeTool: string, onChange: (name: ToolSel) => void, tools: ToolSel[]}) {
+  let toolButtons = [];
+
+  for (let toolSel of tools) {
+    let tool = allTools.find(t => (t.name === toolSel));
+    if (tool) {
+      toolButtons.push(<Button
+        key={tool.name}
+        className={`p-button-rounded p-button-text ${activeTool === tool.name ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white' : ''}`}
+        onClick={() => onChange(tool.name)}
+        tooltip={`${tool.name[0].toUpperCase() + tool.name.slice(1)} (Hotkey: ${tool.hotkey})`}
+      >
+        {tool.icon}
+      </Button>);
+    }
+  }
+
+  let centerContents = <div className="flex gap-2 p-2 rounded shadow">
+    {toolButtons}
+  </div>;
 
   return <Toolbar center={centerContents} />;
+}
+
+export function GraphToolbarPanel({ activeTool, onChange, paintBrush = false, children }: 
+  { activeTool: string, onChange: (name: ToolSel) => void, children: React.ReactNode, paintBrush?: boolean}) {
+
+  let divRef = useRef<HTMLDivElement>(null);
+
+  let tools: ToolSel[] = ["insert", "delete", "drag"];
+
+  if (paintBrush) {
+    tools.push("paint");
+  }
+
+  return <div ref={divRef} className="flex flex-col w-full h-full"
+    tabIndex={0}
+    onKeyDown={(e) => {
+      if (e.key === 'Control') { onChange("drag"); e.preventDefault(); }
+      if (e.key === 'Alt') { onChange("delete"); e.preventDefault(); }
+      if (e.key === 'Shift' && paintBrush) { onChange("paint"); e.preventDefault(); }
+    }}
+    onKeyUp={(e) => {onChange("insert"); e.preventDefault()}}
+    onMouseEnter={() => { console.log("entering", divRef.current); divRef.current?.focus(); }}
+    onMouseLeave={() => divRef.current?.blur()}>
+    <GraphToolbar tools={tools} activeTool={activeTool} onChange={onChange} />
+    {children}
+  </div>;
 }

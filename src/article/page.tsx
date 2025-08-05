@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useReducer, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import '@/styles/index.css';
@@ -11,21 +11,22 @@ import * as d3 from "d3";
 import { Check, Frame, X } from 'lucide-react';
 import { ProgressBar } from 'primereact/progressbar';
 import GraphEditor from './GraphEditor';
-import { ColGraph, GraphNode } from './Graph';
-import { GraphToolbar, ToolSel } from '@/common/Toolbar';
+import { ColGraph, CompatGraph, GraphNode } from './Graph';
+import { GraphToolbar, GraphToolbarPanel, ToolSel } from '@/common/Toolbar';
 import { KB, KI } from '@/common/katex';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import BenesNet from '@/route-benes/BenesNet';
 import CompatibilityGraph from './CompatibilityGraph';
 
 type Config = {
-  graph: ColGraph
+  graph: ColGraph,
+  compatGraph: CompatGraph
 }
 
 function configFromCliqueSize(cliqueSize: number): Config {
-  return {
-    graph: new ColGraph(cliqueSize)
-  }
+  let graph = new ColGraph(cliqueSize)
+  let compatGraph = new CompatGraph(graph);
+  return { graph, compatGraph };
 }
 
 
@@ -34,13 +35,13 @@ function Main()
 {
   let [config, setConfig] = useState<Config>(() => configFromCliqueSize(3));
   let graph = config.graph;
+  let compatGraph = config.compatGraph;
 
   let [tool, setTool] = useState<ToolSel>('insert');
 
   let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
 
   let [, forceUpdate] = useReducer(x => x + 1, 0);
-  let [graphVersion, bumpGraphVersion] = useReducer(x => x + 1, 0);
 
   let ref = useRef(null);
 
@@ -60,37 +61,29 @@ function Main()
     setSimulation(sim);
   }, [ref]);
 
-  function reheat(graph: ColGraph) {
+  function onChange(graph: ColGraph, structuralChange: boolean) {
     simulation?.nodes(graph.nodes).alpha(1).restart();
     forceUpdate();
-    bumpGraphVersion();
+    if (structuralChange) {
+      config.compatGraph = new CompatGraph(config.graph);
+      setConfig({ ...config });
+    }
   }
-
-  let divRef = useRef<HTMLDivElement>(null);
 
   return <Splitter className="h-dvh w-full" ref={ref}>
     <SplitterPanel size={30} className="overflow-hidden">
-      <div ref={divRef} className="flex flex-col w-full h-full"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Control') {setTool("drag"); e.preventDefault();}
-        if (e.key === 'Alt') {setTool("delete"); e.preventDefault();}
-      }}
-      onKeyUp={(e) => { setTool("insert");e.preventDefault();}}
-      onMouseEnter={() => divRef.current?.focus()}
-      onMouseLeave={() => divRef.current?.blur()}>
-        <GraphToolbar activeTool={tool} onChange={setTool} />
+      <GraphToolbarPanel activeTool={tool} onChange={setTool} paintBrush>
         <KB>G</KB>
         <div className="flex-1">
-          <GraphEditor tool={tool} graph={graph} onChange={reheat} />
+          <GraphEditor compatGraph={compatGraph} tool={tool} graph={graph} onChange={onChange} />
         </div>
-      </div>
+      </GraphToolbarPanel>
     </SplitterPanel>
     <SplitterPanel size={30} className="overflow-hidden">
-      <div ref={divRef} className="flex flex-col w-full h-full">
+      <div className="flex flex-col w-full h-full">
         <KB>{"G'"}</KB>
         <div className="flex-1">
-          <CompatibilityGraph graph={graph} graphVersion={graphVersion} onColoringChanged={() => forceUpdate()} />
+          <CompatibilityGraph graph={graph} compatGraph={compatGraph} onColoringChanged={() => forceUpdate()} />
         </div>
       </div>
     </SplitterPanel>
@@ -106,7 +99,7 @@ function Main()
             if (val && !isNaN(val)) {
               config.graph.cliqueSize = val;
               setConfig({...config});
-              reheat(config.graph);
+              onChange(config.graph, true);
             }
           }} mode="decimal" showButtons min={1} max={5} />
         </div>
