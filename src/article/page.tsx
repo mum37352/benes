@@ -39,30 +39,11 @@ function Main()
 
   let [tool, setTool] = useState<ToolSel>('insert');
 
-  let [simulation, setSimulation] = useState<d3.Simulation<GraphNode, undefined>>();
-
   let [, forceUpdate] = useReducer(x => x + 1, 0);
 
   let ref = useRef(null);
 
-  function ticked() {
-    forceUpdate();
-  }
-
-  useLayoutEffect(() => {
-    let sim = d3.forceSimulation(graph.nodes)
-
-    sim.on("tick", ticked);
-    sim.force("charge", d3.forceManyBody());
-    sim.force("springs", d3.forceLink(graph.edges));
-    sim.force("x", d3.forceX());
-    sim.force("y", d3.forceY());
-
-    setSimulation(sim);
-  }, [ref]);
-
   function onChange(graph: ColGraph, structuralChange: boolean) {
-    simulation?.nodes(graph.nodes).alpha(1).restart();
     forceUpdate();
     if (structuralChange) {
       config.compatGraph = new CompatGraph(config.graph);

@@ -163,8 +163,8 @@ export function drawBuckets(cnv: BucketCanvas, canvas: React.ReactElement<SVGEle
 }
 
 export function computeNodeBucket(graph: ColGraph, node: GraphNode) {
-  let x: number = node.fx!;
-  let y: number = node.fy!;
+  let x: number = node.x!;
+  let y: number = node.y!;
 
   let angle = Math.atan2(-y, x);
 

@@ -49,7 +49,7 @@ export default function GraphEditor({
         // Add a node.
         let x = cnv.grid.xFromScreen(ex, ey, false);
         let y = cnv.grid.yFromScreen(ex, ey, false);
-        let newNode: GraphNode = { color: TriadColor.Col1, key: "usrnd_" + graph.getNextId(), fy: y, fx: x };
+        let newNode: GraphNode = { color: TriadColor.Col1, key: "usrnd_" + graph.getNextId(), y: y, x: x };
 
         graph.nodes.push(newNode);
         onChange(graph, true);
@@ -92,8 +92,8 @@ export default function GraphEditor({
       let x = cnv.grid.xFromScreen(ex, ey, false);
       let y = cnv.grid.yFromScreen(ex, ey, false);
 
-      draggedNode.fx = x;
-      draggedNode.fy = y;
+      draggedNode.x = x;
+      draggedNode.y = y;
       onChange(graph, false);
     } else if (edgeInteraction) {
       setEdgeInteraction({
@@ -113,8 +113,8 @@ export default function GraphEditor({
       let x = cnv.grid.xFromScreen(ex, ey, false);
       let y = cnv.grid.yFromScreen(ex, ey, false);
 
-      draggedNode.fx = x;
-      draggedNode.fy = y;
+      draggedNode.x = x;
+      draggedNode.y = y;
 
       onChange(graph, false);
       setDraggedNode(undefined);
@@ -148,9 +148,6 @@ export default function GraphEditor({
 
       let [fromX, fromY] = cnv.grid.toScreen(src.x||0, src.y||0);
       let [toX, toY] = cnv.grid.toScreen(tgt.x||0, tgt.y||0);
-
-      let x = (fromX+toX)/2;
-      let y = (fromY+toY)/2;
 
       let proper = (src.color !== tgt.color);
       let color = proper ? midColor : redColor;
