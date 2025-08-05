@@ -169,7 +169,11 @@ export class CompatGraph {
           compatible = false;
         }
 
-        if (dataA.proper && dataB.proper && compatible) {
+        if (!dataA.proper || !dataB.proper) {
+          compatible = false;
+        }
+
+        if (compatible) {
           let bucketA = this.buckets[dataA.bucketIdx];
           let bucketB = this.buckets[dataB.bucketIdx];
 

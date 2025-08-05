@@ -56,7 +56,6 @@ export function drawNode(zoom: number, grid: Grid, type: GraphNodeType, color: s
   svgList.push(<circle {...props}
     key={key}
     cx={screenX} cy={screenY}
-    stroke="none"
     r={(isTerminal ? 15 : 8) * zoom} fill={color} />);
 
   if (isTerminal) {

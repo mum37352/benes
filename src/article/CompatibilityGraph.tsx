@@ -7,7 +7,7 @@ import { BucketCanvas, computeNodeBucket, drawBuckets, genBucketsJsx, randomPoin
 import { Graph } from "graphlib";
 import { foreachNaryString } from "@/common/mathUtils";
 import { drawNode, GraphNodeType } from "@/common/NodeDrawing";
-import { bottomColor, midColor, topColor } from "@/common/Colors";
+import { bottomColor, inputColor, midColor, redColor, topColor } from "@/common/Colors";
 
 export default function CompatibilityGraph({
   graph, compatGraph, onColoringChanged
@@ -50,7 +50,7 @@ export default function CompatibilityGraph({
       let opacity = 0.3;
 
       if (isActive) {
-        color = bottomColor;
+        color = topColor;
         opacity = 1.0;
       }
 
@@ -62,13 +62,19 @@ export default function CompatibilityGraph({
       let node = compatGraph.graph.node(nodeId);
       let color = midColor;
 
-      if (compatGraph.activeSubgraph[node.bucketIdx] === nodeId) {
-        color = bottomColor;
+      let active = (compatGraph.activeSubgraph[node.bucketIdx] === nodeId);
+      if (active) {
+        color = topColor;
+      }
+
+
+      if (!node.proper) {
+        color = active ? redColor : inputColor;
       }
 
       drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x, node.y, canvas, labels, {
         onMouseDown: (e: React.MouseEvent) => handleMouseDown(e, nodeId),
-        className: "cursor-pointer"
+        className: "cursor-pointer",
       });
     });
 
