@@ -142,7 +142,7 @@ export class CompatGraph {
         let proper = true;
         for (let i = 0; i < bucket.length && proper; i++) {
           for (let j = i + 1; j < bucket.length && proper; j++) {
-            if (coloring[i] != coloring[j] && graph.hasEdge(bucket[i], bucket[j])) {
+            if (coloring[i] === coloring[j] && graph.hasEdge(bucket[i], bucket[j])) {
               proper = false;
             }
           }
