@@ -8,7 +8,7 @@ import { MouseEventHandler, RefObject, useRef } from "react";
 import { ColGraph, GraphNode } from "./Graph";
 import { backgroundColor, getColorScale, MainGradient } from "@/common/Colors";
 import { CenteredKI } from "@/common/NodeDrawing";
-import { Box, lengthSq2d, mod, normalize2d, rotatePoint, sampleUniformUnitDisk, Vec2 } from "@/common/mathUtils";
+import { Box, length2d, lengthSq2d, mod, normalize2d, rotatePoint, sampleUniformUnitDisk, Vec2 } from "@/common/mathUtils";
 import FastPoissonDiskSampling from 'fast-2d-poisson-disk-sampling';
 
 // I think we had to do this using rulers and compasses in Gymnasium.
@@ -178,13 +178,7 @@ export function computeNodeBucket(graph: ColGraph, node: GraphNode) {
   return sectorIdx;
 }
 
-export function randomPointInBucket(graph: ColGraph, bucketIdx: number) {
-  let [rx, ry] = computeCanonicalBucketEllipse(graph);
-
-  let [r, theta] = sampleUniformUnitDisk();
-  let x = rx*r*Math.cos(theta);
-  let y = -ry*r*Math.sin(theta);
-
+export function mapCanonicalEllipseToBucketArea(graph: ColGraph, bucketIdx: number, x: number, y: number) {
   y -= graph.coreCircleDiam();
 
   let sectorAngle = bucketAngle(graph);
@@ -193,9 +187,16 @@ export function randomPointInBucket(graph: ColGraph, bucketIdx: number) {
 
 function ellipticPoint(rx: number, ry: number): Vec2 {
     let [r, theta] = sampleUniformUnitDisk();
-    let x = rx * Math.cos(theta);
-    let y = -ry * Math.sin(theta);
+    let x = rx * r * Math.cos(theta);
+    let y = -ry * r * Math.sin(theta);
     return [x, y];
+}
+
+export function randomPointInBucket(graph: ColGraph, bucketIdx: number) {
+  let [rx, ry] = computeCanonicalBucketEllipse(graph);
+
+  let [x, y] = ellipticPoint(rx, ry);
+  return mapCanonicalEllipseToBucketArea(graph, bucketIdx, x, y);
 }
 
 export function ellipticPoissonDiskSet(n: number, rx: number, ry: number): Vec2[] {
@@ -203,15 +204,15 @@ export function ellipticPoissonDiskSet(n: number, rx: number, ry: number): Vec2[
 
   if (n === 1) {
     result.push(ellipticPoint(rx, ry));
-  } else {
+  } else if (n > 1) {
     // A maximal Poisson disk set is a set of points distributed so that no two points are
-    // closer than a given minimum distance r, and no more points can be added without
+    // closer than a given minimum distance d, and no more points can be added without
     // violating this condition. In other words, it's a densely packed Poisson disk distribution.
     //
-    // To cover an area A with such a set of N points, we must have: N * pi * r^2 >= A.
-    // This ensures that the total area "covered" by disks of radius r is at least as large as A.
+    // To cover an area A with such a set of N points, we must have: N * pi * d^2 >= A.
+    // This ensures that the total area "covered" by disks of radius d is at least as large as A.
     //
-    // In particular, when r = 1, this simplifies to: N >= A / pi.
+    // In particular, when d = 1, this simplifies to: N >= A / pi.
     //
     // In our case, we want to fill an ellipse with at least n points. The area of an ellipse
     // with radii [r * rx, r * ry] is given by: A = pi * rx * ry * r^2.
@@ -247,10 +248,11 @@ export function ellipticPoissonDiskSet(n: number, rx: number, ry: number): Vec2[
       points[i][1] /= ry;
     }
 
-    points.sort((a, b) => lengthSq2d(...a) - lengthSq2d(...b)).slice(0, n);
+    points = points.sort((a, b) => lengthSq2d(...a) - lengthSq2d(...b)).slice(0, n);
+    let biggest = length2d(...points.at(-1)!) * 1.1;
     
     for (let i = 0; i < points.length; i++) {
-      result.push([points[i][0]*rx, points[i][1]*ry]);
+      result.push([points[i][0]*rx/biggest, points[i][1]*ry/biggest]);
     }
 
     // Finally, just to be extra safe, use a uniform random fallback.

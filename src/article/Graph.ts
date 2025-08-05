@@ -3,7 +3,7 @@ import { bottomColor, midColor, topColor } from "@/common/Colors";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import * as d3 from "d3";
 import { Graph } from "graphlib";
-import { BucketCanvas, computeNodeBucket, randomPointInBucket } from "./buckets";
+import { BucketCanvas, computeCanonicalBucketEllipse, computeNodeBucket, ellipticPoissonDiskSet, mapCanonicalEllipseToBucketArea, randomPointInBucket } from "./buckets";
 import { foreachNaryString } from "@/common/mathUtils";
 
 
@@ -128,11 +128,15 @@ export class CompatGraph {
     }
 
     // Next, iterate over all possible colorings and add nodes.
+    let [rx, ry] = computeCanonicalBucketEllipse(graph);
     for (let bucketIdx = 0; bucketIdx < graph.cliqueSize; bucketIdx++) {
       let bucket = this.buckets[bucketIdx];
 
+      let points = ellipticPoissonDiskSet(3**bucket.length, rx, ry);
+
       foreachNaryString(bucket.length, 3, (coloring: number[]) => {
-        let [x, y] = randomPointInBucket(graph, bucketIdx);
+        let [x, y] = points.pop()!;
+        [x, y] = mapCanonicalEllipseToBucketArea(graph, bucketIdx, x, y);
 
         // Check if these ternary string defines a proper 3-coloring.
         let proper = true;
