@@ -13,6 +13,7 @@ const commonConfig: webpack.Configuration = {
         index: './src/index.tsx',
         benes: './src/route-benes/page.tsx',
         construction: './src/construction/page.tsx',
+        reduction: './src/reduction/page.tsx',
         article: './src/article/page.tsx',
     },
     output: {
@@ -30,6 +31,10 @@ const commonConfig: webpack.Configuration = {
     },
     module: {
         rules: [
+            {
+                test: /\.(md|tex)$/,
+                type: 'asset/source', // built-in replacement for raw-loader
+            },
             {
                 test: /\.[jt]sx?$/,
                 use: 'babel-loader',
@@ -92,6 +97,11 @@ const commonConfig: webpack.Configuration = {
             template: './public/benes.html',
             filename: 'benes.html',
             chunks: ['benes'],
+        }),
+        new HtmlWebpackPlugin({
+            template: './public/reduction.html',
+            filename: 'reduction.html',
+            chunks: ['reduction'],
         }),
         new HtmlWebpackPlugin({
             template: './public/article.html',

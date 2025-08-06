@@ -14,7 +14,12 @@ root.render(
         <PrimeReactProvider>
             <div>
 
-                At this moment, there are test pages on <a href="benes.html">Beneš nets</a>, <a href="construction.html">communication network construction</a> and <a href="article.html">the <KI>{"\\mathsf{3Assignment} \\to \\mathsf{Clique}"}</KI> reduction</a>.
+                At this moment, there are test pages on <a href="benes.html">Beneš nets</a>, <a href="construction.html">communication network construction</a> and <a href="reconstruction.html">the <KI>{"\\mathsf{3Assignment} \\to \\mathsf{Clique}"}</KI> reduction</a>.
+            </div>
+            
+            <div>
+
+                There is also the <a href="article.html">article itself</a>.
             </div>
         </PrimeReactProvider>
     </React.StrictMode>

@@ -2,7 +2,7 @@ import React from "react";
 
 import katex from "katex";
 
-import macrosTex from "!!raw-loader!@/macros.tex";
+import macrosTex from "../macros.tex";
 
 import 'katex/dist/katex.min.css';
 
