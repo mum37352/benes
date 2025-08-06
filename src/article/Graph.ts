@@ -39,7 +39,8 @@ export enum EdgeType {
 };
 
 export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
-  type: EdgeType
+  type: EdgeType,
+  key: string
 }
 
 export class ColGraph {

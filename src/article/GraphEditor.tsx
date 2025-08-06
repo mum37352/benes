@@ -127,7 +127,8 @@ export default function GraphEditor({
         let newEdge: GraphEdge = {
           source: edgeInteraction.fromNode,
           target: node,
-          type: EdgeType.Disequality
+          type: EdgeType.Disequality,
+          key: "usredge_"+graph.getNextId()
         };
         graph.edges.push(newEdge);
       }
@@ -158,7 +159,7 @@ export default function GraphEditor({
       }
 
 
-      let line = <line className={cursor} key={'edge_'+edge.index} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
+      let line = <line className={cursor} key={'edge_'+edge.key} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
 
       canvas.push(line);
     }

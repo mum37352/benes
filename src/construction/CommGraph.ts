@@ -26,7 +26,9 @@ type LPModel = {
   };
 };
 
-export type CommGraphEdge = d3.SimulationLinkDatum<CommGraphNode>;
+export interface CommGraphEdge extends d3.SimulationLinkDatum<CommGraphNode> {
+  key: string
+}
 
 export class CommGraph {
   constructor(ioHeight: number) {

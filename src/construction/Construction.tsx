@@ -171,7 +171,8 @@ export default function Construction({
       if (node) {
         let newEdge: CommGraphEdge = {
           source: edgeInteraction.fromNode,
-          target: node
+          target: node,
+          key: "usredge_" + graph.getNextId()
         };
         graph.edges.push(newEdge);
         graph.routeAllPermutations();
@@ -199,7 +200,7 @@ export default function Construction({
       let [fromX, fromY] = grid.toScreen(src.x||0, src.y||0);
       let [toX, toY] = grid.toScreen(tgt.x||0, tgt.y||0);
 
-      let line = <line className={tool==='delete'?"cursor-pointer":""} key={edge.index} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke="white" strokeWidth={zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
+      let line = <line className={tool==='delete'?"cursor-pointer":""} key={edge.key} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke="white" strokeWidth={zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
 
       canvas.push(line);
     }
