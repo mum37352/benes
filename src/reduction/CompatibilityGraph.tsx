@@ -4,7 +4,6 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { computeGridMargins } from "@/common/Grid";
 import { BucketCanvas, computeNodeBucket, drawBuckets, genBucketsJsx, randomPointInBucket, useBucketCanvas } from "./buckets";
-import { Graph } from "graphlib";
 import { foreachNaryString } from "@/common/mathUtils";
 import { drawNode, GraphNodeType } from "@/common/NodeDrawing";
 import { bottomColor, inputColor, midColor, redColor, topColor } from "@/common/Colors";
