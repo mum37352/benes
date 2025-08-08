@@ -49,7 +49,7 @@ export type BucketCanvas = {
   graph: ColGraph
 }
 
-export function useBucketCanvas(graph: ColGraph) {
+export function useBucketCanvas(colGraph: ColGraph) {
 
   let ref = useRef<HTMLDivElement>(null);
   let dummyRectRef = useRef<SVGRectElement>(null);
@@ -59,7 +59,7 @@ export function useBucketCanvas(graph: ColGraph) {
   let screenWidth = size?.width || 0;
   let screenHeight = size?.height || 0;
 
-  let coreCircleDiam = graph.coreCircleDiam();
+  let coreCircleDiam = colGraph.coreCircleDiam();
 
   let margin = computeGridMargins(false, false);
 
@@ -96,7 +96,7 @@ export function useBucketCanvas(graph: ColGraph) {
     ref,
     dummyRectRef,
     vertical,
-    graph
+    graph: colGraph
   };
 
   return cnv;

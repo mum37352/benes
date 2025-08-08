@@ -81,18 +81,24 @@ export default function GraphEditor({
     }
   }
 
+  function reassignNodePosition(e: React.MouseEvent) {
+    let [ex, ey] = cnv.getEventPoint(e);
+    let x = cnv.grid.xFromScreen(ex, ey, false);
+    let y = cnv.grid.yFromScreen(ex, ey, false);
+
+    let prevBucketIdx = computeNodeBucket(colGraph, draggedNode!);
+    let draggedData = colGraph.graph.getNodeAttributes(draggedNode);
+    draggedData.x = x;
+    draggedData.y = y;
+    let bucketIdx = computeNodeBucket(colGraph, draggedNode!);
+    onChange(colGraph, prevBucketIdx !== bucketIdx);
+  }
+
   function handleMouseMove(e: React.MouseEvent) {
     let [ex, ey] = cnv.getEventPoint(e);
 
-    console.log(draggedNode);
     if (draggedNode) {
-      let x = cnv.grid.xFromScreen(ex, ey, false);
-      let y = cnv.grid.yFromScreen(ex, ey, false);
-
-      let draggedData = colGraph.graph.getNodeAttributes(draggedNode);
-      draggedData.x = x;
-      draggedData.y = y;
-      onChange(colGraph, false);
+      reassignNodePosition(e);
     } else if (edgeInteraction) {
       setEdgeInteraction({
         fromNode: edgeInteraction.fromNode
@@ -105,17 +111,8 @@ export default function GraphEditor({
   }
 
   function handleMouseUp(e: React.MouseEvent, nodeId?: string) {
-    let [ex, ey] = cnv.getEventPoint(e);
-
     if (draggedNode) {
-      let x = cnv.grid.xFromScreen(ex, ey, false);
-      let y = cnv.grid.yFromScreen(ex, ey, false);
-
-      let draggedData = colGraph.graph.getNodeAttributes(draggedNode);
-      draggedData.x = x;
-      draggedData.y = y;
-
-      onChange(colGraph, false);
+      reassignNodePosition(e);
       setDraggedNode(undefined);
       e.stopPropagation();
       e.preventDefault();
