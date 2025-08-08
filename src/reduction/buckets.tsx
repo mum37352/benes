@@ -5,7 +5,7 @@
 import { computeGridLayout, computeGridMargins, Grid } from "@/common/Grid";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { MouseEventHandler, RefObject, useRef } from "react";
-import { ColGraph, GraphNode } from "./Graph";
+import { ColGraph, ColGraphNode } from "./Graph";
 import { backgroundColor, getColorScale, MainGradient } from "@/common/Colors";
 import { CenteredKI } from "@/common/NodeDrawing";
 import { Box, length2d, lengthSq2d, mod, normalize2d, rotatePoint, sampleUniformUnitDisk, Vec2 } from "@/common/mathUtils";
@@ -163,17 +163,16 @@ export function drawBuckets(cnv: BucketCanvas, canvas: React.ReactElement<SVGEle
   }
 }
 
-export function computeNodeBucket(graph: ColGraph, node: GraphNode) {
-  let x: number = node.x!;
-  let y: number = node.y!;
+export function computeNodeBucket(colGraph: ColGraph, nodeId: string) {
+  let node = colGraph.graph.getNodeAttributes(nodeId);
 
-  let angle = Math.atan2(-y, x);
+  let angle = Math.atan2(-node.y, node.x);
 
-  let sectorAngle = bucketAngle(graph);
+  let sectorAngle = bucketAngle(colGraph);
 
   let firstBoundary = Math.PI/2 + sectorAngle/2;
 
-  let sectorIdx = mod(Math.floor(-(angle - firstBoundary)/sectorAngle), graph.cliqueSize);
+  let sectorIdx = mod(Math.floor(-(angle - firstBoundary)/sectorAngle), colGraph.cliqueSize);
 
   return sectorIdx;
 }

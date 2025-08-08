@@ -1,8 +1,6 @@
 // TODO: Deduplicate w/ the construction page.
 import { bottomColor, midColor, topColor } from "@/common/Colors";
-import { GraphNodeType } from "@/common/NodeDrawing";
-import * as d3 from "d3";
-import { BucketCanvas, computeCanonicalBucketEllipse, computeNodeBucket, ellipticPoissonDiskSet, mapCanonicalEllipseToBucketArea, randomPointInBucket } from "./buckets";
+import { computeCanonicalBucketEllipse, computeNodeBucket, ellipticPoissonDiskSet, mapCanonicalEllipseToBucketArea, randomPointInBucket } from "./buckets";
 import { foreachNaryString } from "@/common/mathUtils";
 import Graph from "graphology";
 
@@ -28,9 +26,10 @@ export function triadColorToColor(col: TriadColor) {
   return color;
 }
 
-export interface GraphNode extends d3.SimulationNodeDatum {
+export interface ColGraphNode {
   color: TriadColor,
-  key: string
+  x: number,
+  y: number
 }
 
 export enum EdgeType {
@@ -38,17 +37,15 @@ export enum EdgeType {
   Disequality
 };
 
-export interface GraphEdge extends d3.SimulationLinkDatum<GraphNode> {
-  type: EdgeType,
-  key: string
+export interface ColGraphEdge {
+  type: EdgeType
 }
 
 export class ColGraph {
   constructor(cliqueSize: number) {
     this.nextId = 0;
 
-    this.nodes = [];
-    this.edges = [];
+    this.graph = new Graph({ type: 'undirected' });
 
     this.cliqueSize = cliqueSize;
   }
@@ -58,44 +55,6 @@ export class ColGraph {
   }
 
 
-  // Warning: expensive! Linear in the number of edges.
-  hasEdge(a: GraphNode, b: GraphNode) {
-    for (let edge of this.edges) {
-      if (edge.source === a && edge.target === b) {
-        return true;
-      }
-      if (edge.target === a && edge.source == b) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  deleteNode(node: GraphNode) {
-    // Delete edges containing the node.
-    // Remove all elements greater than 3, in-place
-    for (let i = this.edges.length - 1; i >= 0; i--) {
-      if (this.edges[i].target === node || this.edges[i].source === node) {
-        this.edges.splice(i, 1);
-      }
-    }
-    
-    for (let i = this.nodes.length - 1; i >= 0; i--) {
-      if (this.nodes[i] === node) {
-        this.nodes.splice(i, 1);
-      }
-    }
-  }
-
-  deleteEdge(edge: GraphEdge) {
-    for (let i = this.edges.length - 1; i >= 0; i--) {
-      if (this.edges[i] === edge) {
-        this.edges.splice(i, 1);
-      }
-    }
-  }
-
   coreCircleDiam() {
     return Math.max(1, (Math.sqrt(this.cliqueSize*1.6)));
   }
@@ -104,8 +63,7 @@ export class ColGraph {
 
   cliqueSize: number;
 
-  nodes: GraphNode[];
-  edges: GraphEdge[];
+  graph: Graph<ColGraphNode, ColGraphEdge>;
 }
 
 type CompatGraphNode = {
@@ -121,37 +79,36 @@ export class CompatGraph {
     return bucketIdx.toString() + "-" + coloring.toString();
   }
 
-  constructor(graph: ColGraph) {
-    let result: Graph = new Graph<CompatGraphNode>({ type: 'undirected' });
+  constructor(colGraph: ColGraph) {
+    this.colGraph = colGraph;
+    let result: Graph<CompatGraphNode> = new Graph({ type: 'undirected' });
 
-    this.buckets = Array.from({ length: graph.cliqueSize }, () => []);
+    this.buckets = Array.from({ length: colGraph.cliqueSize }, () => []);
 
-    for (let node of graph.nodes) {
-      let bucketIdx = computeNodeBucket(graph, node);
+    colGraph.graph.forEachNode((nodeId, attributes) => {
+      let bucketIdx = computeNodeBucket(colGraph, nodeId);
 
-      if (bucketIdx < 0) {
-        continue;
+      if (bucketIdx >= 0) {
+        this.buckets[bucketIdx].push(nodeId);
       }
-
-      this.buckets[bucketIdx].push(node);
-    }
+    });
 
     // Next, iterate over all possible colorings and add nodes.
-    let [rx, ry] = computeCanonicalBucketEllipse(graph);
-    for (let bucketIdx = 0; bucketIdx < graph.cliqueSize; bucketIdx++) {
+    let [rx, ry] = computeCanonicalBucketEllipse(colGraph);
+    for (let bucketIdx = 0; bucketIdx < colGraph.cliqueSize; bucketIdx++) {
       let bucket = this.buckets[bucketIdx];
 
       let points = ellipticPoissonDiskSet(3**bucket.length, rx, ry);
 
       foreachNaryString(bucket.length, 3, (coloring: number[]) => {
         let [x, y] = points.pop()!;
-        [x, y] = mapCanonicalEllipseToBucketArea(graph, bucketIdx, x, y);
+        [x, y] = mapCanonicalEllipseToBucketArea(colGraph, bucketIdx, x, y);
 
         // Check if these ternary string defines a proper 3-coloring.
         let proper = true;
         for (let i = 0; i < bucket.length && proper; i++) {
           for (let j = i + 1; j < bucket.length && proper; j++) {
-            if (coloring[i] === coloring[j] && graph.hasEdge(bucket[i], bucket[j])) {
+            if (coloring[i] === coloring[j] && colGraph.graph.hasEdge(bucket[i], bucket[j])) {
               proper = false;
             }
           }
@@ -188,7 +145,7 @@ export class CompatGraph {
 
           for (let i = 0; i < bucketA.length && compatible; i++) {
             for (let j = 0; j < bucketB.length && compatible; j++) {
-              if (dataA.coloring[i] === dataB.coloring[j] && graph.hasEdge(bucketA[i], bucketB[j])) {
+              if (dataA.coloring[i] === dataB.coloring[j] && colGraph.graph.hasEdge(bucketA[i], bucketB[j])) {
                 compatible = false;
               }
             }
@@ -215,13 +172,14 @@ export class CompatGraph {
 
     let coloring: number[] = new Array(bucket.length).fill(0);
     for (let i = 0; i < bucket.length; i++) {
-      coloring[i] = bucket[i].color;
+      coloring[i] = this.colGraph.graph.getNodeAttributes(bucket[i]).color;
     }
     this.activeSubgraph[bucketIdx] = this.mkNodeId(bucketIdx, coloring);
   }
 
-  graph: Graph;
-  buckets: GraphNode[][];
+  colGraph: ColGraph;
+  graph: Graph<CompatGraphNode>;
+  buckets: string[][];
 
   // For each bucket, store a selected compatibility node.
   // Contains the node IDs.

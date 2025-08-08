@@ -1,5 +1,5 @@
 import { ToolSel } from "@/common/Toolbar";
-import { ColGraph, CompatGraph, GraphNode, triadColorLut } from "./Graph";
+import { ColGraph, CompatGraph, ColGraphNode, triadColorLut } from "./Graph";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useFlushingResizeObserver } from "@/common/resizeObserver";
 import { computeGridMargins } from "@/common/Grid";
@@ -9,22 +9,26 @@ import { drawNode, GraphNodeType } from "@/common/NodeDrawing";
 import { bottomColor, inputColor, midColor, redColor, topColor } from "@/common/Colors";
 
 export default function CompatibilityGraph({
-  graph, compatGraph, onColoringChanged
+  graph: colGraph, compatGraph, onColoringChanged
 } : {graph: ColGraph, compatGraph: CompatGraph, onColoringChanged: () => void})
 {
-  let cnv = useBucketCanvas(graph);
+  let cnv = useBucketCanvas(colGraph);
 
   let [, bumpCompatGraphVersion] = useReducer(x => x + 1, 0);
 
 
   function handleMouseDown(e: React.MouseEvent, nodeId: string) {
-    let node = compatGraph?.graph.getNodeAttributes(nodeId);
+    if (!compatGraph) {
+      return;
+    }
+
+    let node = compatGraph.graph.getNodeAttributes(nodeId);
     if (node && compatGraph) {
       compatGraph.activeSubgraph[node.bucketIdx] = nodeId;
       let bucket = compatGraph.buckets[node.bucketIdx];
 
       for (let nodeIdx = 0; nodeIdx < bucket.length; nodeIdx++) {
-        bucket[nodeIdx].color = triadColorLut[node.coloring[nodeIdx]];
+        colGraph.graph.getNodeAttributes(bucket[nodeIdx]).color = triadColorLut[node.coloring[nodeIdx]];
       }
       onColoringChanged();
 

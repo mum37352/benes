@@ -1,47 +1,41 @@
 // TODO: Deduplicate with construction site.
 
-import useResizeObserver from "@react-hook/resize-observer";
-import * as d3 from "d3";
-import { act, MouseEvent, useLayoutEffect, useReducer, useRef, useState } from "react";
-import Permutation, { clipToRange, correctIdx } from "../common/Permutation";
-import { backgroundColor, getColorScale, inputColor, MainGradient, midColor, outputColor, redColor, topColor } from "../common/Colors";
-import PermWidget from "@/common/PermWidget";
-import { useFlushingResizeObserver } from "@/common/resizeObserver";
-import { computeGridLayout as computeWeightedLayout, computeGridMargins, Grid } from "@/common/Grid";
-import { applyTerminalBias, CenteredKI, drawNode, GraphNodeType } from "@/common/NodeDrawing";
-import { EdgeType, ColGraph, GraphEdge, GraphNode, TriadColor, triadColorToColor, CompatGraph } from "./Graph";
-import { ToolSel } from "@/common/Toolbar";
-import { bucketScale, computeNodeBucket, drawBuckets, fitEllipseIntoIceCone, genBucketsJsx, useBucketCanvas } from "./buckets";
 import { Vec2 } from "@/common/mathUtils";
+import { drawNode, GraphNodeType } from "@/common/NodeDrawing";
+import { ToolSel } from "@/common/Toolbar";
+import { useState } from "react";
+import { midColor, redColor } from "../common/Colors";
+import { bucketScale, computeNodeBucket, drawBuckets, genBucketsJsx, useBucketCanvas } from "./buckets";
+import { ColGraph, ColGraphEdge, ColGraphNode, CompatGraph, EdgeType, TriadColor, triadColorToColor } from "./Graph";
 
 type AddEdgeInteraction = {
-  fromNode: GraphNode,
+  fromNode: string,
 };
 
 export default function GraphEditor({
-  graph,
+  colGraph,
   compatGraph,
   onChange = (() => {}),
   tool
-} : {graph: ColGraph, compatGraph: CompatGraph, onChange?: (graph: ColGraph, structuralChange: boolean) => void, tool: ToolSel})
+} : {colGraph: ColGraph, compatGraph: CompatGraph, onChange?: (colGraph: ColGraph, structuralChange: boolean) => void, tool: ToolSel})
 {
-  let cnv = useBucketCanvas(graph);
+  let cnv = useBucketCanvas(colGraph);
 
-  let [draggedNode, setDraggedNode] = useState<GraphNode>();
+  let [draggedNode, setDraggedNode] = useState<string>();
   let [edgeInteraction, setEdgeInteraction] = useState<AddEdgeInteraction>();
   let [mousePos, setMousePos] = useState<Vec2>();
 
   // NOTE: Calling e.preventDefault is necessary in the mouse handlers, to avoid
   // Firefox from removing the keyboard focus from the parent interceptor.
 
-  function handleMouseDown(e: React.MouseEvent, node?: GraphNode, edge?: GraphEdge) {
+  function handleMouseDown(e: React.MouseEvent, nodeId?: string, edgeId?: string) {
     let [ex, ey] = cnv.getEventPoint(e);
 
     if (tool === 'insert') {
-      if (node) {
+      if (nodeId) {
         // Add an edge
         setEdgeInteraction({
-          fromNode: node
+          fromNode: nodeId
         });
         e.stopPropagation();
         e.preventDefault();
@@ -49,37 +43,40 @@ export default function GraphEditor({
         // Add a node.
         let x = cnv.grid.xFromScreen(ex, ey, false);
         let y = cnv.grid.yFromScreen(ex, ey, false);
-        let newNode: GraphNode = { color: TriadColor.Col1, key: "usrnd_" + graph.getNextId(), y: y, x: x };
+        let id = "usrnd_" + colGraph.getNextId();
 
-        graph.nodes.push(newNode);
-        onChange(graph, true);
+        let data: ColGraphNode = { color: TriadColor.Col1, x: x, y: y };
+
+        colGraph.graph.addNode(id, data);
+        onChange(colGraph, true);
         e.stopPropagation();
         e.preventDefault();
       }
     } else if (tool === 'delete') {
-      if (node) {
-        graph.deleteNode(node);
-        onChange(graph, true);
+      if (nodeId) {
+        colGraph.graph.dropNode(nodeId);
+        onChange(colGraph, true);
         e.stopPropagation();
         e.preventDefault();
-      } else if (edge) {
-        graph.deleteEdge(edge);
-        onChange(graph, true);
+      } else if (edgeId) {
+        colGraph.graph.dropEdge(edgeId);
+        onChange(colGraph, true);
         e.stopPropagation();
         e.preventDefault();
       }
     } else if (tool === 'drag') {
-      if (node) {
-        setDraggedNode(node);
+      if (nodeId) {
+        setDraggedNode(nodeId);
         e.stopPropagation();
         e.preventDefault();
       }
     } else if (tool === 'paint') {
-      if (node) {
+      if (nodeId) {
+        let node = colGraph.graph.getNodeAttributes(nodeId);
         node.color = (node.color + 1) % 3;
-        let bucketIdx = computeNodeBucket(graph, node);
+        let bucketIdx = computeNodeBucket(colGraph, nodeId);
         compatGraph.recomputeActiveSubgraph(bucketIdx);
-        onChange(graph, false);
+        onChange(colGraph, false);
       }
     }
   }
@@ -92,9 +89,10 @@ export default function GraphEditor({
       let x = cnv.grid.xFromScreen(ex, ey, false);
       let y = cnv.grid.yFromScreen(ex, ey, false);
 
-      draggedNode.x = x;
-      draggedNode.y = y;
-      onChange(graph, false);
+      let draggedData = colGraph.graph.getNodeAttributes(draggedNode);
+      draggedData.x = x;
+      draggedData.y = y;
+      onChange(colGraph, false);
     } else if (edgeInteraction) {
       setEdgeInteraction({
         fromNode: edgeInteraction.fromNode
@@ -106,34 +104,35 @@ export default function GraphEditor({
     setMousePos([ex, ey]);
   }
 
-  function handleMouseUp(e: React.MouseEvent, node?: GraphNode) {
+  function handleMouseUp(e: React.MouseEvent, nodeId?: string) {
     let [ex, ey] = cnv.getEventPoint(e);
 
     if (draggedNode) {
       let x = cnv.grid.xFromScreen(ex, ey, false);
       let y = cnv.grid.yFromScreen(ex, ey, false);
 
-      draggedNode.x = x;
-      draggedNode.y = y;
+      let draggedData = colGraph.graph.getNodeAttributes(draggedNode);
+      draggedData.x = x;
+      draggedData.y = y;
 
-      onChange(graph, false);
+      onChange(colGraph, false);
       setDraggedNode(undefined);
       e.stopPropagation();
       e.preventDefault();
     }
 
     if (edgeInteraction) {
-      if (node) {
-        let newEdge: GraphEdge = {
-          source: edgeInteraction.fromNode,
-          target: node,
-          type: EdgeType.Disequality,
-          key: "usredge_"+graph.getNextId()
+      if (nodeId) {
+        let newEdge: ColGraphEdge = {
+          type: EdgeType.Disequality
         };
-        graph.edges.push(newEdge);
+        // Prevent self-loops
+        if (edgeInteraction.fromNode !== nodeId) {
+          colGraph.graph.addEdge(edgeInteraction.fromNode, nodeId, newEdge);
+        }
       }
 
-      onChange(graph, true);
+      onChange(colGraph, true);
       setEdgeInteraction(undefined);
       e.stopPropagation();
       e.preventDefault();
@@ -143,9 +142,9 @@ export default function GraphEditor({
   function drawGraph(canvas: React.JSX.Element[], labels: React.JSX.Element[]) {
     drawBuckets(cnv, canvas, labels);
 
-    for (let edge of graph.edges) {
-      let src = edge.source as GraphNode;
-      let tgt = edge.target as GraphNode;
+    colGraph.graph.forEachEdge((edgeId, attributes, source, target) => {
+      let src = colGraph.graph.getNodeAttributes(source);
+      let tgt = colGraph.graph.getNodeAttributes(target);
 
       let [fromX, fromY] = cnv.grid.toScreen(src.x||0, src.y||0);
       let [toX, toY] = cnv.grid.toScreen(tgt.x||0, tgt.y||0);
@@ -159,14 +158,14 @@ export default function GraphEditor({
       }
 
 
-      let line = <line className={cursor} key={'edge_'+edge.key} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edge)} />;
+      let line = <line className={cursor} key={'edge_'+edgeId} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeWidth={cnv.zoom*2} onMouseDown={e => handleMouseDown(e, undefined, edgeId)} />;
 
       canvas.push(line);
-    }
+    });
 
     if (edgeInteraction && mousePos) {
-      let src = edgeInteraction.fromNode;
-      let [fromX, fromY] = cnv.grid.toScreen(src.x||0, src.y||0);
+      let src = colGraph.graph.getNodeAttributes(edgeInteraction.fromNode);
+      let [fromX, fromY] = cnv.grid.toScreen(src.x, src.y);
 
       let line = <line key={"edgeInteract"} x1={fromX} y1={fromY} x2={mousePos[0]} y2={mousePos[1]} stroke="white" strokeOpacity={0.5} strokeWidth={cnv.zoom*4} />;
 
@@ -178,9 +177,7 @@ export default function GraphEditor({
       canvas.push(circ);
     }
 
-    let colorScale = bucketScale(cnv.graph);
-
-    for (let node of graph.nodes) {
+    colGraph.graph.forEachNode((nodeId, attributes) => {
       let cursor = "";
       if (tool === "drag") {
         cursor = "cursor-grab";
@@ -190,15 +187,14 @@ export default function GraphEditor({
         cursor = "cursor-crosshair";
       }
 
-      let color = triadColorToColor(node.color);
-      //color = colorScale(computeNodeBucket(graph, node));
+      let color = triadColorToColor(attributes.color);
 
-      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x || 0, node.y || 0, canvas, labels, {
+      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, attributes.x || 0, attributes.y || 0, canvas, labels, {
         className: cursor,
-        onMouseDown: (e: React.MouseEvent) => {handleMouseDown(e, node)},
-        onMouseUp: (e: React.MouseEvent) => {handleMouseUp(e, node)}
+        onMouseDown: (e: React.MouseEvent) => {handleMouseDown(e, nodeId)},
+        onMouseUp: (e: React.MouseEvent) => {handleMouseUp(e, nodeId)}
       });
-    }
+    });
   }
 
   let graphCanvas: React.JSX.Element[] = [];

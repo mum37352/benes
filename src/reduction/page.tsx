@@ -11,7 +11,7 @@ import * as d3 from "d3";
 import { Check, Frame, X } from 'lucide-react';
 import { ProgressBar } from 'primereact/progressbar';
 import GraphEditor from './GraphEditor';
-import { ColGraph, CompatGraph, GraphNode } from './Graph';
+import { ColGraph, CompatGraph, ColGraphNode } from './Graph';
 import { GraphToolbar, GraphToolbarPanel, ToolSel } from '@/common/Toolbar';
 import { KB, KI } from '@/common/katex';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
@@ -56,7 +56,7 @@ function Main()
       <GraphToolbarPanel activeTool={tool} onChange={setTool} paintBrush>
         <KB>G</KB>
         <div className="flex-1">
-          <GraphEditor compatGraph={compatGraph} tool={tool} graph={graph} onChange={onChange} />
+          <GraphEditor compatGraph={compatGraph} tool={tool} colGraph={graph} onChange={onChange} />
         </div>
       </GraphToolbarPanel>
     </SplitterPanel>
