@@ -19,7 +19,7 @@ export default function CompatibilityGraph({
 
 
   function handleMouseDown(e: React.MouseEvent, nodeId: string) {
-    let node = compatGraph?.graph.node(nodeId);
+    let node = compatGraph?.graph.getNodeAttributes(nodeId);
     if (node && compatGraph) {
       compatGraph.activeSubgraph[node.bucketIdx] = nodeId;
       let bucket = compatGraph.buckets[node.bucketIdx];
@@ -36,15 +36,15 @@ export default function CompatibilityGraph({
   function drawGraph(canvas: React.JSX.Element[], labels: React.JSX.Element[]) {
     drawBuckets(cnv, canvas, labels);
 
-    compatGraph?.graph.edges().forEach(edge => {
-      let src = compatGraph.graph.node(edge.v);
-      let tgt = compatGraph.graph.node(edge.w);
+    compatGraph?.graph.forEachEdge((edgeId, attributes, source, target) => {
+      let src = compatGraph.graph.getNodeAttributes(source);
+      let tgt = compatGraph.graph.getNodeAttributes(target);
 
 
       let [fromX, fromY] = cnv.grid.toScreen(src.x || 0, src.y || 0);
       let [toX, toY] = cnv.grid.toScreen(tgt.x || 0, tgt.y || 0);
 
-      let isActive = (compatGraph.activeSubgraph[src.bucketIdx] === edge.v) && (compatGraph.activeSubgraph[tgt.bucketIdx] === edge.w);
+      let isActive = (compatGraph.activeSubgraph[src.bucketIdx] === source) && (compatGraph.activeSubgraph[tgt.bucketIdx] === target);
 
       let color = "gray";
       let opacity = 0.3;
@@ -54,25 +54,24 @@ export default function CompatibilityGraph({
         opacity = 1.0;
       }
 
-      let line = <line key={'edge_' + edge.v + "-" + edge.w} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeOpacity={opacity} strokeWidth={cnv.zoom * 2} />;
+      let line = <line key={'edge_' + edgeId} x1={fromX} y1={fromY} x2={toX} y2={toY} stroke={color} strokeOpacity={opacity} strokeWidth={cnv.zoom * 2} />;
       canvas.push(line)
     })
 
-    compatGraph?.graph.nodes().forEach(nodeId => {
-      let node = compatGraph.graph.node(nodeId);
+    compatGraph?.graph.forEachNode((nodeId, attributes) => {
       let color = midColor;
 
-      let active = (compatGraph.activeSubgraph[node.bucketIdx] === nodeId);
+      let active = (compatGraph.activeSubgraph[attributes.bucketIdx] === nodeId);
       if (active) {
         color = topColor;
       }
 
 
-      if (!node.proper) {
+      if (!attributes.proper) {
         color = active ? redColor : inputColor;
       }
 
-      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, node.x, node.y, canvas, labels, {
+      drawNode(cnv.zoom, cnv.grid, GraphNodeType.Internal, color, attributes.x, attributes.y, canvas, labels, {
         onMouseDown: (e: React.MouseEvent) => handleMouseDown(e, nodeId),
         className: "cursor-pointer",
       });

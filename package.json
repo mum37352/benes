@@ -38,6 +38,7 @@
         "d3": "^7.9.0",
         "fast-2d-poisson-disk-sampling": "^1.0.3",
         "graphlib": "^2.1.8",
+        "graphology": "^0.26.0",
         "javascript-lp-solver": "^0.4.24",
         "katex": "^0.16.22",
         "lucide-react": "^0.513.0",

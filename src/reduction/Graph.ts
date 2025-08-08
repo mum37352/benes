@@ -2,9 +2,9 @@
 import { bottomColor, midColor, topColor } from "@/common/Colors";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import * as d3 from "d3";
-import { Graph } from "graphlib";
 import { BucketCanvas, computeCanonicalBucketEllipse, computeNodeBucket, ellipticPoissonDiskSet, mapCanonicalEllipseToBucketArea, randomPointInBucket } from "./buckets";
 import { foreachNaryString } from "@/common/mathUtils";
+import Graph from "graphology";
 
 
 export enum TriadColor {
@@ -108,13 +108,21 @@ export class ColGraph {
   edges: GraphEdge[];
 }
 
+type CompatGraphNode = {
+  x: number,
+  y: number,
+  coloring: number[],
+  proper: boolean,
+  bucketIdx: number
+}
+
 export class CompatGraph {
   mkNodeId(bucketIdx: number, coloring: number[]) {
     return bucketIdx.toString() + "-" + coloring.toString();
   }
 
   constructor(graph: ColGraph) {
-    let result: Graph = new Graph({ multigraph: false, directed: false });
+    let result: Graph = new Graph<CompatGraphNode>({ type: 'undirected' });
 
     this.buckets = Array.from({ length: graph.cliqueSize }, () => []);
 
@@ -149,7 +157,7 @@ export class CompatGraph {
           }
         }
 
-        result.setNode(this.mkNodeId(bucketIdx, coloring), { x, y, proper, bucketIdx, coloring: [...coloring] });
+        result.addNode(this.mkNodeId(bucketIdx, coloring), { x, y, proper, bucketIdx, coloring: [...coloring] });
         return false;
       });
     }
@@ -163,8 +171,8 @@ export class CompatGraph {
 
         let compatible = true;
 
-        let dataA = result.node(nodeA);
-        let dataB = result.node(nodeB);
+        let dataA = result.getNodeAttributes(nodeA);
+        let dataB = result.getNodeAttributes(nodeB);
 
         if (dataA.bucketIdx === dataB.bucketIdx) {
           compatible = false;
@@ -188,7 +196,7 @@ export class CompatGraph {
         }
 
         if (compatible) {
-          result.setEdge(nodeA, nodeB);
+          result.addEdge(nodeA, nodeB);
         }
       }
     }
