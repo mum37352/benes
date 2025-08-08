@@ -17,6 +17,7 @@ import { KB, KI } from '@/common/katex';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import BenesNet from '@/route-benes/BenesNet';
 import CompatibilityGraph from './CompatibilityGraph';
+import { FullscreenButton } from '@/common/FullscreenButton';
 
 type Config = {
   graph: ColGraph,
@@ -127,11 +128,12 @@ const root = ReactDOM.createRoot(document.getElementById('root')!);
 //initMacros();
 root.render(
   <React.StrictMode>
-      <PrimeReactProvider>
-        {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
-        <div className="fixed flex overflow-hidden h-dvh w-full">
-          <Main />
-        </div>
-      </PrimeReactProvider>
+    <PrimeReactProvider>
+      {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
+      <div className="fixed flex overflow-hidden h-dvh w-full">
+        <Main />
+        <FullscreenButton />
+      </div>
+    </PrimeReactProvider>
   </React.StrictMode>
 );

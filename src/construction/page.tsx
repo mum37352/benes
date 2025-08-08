@@ -20,6 +20,7 @@ import * as d3 from "d3";
 import { Card } from 'primereact/card';
 import { Check, X } from 'lucide-react';
 import { ProgressBar } from 'primereact/progressbar';
+import { FullscreenButton } from '@/common/FullscreenButton';
 
 type Config = {
   ioHeight: number,
@@ -211,7 +212,7 @@ function Main()
         </div>
 
         <PermLists config={config} setConfig={setConfig} />
-        </div>
+      </div>
     </SplitterPanel>
   </Splitter>;
 }
@@ -221,11 +222,12 @@ const root = ReactDOM.createRoot(document.getElementById('root')!);
 initMacros();
 root.render(
   <React.StrictMode>
-      <PrimeReactProvider>
-        {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
-        <div className="fixed flex overflow-hidden h-dvh w-full">
-          <Main />
-        </div>
-      </PrimeReactProvider>
+    <PrimeReactProvider>
+      {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
+      <div className="fixed flex overflow-hidden h-dvh w-full">
+        <Main />
+        <FullscreenButton />
+      </div>
+    </PrimeReactProvider>
   </React.StrictMode>
 );

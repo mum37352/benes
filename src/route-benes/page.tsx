@@ -12,6 +12,9 @@ import { InputSwitch } from "primereact/inputswitch";
 import { SelectButton } from "primereact/selectbutton";
 import { initMacros, KI } from "../common/katex";
 import { inputColor, outputColor } from "../common/Colors";
+import { Maximize, Minimize2 } from 'lucide-react';
+import { Button } from 'primereact/button';
+import { FullscreenButton } from '@/common/FullscreenButton';
 
 function Main() {
   let [benesOrder, setBenesOrder] = useState(3);
@@ -104,16 +107,18 @@ function Main() {
   </Splitter>;
 }
 
+
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 initMacros();
 root.render(
   <React.StrictMode>
-      <PrimeReactProvider>
-        {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
-        <div className="fixed flex overflow-hidden h-dvh w-full">
-          <Main />
-        </div>
-      </PrimeReactProvider>
+    <PrimeReactProvider>
+      {/* A fixed pos seems to be necessary to get rid of some strange scrollbars */}
+      <div className="fixed flex overflow-hidden h-dvh w-full">
+        <Main />
+        <FullscreenButton />
+      </div>
+    </PrimeReactProvider>
   </React.StrictMode>
 );
