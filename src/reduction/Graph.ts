@@ -160,7 +160,12 @@ export class CompatGraph {
 
     this.activeSubgraph = new Array(this.buckets.length).fill(null);
     for (let bucketIdx = 0; bucketIdx < this.buckets.length; bucketIdx++) {
-      let coloring = new Array(this.buckets[bucketIdx].length).fill(0);
+      let bucket = this.buckets[bucketIdx];
+      let coloring: number[] = [];
+      for (let i = 0; i < bucket.length; i++) {
+        let node = bucket[i];
+        coloring.push(colGraph.graph.getNodeAttribute(node, "color"));
+      }
       this.activeSubgraph[bucketIdx] = this.mkNodeId(bucketIdx, coloring);
     }
 
