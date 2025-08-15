@@ -166,9 +166,10 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
         <MdTokens tokens={token.tokens!} />
       </TaggedBox>);
     } else if (token.type === "list") {
-      renderList.push(<ul className="list-disc pl-5"><MdTokens tokens={token.items!} /></ul>);
+      renderList.push(<ul className="list-disc pl-5"><MdTokens tokens={token.items} /></ul>);
     } else if (token.type === "list_item") {
-      renderList.push(<li><MdTokens tokens={token.tokens!} /></li>);
+      let tokens = marked.lexer(token.text);
+      renderList.push(<li><MdTokens tokens={tokens} /></li>);
     }
   }
 
