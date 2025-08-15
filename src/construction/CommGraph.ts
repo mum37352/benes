@@ -488,68 +488,6 @@ export class CommGraph {
     }
   }
 
-
-  // Old implementation (using a backtracking approach), does not yet seem to work. Abandoned following discussions w/ Prof RC.
-  /*
-  routePermutation(perm: Permutation) {
-    let paths: GraphNode[][] = [];
-    let visitedVerts = new Set<GraphNode>();
-    let success = this.routePermutation_recurse(perm, 0, paths, visitedVerts);
-
-    return success ? paths : undefined;
-  }
-
-  routePermutation_recurse(perm: Permutation, pathIdx: number, paths: GraphNode[][], visitedVerts: Set<GraphNode>) {
-    let dst = this.outputs[perm.lut[pathIdx]];
-
-    let newPath : GraphNode[] = [];
-    type StackEntry = {node: GraphNode, pathIdx: number};
-    let stack : StackEntry[] = [{node: this.inputs[pathIdx], pathIdx: 0}];
-
-    for (;;) {
-      let atEntry = stack.pop();
-
-      if (!atEntry) {
-        break;
-      }
-
-      // Truncate.
-      newPath.length = atEntry.pathIdx;
-      newPath.push(atEntry.node);
-
-      if (visitedVerts.has(atEntry.node)) {
-        continue;
-      }
-
-      visitedVerts.add(atEntry.node);
-
-      if (atEntry.node === dst) {
-        paths.push(newPath);
-
-        if (pathIdx < this.ioHeight - 1) {
-          if (this.routePermutation_recurse(perm, pathIdx + 1, paths, visitedVerts)) {
-            return true;
-          }
-
-          paths.pop();
-        } else {
-          return true;
-        }
-      }
-
-      newPath.push();
-
-      let neighbors = this.adjacentVerts(atEntry.node);
-      for (let neighbor of neighbors) {
-        stack.push({node: neighbor, pathIdx: newPath.length});
-      }
-    }
-
-    // Could not find a path.
-    return false;
-  }
-    */
-
   // WARNING: Expensive, linear in the # of edges.
   adjacentVerts(node: CommGraphNode) : CommGraphNode[] {
     let result: CommGraphNode[] = [];
