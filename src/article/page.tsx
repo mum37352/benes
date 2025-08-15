@@ -2,10 +2,47 @@ import React, { useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import '@/styles/index.css';
-import { marked, Token } from 'marked';
+import { marked, MarkedExtension, Token } from 'marked';
 import linkupMd from "./linkup.md";
 import { initMacros, KB, KI } from '@/common/katex';
 import { ChevronsRight } from 'lucide-react';
+
+
+let mathExtension: MarkedExtension = {
+  extensions: [
+    {
+      name: 'inlineMath',
+      level: 'inline',
+      start(src: string) { return src.match(/\$/)?.index; },
+      tokenizer(src: string) {
+        const match = src.match(/^\$([^\$]+)\$/);
+        if (match) {
+          return {
+            type: 'inlineMath',
+            raw: match[0],
+            text: match[1].trim()
+          };
+        }
+      }
+    },
+    {
+      name: 'blockMath',
+      level: 'block',
+      start(src: string) { return src.match(/\$\$/)?.index; },
+      tokenizer(src: string) {
+        const match = src.match(/^\$\$([^$]+)\$\$/m);
+        if (match) {
+          return {
+            type: 'blockMath',
+            raw: match[0],
+            text: match[1].trim()
+          };
+        }
+      }
+    }
+  ]
+};
+marked.use(mathExtension);
 
 function parseMd() {
   let markdown = linkupMd.replace(/^\uFEFF/, ''); // remove BOM if present
@@ -111,6 +148,10 @@ function MdTokens({tokens}: {tokens: Token[]}) {
         renderList.push(<p><MdTokens tokens={token.tokens!}/></p>);
     } else if (token.type === "strong") {
         renderList.push(<Strong><MdTokens tokens={token.tokens!}/></Strong>);
+    } else if (token.type === "inlineMath") {
+        renderList.push(<KI>{token.text}</KI>);
+    } else if (token.type === "blockMath") {
+        renderList.push(<KB>{token.text}</KB>);
     }
   }
 
@@ -123,7 +164,7 @@ function MdArticle() {
 
 
 // Disable for now. My macros break KaTeX's \neq (eyeroll), no idea why
-initMacros();
+//initMacros();
 root.render(
   <React.StrictMode>
         <div className="mx-auto max-w-4xl p-3 font-crimson text-lg">
