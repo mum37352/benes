@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import '@/styles/index.css';
-import { marked } from 'marked';
+import { marked, Token } from 'marked';
 import linkupMd from "./linkup.md";
 import { initMacros, KB, KI } from '@/common/katex';
 import { ChevronsRight } from 'lucide-react';
@@ -96,22 +96,27 @@ The torus <KI>\T^2</KI> and the Euclidean plane <KI>\R^2</KI> are locally isomor
 </>);
 }
 
-function MdArticle() {
+function MdTokens({tokens}: {tokens: Token[]}) {
   let renderList: any = [];
   for (let token of tokens) {
     if (token.type === "heading") {
       if (token.depth === 1) {
-        renderList.push(<Title>{token.text}</Title>);
+        renderList.push(<Title><MdTokens tokens={token.tokens!}/></Title>);
       } else if (token.depth === 2) {
-        renderList.push(<Section>{token.text}</Section>);
+        renderList.push(<Section><MdTokens tokens={token.tokens!}/></Section>);
       }
-    } else if (token.type === "paragraph") {
-      
+    } else if (token.type === "text") {
         renderList.push(<>{token.text}</>);
+    } else if (token.type === "paragraph") {
+        renderList.push(<p><MdTokens tokens={token.tokens!}/></p>);
     }
   }
 
   return <>{renderList}</>
+}
+
+function MdArticle() {
+  return <MdTokens tokens={tokens} />
 }
 
 
