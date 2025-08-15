@@ -7,17 +7,14 @@ import { Splitter, SplitterPanel } from 'primereact/splitter';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import { PrimeReactProvider } from 'primereact/api';
 import "primereact/resources/themes/lara-dark-teal/theme.css";
-import { InputSwitch, InputSwitchChangeEvent } from "primereact/inputswitch";
 import { SelectButton } from "primereact/selectbutton";
 import { initMacros, KI } from "../common/katex";
 import Construction from "./Construction";
 import Permutation, { allPerms } from "../common/Permutation";
 import { inputColor, outputColor } from "../common/Colors";
-import { Toolbar } from 'primereact/toolbar';
-import { ConstructionAction, ConstructionMode, GraphToolbar, GraphToolbarPanel, ToolSel } from '../common/Toolbar';
+import { GraphToolbarPanel, ToolSel } from '../common/Toolbar';
 import { CommGraph, CommGraphNode } from './CommGraph';
 import * as d3 from "d3";
-import { Card } from 'primereact/card';
 import { Check, X } from 'lucide-react';
 import { ProgressBar } from 'primereact/progressbar';
 import { FullscreenButton } from '@/common/FullscreenButton';
@@ -26,7 +23,7 @@ type Config = {
   ioHeight: number,
   perms: Permutation[],
   selPerm: Permutation,
-  graph: CommGraph
+  commGraph: CommGraph
 }
 
 function configFromIoHeight(ioHeight: number): Config {
@@ -34,7 +31,7 @@ function configFromIoHeight(ioHeight: number): Config {
     ioHeight,
     perms: allPerms(ioHeight),
     selPerm: new Permutation([...Array(ioHeight).keys()]),
-    graph: CommGraph.makeCompleteBipartiteGraph(ioHeight)
+    commGraph: CommGraph.makeCompleteBipartiteGraph(ioHeight)
   }
 }
 
@@ -47,7 +44,7 @@ function PermLists({config, setConfig}: {config: Config, setConfig: Function} ) 
             ${atPerm.lut.toString() === perm.lut.toString()
           ? "bg-gray-700"
           : "bg-gray-700/10"}
-            ${config.graph.routingLut.get(atPerm.lut.toString()) ? "" : "border border-red-500"}
+            ${config.commGraph.routingLut.get(atPerm.lut.toString()) ? "" : "border border-red-500"}
           `}
         onClick={() => setConfig({...config, selPerm: atPerm})}
         key={atPerm.lut.toString()}>
@@ -62,7 +59,7 @@ function PermLists({config, setConfig}: {config: Config, setConfig: Function} ) 
   let goodPerms = [];
   let badPerms = [];
   for (let atPerm of config.perms) {
-    let routing = config.graph.routingLut.get(atPerm.lut.toString());
+    let routing = config.commGraph.routingLut.get(atPerm.lut.toString());
 
     if (routing) {
       goodPerms.push(atPerm);
@@ -93,15 +90,16 @@ function PermLists({config, setConfig}: {config: Config, setConfig: Function} ) 
 function Main()
 {
   let [config, setConfig] = useState<Config>(() => configFromIoHeight(3));
-  let graph = config.graph;
+  let commGraph = config.commGraph;
 
   let [tool, setTool] = useState<ToolSel>('insert');
-
-  let [simulation, setSimulation] = useState<d3.Simulation<CommGraphNode, undefined>>();
 
   let [, forceUpdate] = useReducer(x => x + 1, 0);
 
   let ref = useRef(null);
+
+  // Physics code, disabled for now.
+  /*
 
   function ticked() {
     forceUpdate();
@@ -123,25 +121,6 @@ function Main()
     simulation?.nodes(graph.nodes).alpha(1).restart();
     forceUpdate();
   }
-
-  // Old card rendering code (drew the entire graph).
-  /*
-  let permCards: React.JSX.Element[] = [];
-
-  for (let atPerm of perms) {
-    permCards.push(
-      <div className={`h-64 cursor-pointer rounded-lg p-1 shadow-md hover:shadow-xl active:bg-gray-900 hover:bg-gray-400/10 transition text-white
-            ${atPerm.lut.toString() === selPerm.lut.toString()
-              ? "bg-gray-700"
-              : "bg-gray-700/10"}
-            ${graph.routingLut.get(atPerm.lut.toString()) ? "":"border border-red-500"}
-          `}
-          onClick={() => setSelPerm(atPerm)}
-          key={atPerm.lut.toString()}>
-        <Construction graph={graph} ioHeight={ioHeight} perm={atPerm} />
-      </div>
-    );
-  }
     */
 
   return <Splitter className="h-dvh w-full" ref={ref}>
@@ -149,7 +128,7 @@ function Main()
       <GraphToolbarPanel activeTool={tool} onChange={setTool}>
         
         <div className="flex-1">
-          <Construction tool={tool} graph={graph} perm={config.selPerm} onChange={reheat} onPermChanged={(newPerm) => setConfig({ ...config, selPerm: newPerm })} />
+          <Construction tool={tool} commGraph={commGraph} perm={config.selPerm} onChange={() => forceUpdate()} onPermChanged={(newPerm) => setConfig({ ...config, selPerm: newPerm })} />
         </div>
       </GraphToolbarPanel>
     </SplitterPanel>
@@ -160,7 +139,7 @@ function Main()
         <div className="text-sm">
           <label className="block mb-1 font-bold" htmlFor="vertical">Routing:</label>
 
-          <SelectButton className="w-full" value={graph.useIlp ? "ILP" : "Brute-Force"} onChange={(e: any) => {graph.useIlp = (e.value == "ILP"); setConfig({...config});}} options={["ILP", "Brute-Force"]} />
+          <SelectButton className="w-full" value={commGraph.useIlp ? "ILP" : "Brute-Force"} onChange={(e: any) => {commGraph.useIlp = (e.value == "ILP"); setConfig({...config});}} options={["ILP", "Brute-Force"]} />
         </div>
 
         <p>
@@ -184,14 +163,14 @@ function Main()
             if (val && !isNaN(val)) {
               let newConfig = configFromIoHeight(val);
               setConfig(newConfig);
-              reheat(newConfig.graph);
+              forceUpdate();
             }
           }} mode="decimal" showButtons min={1} max={5} />
         </div>
 
         <p>
           This playground lets you construct "good" uncongested communication networks (Even though it may be a good warm-up to construct a bad one first.)
-          Your current network has <KI>{`${graph.nodes.length} \\geq 2n=${2*config.ioHeight}`}</KI> nodes and <KI>{`${graph.edges.length}`}</KI> edges.
+          Your current network has <KI>{`${commGraph.graph.order} \\geq 2n=${2*config.ioHeight}`}</KI> nodes and <KI>{`${commGraph.graph.size}`}</KI> edges.
         </p>
 
         <p>
@@ -201,11 +180,11 @@ function Main()
         <div className="text-sm">
           <label className="block mb-1 font-bold" htmlFor="inputHeight">Number of guidelines:</label>
 
-          <InputNumber className="" name="inputHeight" value={graph.numGuidelines} onValueChange={(e: InputNumberValueChangeEvent) => {
+          <InputNumber className="" name="inputHeight" value={commGraph.numGuidelines} onValueChange={(e: InputNumberValueChangeEvent) => {
             let val = e.value;
             if (val && !isNaN(val)) {
-              graph.setNumGuidelines(val);
-              reheat(graph);
+              commGraph.setNumGuidelines(val);
+              forceUpdate();
               setConfig({...config});
             }
           }} mode="decimal" showButtons min={1} max={8} />

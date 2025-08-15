@@ -26,7 +26,7 @@ export default function GraphEditor({
   let [mousePos, setMousePos] = useState<Vec2>();
 
   // NOTE: Calling e.preventDefault is necessary in the mouse handlers, to avoid
-  // Firefox from removing the keyboard focus from the parent interceptor.
+  // Firefox's removing the keyboard focus from the parent interceptor.
 
   function handleMouseDown(e: React.MouseEvent, nodeId?: string, edgeId?: string) {
     let [ex, ey] = cnv.getEventPoint(e);

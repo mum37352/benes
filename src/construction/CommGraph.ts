@@ -2,14 +2,9 @@ import { foreachNaryString, Vec2 } from "@/common/mathUtils";
 import { GraphNodeType } from "@/common/NodeDrawing";
 import Permutation, { allPerms } from "@/common/Permutation";
 import * as d3 from "d3";
+import Graph from "graphology";
 
 let solver = require('javascript-lp-solver');
-
-export interface CommGraphNode extends d3.SimulationNodeDatum {
-  type: GraphNodeType,
-  key: string,
-  guideline?: number|undefined
-}
 
 type LPModel = {
   optimize: string;
@@ -26,9 +21,54 @@ type LPModel = {
   };
 };
 
-export interface CommGraphEdge extends d3.SimulationLinkDatum<CommGraphNode> {
-  key: string
+function printLPModel(model: LPModel): void {
+  const { optimize, opType, constraints, variables } = model;
+
+  // Build objective function
+  const objectiveTerms = Object.entries(variables)
+    .map(([varName, coeffs]) => {
+      const c = coeffs[optimize] ?? 0;
+      return c !== 0 ? `${c}*${varName}` : null;
+    })
+    .filter(Boolean)
+    .join(" + ");
+
+  console.log(`${opType === "max" ? "Maximize" : "Minimize"}: ${objectiveTerms}`);
+
+  console.log("Subject to:");
+
+  for (const [constraintName, bounds] of Object.entries(constraints)) {
+    const terms = Object.entries(variables)
+      .map(([varName, coeffs]) => {
+        const coef = coeffs[constraintName] ?? 0;
+        return coef !== 0 ? `${coef}*${varName}` : null;
+      })
+      .filter(Boolean)
+      .join(" + ");
+
+    if (bounds.hasOwnProperty("equal")) {
+      console.log(`  ${terms} = ${bounds.equal}   (${constraintName})`);
+    }
+    if (bounds.hasOwnProperty("max")) {
+      console.log(`  ${terms} ≤ ${bounds.max}   (${constraintName})`);
+    }
+    if (bounds.hasOwnProperty("min")) {
+      console.log(`  ${terms} ≥ ${bounds.min}   (${constraintName})`);
+    }
+  }
+
+  // List non-negativity constraints
+  const varNames = Object.keys(variables);
+  console.log(`${varNames.join(", ")} ≥ 0`);
 }
+
+export type CommGraphNode = {
+  x: number,
+  y: number,
+  type: GraphNodeType,
+  guideline?: number|undefined;
+};
+
 
 export class CommGraph {
   constructor(ioHeight: number) {
@@ -36,24 +76,19 @@ export class CommGraph {
 
     this.ioHeight = ioHeight;
 
-    this.inputs = [];
+    this.graph = new Graph({ type: 'undirected' });
+
     for (let inputIdx = 0; inputIdx < ioHeight; inputIdx++) {
       let [x, y] = this.getInputPos(inputIdx);
-      let node : CommGraphNode = {key: "innd_"+inputIdx, type: GraphNodeType.Input, fx: x, fy: y };
-      this.inputs.push(node);
+      this.graph.addNode(CommGraph.mkInputKey(inputIdx), {type: GraphNodeType.Input, x, y});
     }
 
-    this.outputs = [];
     for (let outputIdx = 0; outputIdx < ioHeight; outputIdx++) {
       let [x, y] = this.getOutputPos(outputIdx);
-      let node : CommGraphNode = {key: "outnd_"+outputIdx, type: GraphNodeType.Output, fx: x, fy: y };
-      this.outputs.push(node);
+      this.graph.addNode(CommGraph.mkOutputKey(outputIdx), {type: GraphNodeType.Output, x, y});
     }
 
     this.nextId = 0;
-
-    this.nodes = [...this.inputs, ...this.outputs];
-    this.edges = [];
 
     this.useIlp = false;
 
@@ -61,40 +96,44 @@ export class CommGraph {
     this.routingLut = new Map();
   }
 
-  static makeCompleteBipartiteGraph(ioHeight: number) {
-    let graph = new CommGraph(ioHeight);
+  static mkInputKey(inputIdx: number) {
+    return "innd-" + inputIdx;
+  }
 
-    
+  static mkOutputKey(inputIdx: number) {
+    return "outnd-" + inputIdx;
+  }
+
+  static makeCompleteBipartiteGraph(ioHeight: number) {
+    let commGraph = new CommGraph(ioHeight);
+
     for (let inputIdx = 0; inputIdx < ioHeight; inputIdx++) {
       for (let outputIdx = 0; outputIdx < ioHeight; outputIdx++) {
-        let newEdge: CommGraphEdge = {
-          source: graph.inputs[inputIdx],
-          target: graph.outputs[outputIdx]
-        };
-        graph.edges.push(newEdge);
+        commGraph.graph.addEdge(CommGraph.mkInputKey(inputIdx), CommGraph.mkOutputKey(outputIdx));
       }
     }
     
-    graph.routeAllPermutations();
+    commGraph.routeAllPermutations();
 
-    return graph;
+    return commGraph;
   }
 
   setNumGuidelines(newNum: number) {
     this.numGuidelines = newNum;
 
-    for (let [i, node] of this.inputs.entries()) {
-      [node.fx, node.fy] = this.getInputPos(i);
+    // Update terminal positions.
+    for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
+      this.graph.setNodeAttribute(CommGraph.mkInputKey(inputIdx), "x", this.getInputPos(inputIdx)[0]);
     }
-    for (let [i, node] of this.outputs.entries()) {
-      [node.fx, node.fy] = this.getOutputPos(i);
+    for (let outputIdx = 0; outputIdx < this.ioHeight; outputIdx++) {
+      this.graph.setNodeAttribute(CommGraph.mkOutputKey(outputIdx), "x", this.getOutputPos(outputIdx)[0]);
     }
-    for (let i = this.nodes.length - 1; i >= 0; i--) {
-      let node = this.nodes[i];
-      if (node.type === GraphNodeType.Internal && node.guideline && node.guideline >= newNum) {
-        this.deleteNode(node);
-      }
-    }
+
+    // Delete nodes on deleted guidelines.
+    let aboutToDie = this.graph.filterNodes((node, attributes) => (attributes.type === GraphNodeType.Internal && !!attributes.guideline && attributes.guideline >= newNum));
+    aboutToDie.forEach(node => this.graph.dropNode(node));
+
+    // Reroute.
     this.routeAllPermutations();
   }
 
@@ -114,11 +153,12 @@ export class CommGraph {
     return (this.ioHeight-1)/2;
   }
 
+  // Used for the brute force router.
   // If successful, return the valences, else return null.
-  hasNoValence3Nodes(edgeSubset: Array<number>) {
+  hasNoValence3Nodes(edges: string[], edgeSubset: Array<number>) {
     let nodeValences = new Map();
 
-    function bumpValence(node: CommGraphNode) {
+    function bumpValence(node: string) {
       let current = nodeValences.get(node);
       if (!current) {
         current = 1;
@@ -132,10 +172,10 @@ export class CommGraph {
 
     for (let edgeIdx = 0; edgeIdx < edgeSubset.length; edgeIdx++) {
       if (edgeSubset[edgeIdx] != 0) {
-        let edge = this.edges[edgeIdx];
+        let edge = edges[edgeIdx];
 
-        let valenceA = bumpValence(edge.source as CommGraphNode);
-        let valenceB = bumpValence(edge.target as CommGraphNode);
+        let valenceA = bumpValence(this.graph.source(edge));
+        let valenceB = bumpValence(this.graph.target(edge));
 
         if (valenceA > 2 || valenceB > 2) {
           return null;
@@ -146,48 +186,8 @@ export class CommGraph {
     return nodeValences;
   }
 
-  printLPModel(model: LPModel): void {
-    const { optimize, opType, constraints, variables } = model;
-
-    // Build objective function
-    const objectiveTerms = Object.entries(variables)
-      .map(([varName, coeffs]) => {
-        const c = coeffs[optimize] ?? 0;
-        return c !== 0 ? `${c}*${varName}` : null;
-      })
-      .filter(Boolean)
-      .join(" + ");
-
-    console.log(`${opType === "max" ? "Maximize" : "Minimize"}: ${objectiveTerms}`);
-
-    console.log("Subject to:");
-
-    for (const [constraintName, bounds] of Object.entries(constraints)) {
-      const terms = Object.entries(variables)
-        .map(([varName, coeffs]) => {
-          const coef = coeffs[constraintName] ?? 0;
-          return coef !== 0 ? `${coef}*${varName}` : null;
-        })
-        .filter(Boolean)
-        .join(" + ");
-
-      if (bounds.hasOwnProperty("equal")) {
-        console.log(`  ${terms} = ${bounds.equal}   (${constraintName})`);
-      }
-      if (bounds.hasOwnProperty("max")) {
-        console.log(`  ${terms} ≤ ${bounds.max}   (${constraintName})`);
-      }
-      if (bounds.hasOwnProperty("min")) {
-        console.log(`  ${terms} ≥ ${bounds.min}   (${constraintName})`);
-      }
-    }
-
-    // List non-negativity constraints
-    const varNames = Object.keys(variables);
-    console.log(`${varNames.join(", ")} ≥ 0`);
-  }
-
-  routePermutationIlp(perm: Permutation): CommGraphNode[][] | null {
+  // string[] = Array of nodes.
+  routePermutationIlp(perm: Permutation): string[][] | null {
     let variables: {[key: string]: {[key: string]: number}} = {};
     let constraints: {[key: string]: {"equal"?: number, "max"?: number, "min"?: number}} = {};
     let ints:  {[key: string]: 1} = {};
@@ -197,107 +197,98 @@ export class CommGraph {
       return "p" + pathIdx.toString() + "-" + key;
     }
 
-    function mkEdgeVarKey(edgeIdx: number, pathIdx: number) {
-      return pathMod(edgeIdx.toString() + "-var", pathIdx);
+    function mkEdgeVarKey(edge: string, pathIdx: number) {
+      // TODO: Should escape the edge key?
+      return pathMod(edge + "-var", pathIdx);
     }
     
     for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
-      let inputNode = this.inputs[inputIdx];
-      let outputNode = this.outputs[perm.lut[inputIdx]];
+      let inputNode = CommGraph.mkInputKey(inputIdx);
+      let outputNode = CommGraph.mkOutputKey(perm.lut[inputIdx]);
 
-      function isTerminal(node: CommGraphNode) {
+      function isInTermPair(node: string) {
         return node === inputNode || node === outputNode;
       }
 
-      for (let edgeIdx = 0; edgeIdx < this.edges.length; edgeIdx++) {
-        let edgeKey = mkEdgeVarKey(edgeIdx, inputIdx);
-        let binEqnKey = pathMod(edgeIdx.toString() + "-b-eqn", inputIdx);
+      this.graph.forEachEdge((edge, attribs) => {
+        let edgeKey = mkEdgeVarKey(edge, inputIdx);
+        let binEqnKey = pathMod(edge + "-b-eqn", inputIdx);
 
         variables[edgeKey] = { "objective": 0 };
         variables[edgeKey][binEqnKey] = 1;
 
         ints[edgeKey] = 1;
         constraints[binEqnKey] = { "max": 1 };
-      }
+      });
 
       // Add the edge inequalities.
-      let doIncidentCoeffs = (eqnKey: string, edgeIdx: number, node: CommGraphNode) => {
-        if (isTerminal(node)) {
+      let doIncidentCoeffs = (eqnKey: string, edge: string|undefined, node: string) => {
+        if (isInTermPair(node)) {
           constraints[eqnKey]["min"]!--;
         }
 
-        let inc = this.incidentEdgeIndices(node);
-        for (let incEdgeIdx of inc) {
-          if (incEdgeIdx === edgeIdx) {
-            continue;
+        this.graph.forEachEdge(node, (atEdge, atAttrs, atSource, atTarget) => {
+          if (edge !== atEdge) {
+            let incEdgeKey = mkEdgeVarKey(atEdge, inputIdx);
+            if (!variables[incEdgeKey][eqnKey]) {
+              variables[incEdgeKey][eqnKey] = 0;
+            }
+            variables[incEdgeKey][eqnKey]++;
           }
-
-          let incEdgeKey = mkEdgeVarKey(incEdgeIdx, inputIdx);
-          if (!variables[incEdgeKey][eqnKey]) {
-            variables[incEdgeKey][eqnKey] = 0;
-          }
-          variables[incEdgeKey][eqnKey]++;
-        }
+        });
       }
 
-      for (let edgeIdx = 0; edgeIdx < this.edges.length; edgeIdx++) {
-        let edgeKey = mkEdgeVarKey(edgeIdx, inputIdx);
-        let eqnKey = pathMod(edgeIdx.toString() + "-e-eqn", inputIdx);
+      this.graph.forEachEdge((edge, attrs, source, target) => {
+        let edgeKey = mkEdgeVarKey(edge, inputIdx);
+        let eqnKey = pathMod(edge + "-e-eqn", inputIdx);
         variables[edgeKey][eqnKey] = -2;
         constraints[eqnKey] = { "min": 0 };
 
-        let edge = this.edges[edgeIdx];
-
-        doIncidentCoeffs(eqnKey, edgeIdx, edge.source as CommGraphNode);
-        doIncidentCoeffs(eqnKey, edgeIdx, edge.target as CommGraphNode);
-      }
+        doIncidentCoeffs(eqnKey, edge, source);
+        doIncidentCoeffs(eqnKey, edge, target);
+      });
 
       // Add the cycle-valence bounds for the nodes.
-      function mkVertEqnKey(node: CommGraphNode) {
-        return pathMod(node.key + "-v-eqn", inputIdx);
+      function mkVertEqnKey(node: string) {
+        return pathMod(node + "-v-eqn", inputIdx);
       }
 
-      for (let node of this.nodes) {
+      this.graph.forEachNode((node, attribs) => {
         let eqnKey = mkVertEqnKey(node);
 
-        constraints[eqnKey] = { "max": isTerminal(node) ? 1 : 2 };
-        let inc = this.incidentEdgeIndices(node);
+        constraints[eqnKey] = { "max": isInTermPair(node) ? 1 : 2 };
 
-        for (let edgeIdx of inc) {
-          let edgeKey = mkEdgeVarKey(edgeIdx, inputIdx);
+        this.graph.forEachEdge(node, (atEdge, atAttrs, atSource, atTarget) => {
+          let edgeKey = mkEdgeVarKey(atEdge, inputIdx);
           variables[edgeKey][eqnKey] = 1;
-        }
-      }
+        });
+      });
 
       // Add equations for the augmentation edge. These n equations are the only part of
       // the system that are sensitive to the permutation.
       for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
         let eqnKey = pathMod(inputIdx.toString() + "-perm-eqn", inputIdx);
 
-        let inputNode = this.inputs[inputIdx];
-        let outputNode = this.outputs[perm.lut[inputIdx]];
-
         constraints[eqnKey] = { "min": 0 };
-        doIncidentCoeffs(eqnKey, -1, inputNode);
-        doIncidentCoeffs(eqnKey, -1, outputNode);
+        doIncidentCoeffs(eqnKey, undefined, inputNode);
+        doIncidentCoeffs(eqnKey, undefined, outputNode);
         constraints[eqnKey] = { "min": 2 };
       }
     }
 
     // Add vertex-disjointness constraints for all the paths.
-    for (let node of this.nodes) {
-      let eqnKey = node.key + "-dj-eqn";
+    this.graph.forEachNode((node, attribs) => {
+      let eqnKey = node + "-dj-eqn";
 
-      constraints[eqnKey] = { "max": node.type === GraphNodeType.Internal ? 2 : 1 };
+      constraints[eqnKey] = { "max": attribs.type === GraphNodeType.Internal ? 2 : 1 };
 
-      let inc = this.incidentEdgeIndices(node);
-      for (let incIdx of inc) {
+      this.graph.forEachEdge(node, (atEdge, atAttrs, atSource, atTarget) => {
         for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
-          let edgeKey = mkEdgeVarKey(incIdx, inputIdx);
+          let edgeKey = mkEdgeVarKey(atEdge, inputIdx);
           variables[edgeKey][eqnKey] = 1;
         }
-      }
-    }
+      });
+    });
 
     const model = {
       optimize: 'objective',
@@ -307,7 +298,7 @@ export class CommGraph {
       ints
     };
 
-    this.printLPModel(model as LPModel);
+    printLPModel(model as LPModel);
 
     const result = solver.Solve(model);
     console.log(result);
@@ -320,34 +311,31 @@ export class CommGraph {
 
     let permutationPaths = [];
     for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
-      let path: CommGraphNode[] = [this.inputs[inputIdx]];
+      let path: string[] = [CommGraph.mkInputKey(inputIdx)];
       // Each iteration of the loop adds one node to the path.
       for (;;) {
         // Find all edges incident w/ the last node in the path.
-        let lastNode = path.at(-1) as CommGraphNode;
+        let lastNode = path.at(-1) as string;
 
-        if (lastNode.type === GraphNodeType.Output) {
+        if (this.graph.getNodeAttribute(lastNode, "type") === GraphNodeType.Output) {
           break;
         }
 
         let penultimateNode = path.at(-2);
-        let incidentEdgeIndices = this.incidentEdgeIndices(lastNode);
 
-        for (let incidentEdgeIdx of incidentEdgeIndices) {
-          let edgeKey = mkEdgeVarKey(incidentEdgeIdx, inputIdx);
+        for (let atEdge of this.graph.edges(lastNode)) {
+          let edgeKey = mkEdgeVarKey(atEdge, inputIdx);
 
           // Check if the incident edge is in the subset.
           if (result[edgeKey] === 1) {
-            let edge = this.edges[incidentEdgeIdx];
-            let adjNode = this.getOppositeEdgeNode(edge, lastNode);
+            let adjNode = this.graph.opposite(lastNode, atEdge);
             // Don't go back.
             if (adjNode !== penultimateNode) {
               path.push(adjNode);
               break;
             }
           }
-        }
-
+        };
       }
       permutationPaths.push(path);
     }
@@ -357,7 +345,8 @@ export class CommGraph {
     return permutationPaths;
   }
 
-  routeAllPermutations(): Map<string, CommGraphNode[][]> {
+  // string[] = Array of nodes.
+  routeAllPermutations(): Map<string, string[][]> {
     if (this.useIlp) {
       return this.routeAllPermutationsIlp();
     } else {
@@ -365,8 +354,8 @@ export class CommGraph {
     }
   }
 
-  routeAllPermutationsIlp(): Map<string, CommGraphNode[][]> {
-    let routingLut = new Map<string, CommGraphNode[][]>();
+  routeAllPermutationsIlp(): Map<string, string[][]> {
+    let routingLut = new Map<string, string[][]>();
     let perms = allPerms(this.ioHeight);
 
     for (let perm of perms) {
@@ -382,20 +371,18 @@ export class CommGraph {
     return routingLut;
   }
 
-  routeAllPermutationsBruteForce(): Map<string, CommGraphNode[][]> {
+  routeAllPermutationsBruteForce(): Map<string, string[][]> {
     // Indexed by stringified permutation luts.
-    let routingLut = new Map<string, CommGraphNode[][]>();
-    foreachNaryString(this.edges.length, 2, (edgeSubset: Array<number>) => {
-      let isVertical = true;
-      for (let edgeIdx = 0; edgeIdx < edgeSubset.length; edgeIdx++) {
-        let edgeBool = edgeSubset[edgeIdx] > 0;
-        if (edgeBool !== ((edgeIdx % this.ioHeight) === Math.floor(edgeIdx / this.ioHeight))) {
-          isVertical = false;
-        }
-      }
-
+    let routingLut = new Map<string, string[][]>();
+    let edges = this.graph.edges();
+    // Build a mapping from edgeKey → index
+    let edgeIndexMap: Map<string, number> = new Map();
+    edges.forEach((edgeKey, idx) => {
+      edgeIndexMap.set(edgeKey, idx);
+    });
+    foreachNaryString(edges.length, 2, (edgeSubset: Array<number>) => {
       // TODO(optimize): We don't need a full recomputation of the valences here.
-      let valences = this.hasNoValence3Nodes(edgeSubset);
+      let valences = this.hasNoValence3Nodes(edges, edgeSubset);
       if (!valences) {
         return false;
       }
@@ -404,13 +391,13 @@ export class CommGraph {
 
       // Make sure the input and output nodes are terminal and being connected.
       for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
-        if (valences.get(this.inputs[inputIdx]) !== 1) {
+        if (valences.get(CommGraph.mkInputKey(inputIdx)) !== 1) {
           return false;
         }
       }
 
       for (let outputIdx = 0; outputIdx < this.ioHeight; outputIdx++) {
-        if (valences.get(this.outputs[outputIdx]) !== 1) {
+        if (valences.get(CommGraph.mkOutputKey(outputIdx)) !== 1) {
           return false;
         }
       }
@@ -420,20 +407,18 @@ export class CommGraph {
       let permutationLut = [];
       let permutationPaths = [];
       for (let inputIdx = 0; inputIdx < this.ioHeight; inputIdx++) {
-        let path: CommGraphNode[] = [this.inputs[inputIdx]];
+        let path: string[] = [CommGraph.mkInputKey(inputIdx)];
         // Each iteration of the loop adds one node to the path.
         for (;;) {
           // Find all edges incident w/ the last node in the path.
-          let lastNode = path.at(-1) as CommGraphNode;
+          let lastNode = path.at(-1) as string;
           let penultimateNode = path.at(-2);
-          let incidentEdgeIndices = this.incidentEdgeIndices(lastNode);
 
           let foundNewPathNode = false;
-          for (let incidentEdgeIdx of incidentEdgeIndices) {
+          for (let incidentEdge of this.graph.edges(lastNode)) {
             // Check if the incident edge is in the subset.
-            if (edgeSubset[incidentEdgeIdx]) {
-              let edge = this.edges[incidentEdgeIdx];
-              let adjNode = this.getOppositeEdgeNode(edge, lastNode);
+            if (edgeSubset[edgeIndexMap.get(incidentEdge)!]) {
+              let adjNode = this.graph.opposite(lastNode, incidentEdge);
               // Don't go back.
               if (adjNode !== penultimateNode) {
                 path.push(adjNode);
@@ -453,8 +438,8 @@ export class CommGraph {
         // Now check if the path terminates at an output node.
         let pathIsSane = false;
         for (let outputIdx = 0; outputIdx < this.ioHeight; outputIdx++) {
-          let node = this.outputs[outputIdx];
-          let lastNode = path.at(-1) as CommGraphNode;
+          let node = CommGraph.mkOutputKey(outputIdx);
+          let lastNode = path.at(-1) as string;
           if (lastNode === node) {
             permutationLut.push(outputIdx);
             pathIsSane = true;
@@ -480,49 +465,11 @@ export class CommGraph {
     return routingLut;
   }
 
-  getOppositeEdgeNode(edge: CommGraphEdge, node: CommGraphNode): CommGraphNode {
-    if (edge.source === node) {
-      return edge.target as CommGraphNode;
-    } else {
-      return edge.source as CommGraphNode;
-    }
-  }
-
-  // WARNING: Expensive, linear in the # of edges.
-  adjacentVerts(node: CommGraphNode) : CommGraphNode[] {
-    let result: CommGraphNode[] = [];
-
-    for (let edge of this.edges) {
-      if (edge.source === node) {
-        result.push(edge.source);
-      } else if (edge.target === node) {
-        result.push(edge.target);
-      }
-    }
-
-    return result;
-  }
-
-  // WARNING: Expensive, linear in the # of edges.
-  incidentEdgeIndices(node: CommGraphNode) : number[] {
-    let result: number[] = [];
-
-    for (let edgeIdx = 0; edgeIdx < this.edges.length; edgeIdx++) {
-      let edge = this.edges[edgeIdx];
-      if (edge.source === node) {
-        result.push(edgeIdx);
-      } else if (edge.target === node) {
-        result.push(edgeIdx);
-      }
-    }
-
-    return result;
-  }
-
   getNextId() {
     return this.nextId++;
   }
 
+  /*
   deleteNode(node: CommGraphNode) {
     // Delete edges containing the node.
     // Remove all elements greater than 3, in-place
@@ -545,21 +492,18 @@ export class CommGraph {
         this.edges.splice(i, 1);
       }
     }
-  }
+  }*/
 
   nextId: number;
 
   ioHeight: number;
-  inputs: CommGraphNode[];
-  outputs: CommGraphNode[];
-  nodes: CommGraphNode[];
-  edges: CommGraphEdge[];
 
-  // Vertical lines.
-  //guidelines: Guideline[];
+  graph: Graph<CommGraphNode>;
+
   numGuidelines: number;
 
-  routingLut: Map<string, CommGraphNode[][]>;
+  // For every perm.lut.toString(), we get a table mapping input indices to node arrays.
+  routingLut: Map<string, string[][]>;
 
   useIlp: boolean;
 }

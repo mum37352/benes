@@ -10,6 +10,7 @@ import { backgroundColor, getColorScale, MainGradient } from "@/common/Colors";
 import { CenteredKI } from "@/common/NodeDrawing";
 import { Box, length2d, lengthSq2d, mod, normalize2d, rotatePoint, sampleUniformUnitDisk, Vec2 } from "@/common/mathUtils";
 import FastPoissonDiskSampling from 'fast-2d-poisson-disk-sampling';
+import { GraphCanvas, useGraphCanvas } from "@/common/GraphCanvas";
 
 // I think we had to do this using rulers and compasses in Gymnasium.
 function fitCircleIntoIceCone(coneX: number, coneY: number) {
@@ -35,37 +36,26 @@ export function fitEllipseIntoIceCone(asp: number, angle: number): Vec2 {
   return [rx, rx/asp];
 }
 
-export type BucketCanvas = {
-  clientToSvg: (x: number, y: number) => Vec2,
-  getEventPoint: (e: React.MouseEvent) => Vec2,
+
+export type BucketCanvas = GraphCanvas & {
   grid: Grid,
   coreCircleDiam: number,
   zoom: number,
-  screenWidth: number,
-  screenHeight: number,
-  ref: RefObject<HTMLDivElement|null>,
   dummyRectRef: RefObject<SVGRectElement|null>,
   vertical: boolean,
   graph: ColGraph
 }
 
 export function useBucketCanvas(colGraph: ColGraph) {
-
-  let ref = useRef<HTMLDivElement>(null);
-  let dummyRectRef = useRef<SVGRectElement>(null);
-  
-  let {size, enableTransition} = useFlushingResizeObserver(ref);
-
-  let screenWidth = size?.width || 0;
-  let screenHeight = size?.height || 0;
+  let graphCnv = useGraphCanvas();
 
   let coreCircleDiam = colGraph.coreCircleDiam();
 
   let margin = computeGridMargins(false, false);
 
   // For fence post reasons, we add 1 to the numGuidelines instead of adding 2. Same for inputs
-  let gridWidths = computeGridLayout(screenWidth, [margin.left, 2*coreCircleDiam, margin.right]);
-  let gridHeights = computeGridLayout(screenHeight, [margin.top, 2*coreCircleDiam, margin.bottom]);
+  let gridWidths = computeGridLayout(graphCnv.screenWidth, [margin.left, 2*coreCircleDiam, margin.right]);
+  let gridHeights = computeGridLayout(graphCnv.screenHeight, [margin.top, 2*coreCircleDiam, margin.bottom]);
 
   let graphBox = new Box(gridWidths[0], gridHeights[0], gridWidths[0] + gridWidths[1], gridHeights[0] + gridHeights[1]);
 
@@ -75,26 +65,11 @@ export function useBucketCanvas(colGraph: ColGraph) {
 
   let vertical = false;
 
-  function clientToSvg(x: number, y: number): Vec2 {
-    let svgPoint = new DOMPoint(x, y);
-    svgPoint = svgPoint.matrixTransform(dummyRectRef.current?.getScreenCTM()?.inverse());
-    return [svgPoint.x, svgPoint.y];
-  }
-
-  function getEventPoint(e: React.MouseEvent) {
-    return clientToSvg(e.clientX, e.clientY);
-  }
-
   let cnv: BucketCanvas = {
-    clientToSvg,
-    getEventPoint,
+    ...graphCnv,
     grid,
     coreCircleDiam,
     zoom,
-    screenWidth,
-    screenHeight,
-    ref,
-    dummyRectRef,
     vertical,
     graph: colGraph
   };
