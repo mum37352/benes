@@ -109,6 +109,8 @@ function MdTokens({tokens}: {tokens: Token[]}) {
         renderList.push(<>{token.text}</>);
     } else if (token.type === "paragraph") {
         renderList.push(<p><MdTokens tokens={token.tokens!}/></p>);
+    } else if (token.type === "strong") {
+        renderList.push(<Strong><MdTokens tokens={token.tokens!}/></Strong>);
     }
   }
 
