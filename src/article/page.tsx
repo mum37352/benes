@@ -39,6 +39,22 @@ let mathExtension: MarkedExtension = {
           };
         }
       }
+    },
+    
+    {
+      name: 'applet',
+      level: 'block',
+      start(src: string) { return src.match(/\$\$/)?.index; },
+      tokenizer(src: string) {
+        let match = src.match(/^%%Applet:([A-Za-z0-9_-]+)%%/);
+        if (match) {
+          return {
+            type: 'applet',
+            raw: match[0],
+            text: match[1].trim()
+          };
+        }
+      }
     }
   ]
 };
@@ -170,6 +186,13 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
     } else if (token.type === "list_item") {
       let tokens = marked.lexer(token.text);
       renderList.push(<li><MdTokens tokens={tokens} /></li>);
+    } else if (token.type === "applet") {
+      renderList.push(
+        <iframe src={`https://mum37352.github.io/benes/${token.text}.html`} width="100%"
+          height="500"
+          frameBorder="0"
+          allowFullScreen></iframe>
+      );
     }
   }
 

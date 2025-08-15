@@ -35,6 +35,8 @@ As a warm-up, we demonstrate this idea with $H=K_k$. In this case, we construct 
 - For each proper $3$-assignment of $V_i$, we add a vertex of color $i$ to the graph $G'$.
 - Two vertices in $G'$ are connected by an edge if their colorings are compatible, meaning they come from different blocks and together form a proper assignment.
 
+%%Applet:reduction%%
+
 In other words, we have created a **compatibility graph** $G'$ on the partial assignments to individual blocks of $G$. This graph has at most  $k 3^b$ vertices, where $b = \lceil n/k \rceil$ is the maximum block size. The key observation is:
 
 > The colorful $k$-cliques $K$ in the compatibility graph $G'$ correspond bijectively to proper assignments of the original graph $G$. 
@@ -56,6 +58,8 @@ This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower
 
 ## Benes networks
 
+%%Applet:benes%%
+
 In the remainder of the note, we construct $k$-vertex graphs $H$ of maximum degree $4$ with compression rate $t = \Omega(k / \log k)$. These graphs are so-called **Benes networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
 
 > The colorful $H$-subgraph problem for Benes networks requires $n^{\Omega (k/\log k)}$ time under ETH.
@@ -69,6 +73,10 @@ The Benes networks are recursively defined graphs $B_\ell$ for $\ell \in \mathbb
 - $B_{\ell+1}$ is built from two vertex-disjoint copies of $B_\ell$: For each index $i \in [2^\ell]$, we create two fresh input vertices and make them adjacent to input $i$ from each of the two $B_\ell$-copies. We do the same with outputs. The inputs and outputs of $B_{\ell+1}$ are the new vertices created this way.
 
 Note that the inputs come in pairs of vertices with the same neighborhood; such pairs are called twins. Of course, the same holds for the outputs.
+
+If you want, you can try building your own Benes network below.
+
+%%Applet:construction%%
 
 ### Routing matchings in blowups
 
