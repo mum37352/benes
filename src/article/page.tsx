@@ -75,6 +75,13 @@ export function Section({children} : {children : React.ReactNode}) {
   </>;
 }
 
+export function SubSection({children} : {children : React.ReactNode}) {
+  return <>
+  <h2 className={`text-2xl font-bold mt-14 mb-0 text-stone-800`}>{children}</h2>
+  <hr className="h-px my-8 bg-gray-200 border-0 mt-2 mb-4 " />
+  </>;
+}
+
 export function Strong({children} : {children : React.ReactNode}) {
   return <span className="text-stone-800 font-bold">{children}</span>;
 }
@@ -133,25 +140,35 @@ The torus <KI>\T^2</KI> and the Euclidean plane <KI>\R^2</KI> are locally isomor
 </>);
 }
 
-function MdTokens({tokens}: {tokens: Token[]}) {
+function MdTokens({ tokens }: { tokens: Token[] }) {
   let renderList: any = [];
   for (let token of tokens) {
     if (token.type === "heading") {
       if (token.depth === 1) {
-        renderList.push(<Title><MdTokens tokens={token.tokens!}/></Title>);
+        renderList.push(<Title><MdTokens tokens={token.tokens!} /></Title>);
       } else if (token.depth === 2) {
-        renderList.push(<Section><MdTokens tokens={token.tokens!}/></Section>);
+        renderList.push(<Section><MdTokens tokens={token.tokens!} /></Section>);
+      } else if (token.depth === 3) {
+        renderList.push(<SubSection><MdTokens tokens={token.tokens!} /></SubSection>);
       }
     } else if (token.type === "text") {
-        renderList.push(<>{token.text}</>);
+      renderList.push(<>{token.text}</>);
     } else if (token.type === "paragraph") {
-        renderList.push(<p><MdTokens tokens={token.tokens!}/></p>);
+      renderList.push(<p><MdTokens tokens={token.tokens!} /></p>);
     } else if (token.type === "strong") {
-        renderList.push(<Strong><MdTokens tokens={token.tokens!}/></Strong>);
+      renderList.push(<Strong><MdTokens tokens={token.tokens!} /></Strong>);
     } else if (token.type === "inlineMath") {
-        renderList.push(<KI>{token.text}</KI>);
+      renderList.push(<KI>{token.text}</KI>);
     } else if (token.type === "blockMath") {
-        renderList.push(<KB>{token.text}</KB>);
+      renderList.push(<KB>{token.text}</KB>);
+    } else if (token.type === "blockquote") {
+      renderList.push(<TaggedBox tag={<></>}>
+        <MdTokens tokens={token.tokens!} />
+      </TaggedBox>);
+    } else if (token.type === "list") {
+      renderList.push(<ul className="list-disc pl-5"><MdTokens tokens={token.items!} /></ul>);
+    } else if (token.type === "list_item") {
+      renderList.push(<li><MdTokens tokens={token.tokens!} /></li>);
     }
   }
 
