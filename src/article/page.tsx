@@ -101,9 +101,13 @@ function MdArticle() {
   for (let token of tokens) {
     if (token.type === "heading") {
       if (token.depth === 1) {
-
-      renderList.push(<Title>{token.text}</Title>);
+        renderList.push(<Title>{token.text}</Title>);
+      } else if (token.depth === 2) {
+        renderList.push(<Section>{token.text}</Section>);
       }
+    } else if (token.type === "paragraph") {
+      
+        renderList.push(<>{token.text}</>);
     }
   }
 
