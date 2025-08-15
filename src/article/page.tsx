@@ -7,6 +7,15 @@ import linkupMd from "./linkup.md";
 import { initMacros, KB, KI } from '@/common/katex';
 import { ChevronsRight } from 'lucide-react';
 
+function parseMd() {
+  let markdown = linkupMd.replace(/^\uFEFF/, ''); // remove BOM if present
+  let tokens = marked.lexer(markdown);
+  console.log(tokens);
+  return tokens;
+}
+
+let tokens = parseMd();
+
 export function TaggedBox({ tag, children, className } : { tag? : React.ReactNode, children : React.ReactNode, className? : string }) {
   return <div className={`relative shadow-lg border border-gray-200 rounded-lg p-3 m-2 ${className}`}>
     {tag && <div className="absolute text-2xl -left-5 -translate-x-full">{tag}</div>}
@@ -87,19 +96,27 @@ The torus <KI>\T^2</KI> and the Euclidean plane <KI>\R^2</KI> are locally isomor
 </>);
 }
 
+function MdArticle() {
+  let renderList: any = [];
+  for (let token of tokens) {
+    if (token.type === "heading") {
+      if (token.depth === 1) {
 
-function parseMd() {
-  console.log(marked(linkupMd));
+      renderList.push(<Title>{token.text}</Title>);
+      }
+    }
+  }
+
+  return <>{renderList}</>
 }
 
-parseMd();
 
 // Disable for now. My macros break KaTeX's \neq (eyeroll), no idea why
 initMacros();
 root.render(
   <React.StrictMode>
         <div className="mx-auto max-w-4xl p-3 font-crimson text-lg">
-          <Article />
+          <MdArticle />
         </div>
   </React.StrictMode>
 );
