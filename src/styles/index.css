@@ -1,7 +1,6 @@
 
 @import 'tailwindcss';
-@import "primereact/resources/themes/lara-dark-teal/theme.css";
-@import "primereact/resources/primereact.css";
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap');
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
@@ -19,6 +18,10 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+}
+
+.font-crimson {
+  font-family: Crimson Text, serif;
 }
 
 
