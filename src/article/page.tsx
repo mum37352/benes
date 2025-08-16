@@ -174,7 +174,7 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
     } else if (token.type === "strong") {
       renderList.push(<Strong><MdTokens tokens={token.tokens!} /></Strong>);
     } else if (token.type === "inlineMath") {
-      renderList.push(<KI>{token.text}</KI>);
+      renderList.push(<span className="text-sm"><KI>{token.text}</KI></span>);
     } else if (token.type === "blockMath") {
       renderList.push(<KB>{token.text}</KB>);
     } else if (token.type === "blockquote") {
