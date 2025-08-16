@@ -20,6 +20,10 @@
     }
 }
 
+html {
+  font-size: 17px;
+}
+
 .font-crimson {
   font-family: Crimson Text, serif;
 }
