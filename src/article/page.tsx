@@ -111,7 +111,7 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
     } else if (token.type === "text") {
       renderList.push(<>{token.text}</>);
     } else if (token.type === "paragraph") {
-      renderList.push(<p><MdTokens tokens={token.tokens!} /></p>);
+      renderList.push(<p className="mb-4 mt-4"><MdTokens tokens={token.tokens!} /></p>);
     } else if (token.type === "strong") {
       renderList.push(<Strong><MdTokens tokens={token.tokens!} /></Strong>);
     } else if (token.type === "inlineMath") {
