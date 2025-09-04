@@ -37,10 +37,42 @@ const prodConfig: webpack.Configuration = {
             }),
         ],
         splitChunks: {
+            chunks: 'all',
             cacheGroups: {
-                default: false,
-                vendors: false,
-            }
+                // We do not apply chunk splitting to the CSS files, since otherwise the import order gets messed up,
+                // which would cause tailwind preflight and primereact to conflict.
+                styles: {
+                    name: 'styles',
+                    type: 'css/mini-extract',
+                    chunks: 'all',
+                    enforce: true,
+                    priority: 40, // higher than reactVendor (30)
+                },
+                reactVendor: {
+                    test: /[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/,
+                    name: 'vendor-react',
+                    chunks: 'all',
+                    priority: 30,
+                    enforce: true,
+                },
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendor-libs',
+                    chunks: 'all',
+                    priority: 20,
+                    reuseExistingChunk: true,
+                    enforce: true,
+                },
+                common: {
+                    test: /[\\/]src[\\/]/,
+                    name: 'common',
+                    chunks: 'all',
+                    minChunks: 2,
+                    priority: 10,
+                    reuseExistingChunk: true,
+                    enforce: true,
+                },
+            },
         }
     },
     plugins: [
