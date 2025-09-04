@@ -5,8 +5,9 @@ import { ColGraph, CompatGraph } from "./Graph";
 import { useReducer, useRef, useState } from "react";
 import { GraphToolbar, GraphToolbarPanel, ToolSel } from "@/common/Toolbar";
 import CompatibilityGraph from "./CompatibilityGraph";
-import { InputNumber } from "primereact/inputnumber";
+import { InputNumber, InputNumberValueChangeEvent } from "primereact/inputnumber";
 import "primereact/resources/themes/fluent-light/theme.css";
+import Leq from "./leq.svg";
 
 type Config = {
   graph: ColGraph,
@@ -58,7 +59,7 @@ export function ReductionApplet() {
       <GraphEditor compatGraph={compatGraph} tool={tool} colGraph={graph} onChange={onChange} />
     </TaggedBox>
     </GraphToolbarPanel>
-    <img src="/leq.svg" className="w-16 m-auto" />
+    <img src={Leq} className="w-16 m-auto" />
     <TaggedBox tag={<KI>{"\\mathsf{Clique}(G')"}</KI>} className="relative flex items-stretch w-3/5 h-100 mx-auto p-1">
       <CompatibilityGraph graph={graph} compatGraph={compatGraph} onColoringChanged={() => forceUpdate()} />
     </TaggedBox>
