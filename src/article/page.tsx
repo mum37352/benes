@@ -154,10 +154,8 @@ function MdArticle() {
 //initMacros();
 root.render(
   <React.StrictMode>
-    <div className="stackedit">
-      <div className="stackedit__html">
-        <MdArticle />
-      </div>
+    <div className="stackedit__html !box-content">
+      <MdArticle />
     </div>
   </React.StrictMode>
 );
