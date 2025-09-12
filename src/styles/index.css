@@ -1,6 +1,5 @@
 
 @import 'tailwindcss';
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap');
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
@@ -19,15 +18,6 @@
         border-color: var(--color-gray-200, currentColor);
     }
 }
-
-html {
-  font-size: 17px;
-}
-
-.font-crimson {
-  font-family: Crimson Text, serif;
-}
-
 
 a {
   @apply underline text-sky-300 hover:text-sky-200

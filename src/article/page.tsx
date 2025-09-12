@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import '@/styles/index.css';
+import '@/styles/stackedit.css';
 import { marked, MarkedExtension, Token } from 'marked';
 import linkupMd from "./linkup.md";
 import { initMacros, KB, KI } from '@/common/katex';
@@ -102,16 +103,16 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
   for (let token of tokens) {
     if (token.type === "heading") {
       if (token.depth === 1) {
-        renderList.push(<Title><MdTokens tokens={token.tokens!} /></Title>);
+        renderList.push(<h1><MdTokens tokens={token.tokens!} /></h1>);
       } else if (token.depth === 2) {
-        renderList.push(<Section><MdTokens tokens={token.tokens!} /></Section>);
+        renderList.push(<h2><MdTokens tokens={token.tokens!} /></h2>);
       } else if (token.depth === 3) {
-        renderList.push(<SubSection><MdTokens tokens={token.tokens!} /></SubSection>);
+        renderList.push(<h3><MdTokens tokens={token.tokens!} /></h3>);
       }
     } else if (token.type === "text") {
       renderList.push(<>{token.text}</>);
     } else if (token.type === "paragraph") {
-      renderList.push(<p className="mb-4 mt-4"><MdTokens tokens={token.tokens!} /></p>);
+      renderList.push(<p><MdTokens tokens={token.tokens!} /></p>);
     } else if (token.type === "strong") {
       renderList.push(<Strong><MdTokens tokens={token.tokens!} /></Strong>);
     } else if (token.type === "inlineMath") {
@@ -119,9 +120,9 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
     } else if (token.type === "blockMath") {
       renderList.push(<KB>{token.text}</KB>);
     } else if (token.type === "blockquote") {
-      renderList.push(<TaggedBox tag={<></>}>
+      renderList.push(<blockquote>
         <MdTokens tokens={token.tokens!} />
-      </TaggedBox>);
+      </blockquote>);
     } else if (token.type === "list") {
       renderList.push(<ul className="list-disc pl-5"><MdTokens tokens={token.items} /></ul>);
     } else if (token.type === "list_item") {
@@ -153,8 +154,10 @@ function MdArticle() {
 //initMacros();
 root.render(
   <React.StrictMode>
-        <div className="mx-auto max-w-4xl p-3 font-crimson text-lg">
-          <MdArticle />
-        </div>
+    <div className="stackedit">
+      <div className="stackedit__html">
+        <MdArticle />
+      </div>
+    </div>
   </React.StrictMode>
 );

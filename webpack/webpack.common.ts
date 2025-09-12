@@ -32,6 +32,13 @@ const commonConfig: webpack.Configuration = {
     module: {
         rules: [
             {
+                test: /\.(woff2?|eot|ttf|otf)$/i,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'fonts/[name][ext][query]', // where bundled fonts go
+                },
+            },
+            {
                 test: /\.(md|tex)$/,
                 type: 'asset/source', // built-in replacement for raw-loader
             },
