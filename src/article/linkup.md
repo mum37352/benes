@@ -35,7 +35,7 @@ As a warm-up, we demonstrate this idea with $H=K_k$. In this case, we construct 
 - For each proper $3$-assignment of $V_i$, we add a vertex of color $i$ to the graph $G'$.
 - Two vertices in $G'$ are connected by an edge if their colorings are compatible, meaning they come from different blocks and together form a proper assignment.
 
-%%Applet:reduction%%
+%%Applet%%reduction%%
 
 In other words, we have created a **compatibility graph** $G'$ on the partial assignments to individual blocks of $G$. This graph has at most  $k 3^b$ vertices, where $b = \lceil n/k \rceil$ is the maximum block size. The key observation is:
 
@@ -53,14 +53,14 @@ In fact, $G$ could even have empty pairs for all non-edges of a specific $k$-ver
 
 Imagine for now that the assignment problem keeps its $2^{\Omega(n)}$ time lower bound under ETH when each input $G$ (an $n$-vertex graph) is given as a subgraph of $H \boxtimes K_{n/k}$. Then the above correspondence between assignments of $G$ and $H$-copies in $G'$ would imply an $n^{\Omega(k)}$ lower bound for the colorful $H$-subgraph problem: Indeed, an $H$-subgraph exists in $G'$ if and only if there is a proper assignment in $G$.
 
-This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/t}$, for some **compression rate** $t\in \mathbb N$, then an $n^{\Omega(t)}$ lower bound follows for the colorful $H$-subgraph problem. Our original paper formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
+This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/R}$, for some **compression rate** $R \in \mathbb N$ (see %%Ref%%def-comprate%% for a definition), then an $n^{\Omega(t)}$ lower bound follows for the colorful $H$-subgraph problem. Our original paper formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
 
 
 ## Benes networks
 
-%%Applet:benes%%
+%%Applet%%benes%%
 
-In the remainder of the note, we construct $k$-vertex graphs $H$ of maximum degree $4$ with compression rate $t = \Omega(k / \log k)$. These graphs are so-called **Benes networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
+In the remainder of the note, we construct $k$-vertex graphs $B_l$ of maximum degree $4$ with compression rate $t = \Omega(k / \log k)$, that will lead to a good choice of $H$. These graphs are so-called **Benes networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
 
 > The colorful $H$-subgraph problem for Benes networks requires $n^{\Omega (k/\log k)}$ time under ETH.
 
@@ -76,27 +76,44 @@ Note that the inputs come in pairs of vertices with the same neighborhood; such 
 
 If you want, you can try building your own Benes network below.
 
-%%Applet:construction%%
+%%Applet%%construction%%
 
 ### Routing matchings in blowups
 
 For our compression result, we consider blowups $B_\ell \boxtimes K_t$ of Benes networks. The inputs/output vertices of $B_\ell \boxtimes K_t$ are the blowups of input/output vertices in $B_\ell$. We show the following:
 
-> **$B_\ell \boxtimes K_t$ can route input-output matchings:** For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
+> %%Frame%%Proposition%%thm-blowup-routing%%$B_\ell \boxtimes K_t$ can route input-output matchings%% For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
 
-We prove this by fixing $t$ arbitrary and performing induction over $\ell$. The statement is trivial for $B_1 \boxtimes K_t$, because this graph is isomorphic to $K_{2t,2t}$. 
-
-For the induction step, we assume that $B_\ell \boxtimes K_t$ can route input-output matchings and show it for $B_{\ell+1} \boxtimes K_t$. Recall that $B_{\ell+1}$ consists of two subnetworks $B^\uparrow$ and $B^\downarrow$ isomorphic to $B_\ell$. Then $B_\ell \boxtimes K_t$ consists of subnetwork blowups $B^\uparrow \boxtimes K_t$ and $B^\downarrow \boxtimes K_t$.
-
-A collection of paths $\mathcal P$ from inputs to outputs in $B_{\ell+1} \boxtimes K_t$ is vertex-disjoint if (but not only if) the following three conditions are satisfied:
-1. For $i \in [2^\ell]$, write $v_i$ and $v'_i$ for the two inputs of $B_{\ell+1}$ adjacent to input $i$ of the two subnetworks. Let $a$ and $a'$ be vertices in $B_{\ell+1} \boxtimes K_t$ from the $t$-blowups of $v_i$ and $v'_i$, respectively. The **first condition** is that the two paths starting at $a$ and $a'$ should go into different subnetwork blowups.
-2. The same holds for outputs: If $w_i$ and $w_{2^\ell +i}$ are the outputs adjacent to output $i$ of the subnetworks, then the paths in $\mathcal P$ ending there must come from different subnetworks.
-3. Within each subnetwork, $\mathcal P$ must induce vertex-disjoint paths from inputs to outputs.
+> %%Proof%%thm-blowup-routing%% We prove this by fixing $t$ arbitrary and performing induction over $\ell$. The statement is trivial for $B_1 \boxtimes K_t$, because this graph is isomorphic to $K_{2t,2t}$. 
+>
+> For the induction step, we assume that $B_\ell \boxtimes K_t$ can route input-output matchings and show it for $B_{\ell+1} \boxtimes K_t$. Recall that $B_{\ell+1}$ consists of two subnetworks $B^\uparrow$ and $B^\downarrow$ isomorphic to $B_\ell$. Then $B_\ell \boxtimes K_t$ consists of subnetwork blowups $B^\uparrow \boxtimes K_t$ and $B^\downarrow \boxtimes K_t$.
+>
+> A collection of paths $\mathcal P$ from inputs to outputs in $B_{\ell+1} \boxtimes K_t$ is vertex-disjoint if (but not only if) the following three conditions are satisfied:
+> 1. For $i \in [2^\ell]$, write $v_i$ and $v'_i$ for the two inputs of $B_{\ell+1}$ adjacent to input $i$ of the two subnetworks. Let $a$ and $a'$ be vertices in $B_{\ell+1} \boxtimes K_t$ from the $t$-blowups of $v_i$ and $v'_i$, respectively. The **first condition** is that the two paths starting at $a$ and $a'$ should go into different subnetwork blowups.
+> 2. The same holds for outputs: If $w_i$ and $w_{2^\ell +i}$ are the outputs adjacent to output $i$ of the subnetworks, then the paths in $\mathcal P$ ending there must come from different subnetworks.
+> 3. Within each subnetwork, $\mathcal P$ must induce vertex-disjoint paths from inputs to outputs.
 
 
 
 ### Compression rate
 
-To show the compression rate, we prove that every $n$-vertex graph $G$ of maximum degree $4$ is a topological minor of $H \boxtimes K_{n/t}$. This means $G$ is a subgraph of $H \boxtimes K_{n/t}$ after subdividing the edges of $H$ appropriately.
+The routing results from before give rise to good embeddability properties in the following sense.
 
+> %%Frame%%Definition%%def-comprate%%Compression Rate $R$%% The compression rate $R(H)$ of a $k$-vertex graph $H$ is the minimum $t \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**. 
+> This means $G$ is a subgraph of $H \boxtimes K_{n/R}$ after subdividing the edges of $G$ appropriately.
 
+These topological minors will live in special vertex subsets:
+
+> %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%% We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with M possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
+
+This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Benes construction from before:
+> %%Frame%%Definition%%def-aug-benes%%$B_\ell$%% Denote by $w_i$ the output vertices of the Benes network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
+outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{l-1}]$.
+
+These augmented Benes networks will play the role of the pattern graphs we have thus far evasively called $H$.
+
+> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching linked subsets of size $\#X = t 2^{l-1}$.
+
+> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_{2i-1}^{(j)}: i \in [2^{l-1}], j \in [n/t]\} \subset V(B̌_\ell \boxtimes K_{n/t})$ as the odd-indexed vertices from all the blowup layers.
+>
+> Use %%Ref%%thm-blowup-routing%%: For every vertex-pair $v_{2i-1}^{(j)}v_{2i'-1}^{(j')}\subset X$ in the matching, route the odd input $v_{2i-1}^{(j)}$ to the output $w_{2i-1}^{(j)}$, and route the even input $v_{2i'-1}^{(j')}$ to the output $w_{2i}^{(j')}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2i-1}^{(j)}w_{2i}^{(j')}$.

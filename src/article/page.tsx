@@ -47,14 +47,67 @@ let mathExtension: MarkedExtension = {
     {
       name: 'applet',
       level: 'block',
-      start(src: string) { return src.match(/\$\$/)?.index; },
+      start(src: string) { return src.match(/%%Applet%%/)?.index; },
       tokenizer(src: string) {
-        let match = src.match(/^%%Applet:([A-Za-z0-9_-]+)%%/);
+        let match = src.match(/^%%Applet%%([^%]+)%%/);
         if (match) {
           return {
             type: 'applet',
             raw: match[0],
             text: match[1].trim()
+          };
+        }
+      }
+    },
+    {
+      name: 'frame',
+      level: 'block',
+      start(src: string) { return src.match(/%%Frame%%/)?.index; },
+      tokenizer(src: string) {
+        let match = src.match(/^%%Frame%%([^%]+)%%([^%]+)%%([^%]+)%%/);
+        if (match) {
+          let [fullMatch, category, id, text] = match;
+          return {
+            type: 'frame',
+            raw: fullMatch,
+            category: category.trim(),
+            id: id.trim(),
+            tokens: this.lexer.inlineTokens(text.trim())
+          };
+        }
+      }
+    },
+    
+    
+    {
+      name: 'ref',
+      level: 'inline',
+      start(src: string) { return src.match(/%%Ref%%/)?.index; },
+      tokenizer(src: string) {
+        let match = src.match(/^%%Ref%%([^%]+)%%/);
+        if (match) {
+          let [fullMatch, id] = match;
+          return {
+            type: 'ref',
+            raw: fullMatch,
+            id: id.trim()
+          };
+        }
+      }
+    },
+
+    {
+      name: 'proof',
+      level: 'block',
+      start(src: string) { return src.match(/%%Proof%%/)?.index; },
+      tokenizer(src: string) {
+        let match = src.match(/^%%Proof%%([^%]+)%%/);
+        if (match) {
+          let [fullMatch, id] = match;
+          return {
+            type: 'proof',
+            raw: fullMatch,
+            thmId: id.trim()
           };
         }
       }
@@ -98,38 +151,70 @@ Furthermore, we will deliver some results on the behavior of local compactness, 
   </TaggedBox>
 }
 
-function MdTokens({ tokens }: { tokens: Token[] }) {
+
+type TagListEntry = {
+  descTokens: Token[],
+  number: number,
+  category: string
+};
+
+type TagList = {[key: string]: TagListEntry};
+
+function MdTokens({ tokens, tagList }: { tokens: Token[], tagList: TagList }) {
+  function buildHtmlId(mdId: string) {
+    return `mdid-${mdId}`;
+  }
+
   let renderList: any = [];
   for (let token of tokens) {
     if (token.type === "heading") {
       if (token.depth === 1) {
-        renderList.push(<h1><MdTokens tokens={token.tokens!} /></h1>);
+        renderList.push(<h1><MdTokens tokens={token.tokens!} tagList={tagList} /></h1>);
       } else if (token.depth === 2) {
-        renderList.push(<h2><MdTokens tokens={token.tokens!} /></h2>);
+        renderList.push(<h2><MdTokens tokens={token.tokens!} tagList={tagList} /></h2>);
       } else if (token.depth === 3) {
-        renderList.push(<h3><MdTokens tokens={token.tokens!} /></h3>);
+        renderList.push(<h3><MdTokens tokens={token.tokens!} tagList={tagList} /></h3>);
       }
     } else if (token.type === "text") {
       renderList.push(<span>{token.text}</span>);
     } else if (token.type === "paragraph") {
-      renderList.push(<p><MdTokens tokens={token.tokens!} /></p>);
+      renderList.push(<p><MdTokens tokens={token.tokens!} tagList={tagList} /></p>);
     } else if (token.type === "strong") {
-      renderList.push(<strong><MdTokens tokens={token.tokens!} /></strong>);
+      renderList.push(<strong><MdTokens tokens={token.tokens!} tagList={tagList} /></strong>);
     } else if (token.type === "em") {
-      renderList.push(<em><MdTokens tokens={token.tokens!} /></em>);
+      renderList.push(<em><MdTokens tokens={token.tokens!} tagList={tagList} /></em>);
     } else if (token.type === "inlineMath") {
       renderList.push(<span className="text-sm whitespace-nowrap"><KI>{token.text}</KI></span>);
     } else if (token.type === "blockMath") {
       renderList.push(<KB>{token.text}</KB>);
     } else if (token.type === "blockquote") {
-      renderList.push(<blockquote>
-        <MdTokens tokens={token.tokens!} />
-      </blockquote>);
+      let firstToken = token.tokens![0];
+      let hadDirectives = false;
+      if (!firstToken) {
+      } else if (firstToken.type === "frame") {
+        hadDirectives = true;
+        renderList.push(<div className="bg-[rgba(0,0,0,0.1)] p-3" id={buildHtmlId(firstToken.id)}>
+          <strong>{firstToken.category} {tagList[firstToken.id].number}: <MdTokens tokens={firstToken.tokens!} tagList={tagList} />.</strong> <MdTokens tokens={token.tokens!} tagList={tagList} />
+        </div>);
+      } else if (firstToken.type === "proof") {
+        hadDirectives = true;
+        let tag = tagList[firstToken.thmId];
+        renderList.push(<blockquote><strong>Proof of {tag.category} {tag.number}.</strong>
+          <MdTokens tokens={token.tokens!} tagList={tagList} />
+          <div className="text-right"><KI>{"\\square"}</KI></div>
+        </blockquote>);
+      }
+
+      if (!hadDirectives) {
+        renderList.push(<blockquote>
+          <MdTokens tokens={token.tokens!} tagList={tagList} />
+        </blockquote>);
+      }
     } else if (token.type === "list") {
-      renderList.push(<ul className="list-disc pl-5"><MdTokens tokens={token.items} /></ul>);
+      renderList.push(<ul className="list-disc pl-5"><MdTokens tokens={token.items} tagList={tagList} /></ul>);
     } else if (token.type === "list_item") {
       let tokens = marked.lexer(token.text);
-      renderList.push(<li><MdTokens tokens={tokens} /></li>);
+      renderList.push(<li><MdTokens tokens={tokens} tagList={tagList} /></li>);
     } else if (token.type === "applet") {
       if (token.text === "reduction") {
         renderList.push(<ReductionApplet />);
@@ -141,14 +226,51 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
             allowFullScreen></iframe>
         );
       }
+    } else if (token.type === "frame") {
+      // Handled by the caller.
+    } else if (token.type === "ref") {
+      let tag = tagList[token.id];
+      renderList.push(<a href={'#'+buildHtmlId(token.id)}>{tag.category} {tag.number}: <MdTokens tokens={tag.descTokens} tagList={tagList} /></a>)
     }
   }
 
   return <>{renderList}</>
 }
 
+type BuildTagListData = {
+  tagList: TagList,
+  counter: number
+}
+
+function buildTagList_recurse(data: BuildTagListData, tokens: Token[]) {
+  for (let token of tokens) {
+    let subTokens = (token as any)["tokens"];
+
+    if (token.type == "frame") {
+      data.tagList[token.id] = {descTokens: token.tokens!, number: data.counter++, category: token.category};
+    }
+
+    if (subTokens) {
+      buildTagList_recurse(data, subTokens);
+    }
+  }
+}
+
+function buildTagList(tokens: Token[]) {
+  let data: BuildTagListData = {
+    tagList: {},
+    counter: 1
+  };
+
+  buildTagList_recurse(data, tokens);
+
+  return data.tagList;
+}
+
 function MdArticle() {
-  return <MdTokens tokens={tokens} />
+  let tagList = buildTagList(tokens);
+
+  return <MdTokens tokens={tokens} tagList={tagList} />;
 }
 
 
