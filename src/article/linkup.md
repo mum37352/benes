@@ -1,6 +1,6 @@
 ﻿# Lower bounds for detecting small subgraphs
 
-The exponential-time hypothesis (ETH) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** This problem requires time $n^{\Omega(k)}$ under ETH.
+The [exponential-time hypothesis (ETH)](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** This problem requires time $n^{\Omega(k)}$ under ETH.
 
 We would like to transfer this lower bound to other parameterized problems. However, there is a problematic blowup: Reductions from $k$-clique to other problems usually need $k$ "vertex gadgets" to encode potential clique vertices, and $k \choose 2$ "edge gadgets" to check edges between the encoded vertices. This yields target instances with parameter value $\ell = \Omega(k^2)$, since each gadget has to increase the parameter by at least a constant value. Due to this parameter increase, only $n^{o(\sqrt \ell)}$ time algorithms can be ruled out for the target problem by reduction from $k$-clique.
 

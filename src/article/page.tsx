@@ -231,6 +231,8 @@ function MdTokens({ tokens, tagList }: { tokens: Token[], tagList: TagList }) {
     } else if (token.type === "ref") {
       let tag = tagList[token.id];
       renderList.push(<a href={'#'+buildHtmlId(token.id)}>{tag.category} {tag.number}: <MdTokens tokens={tag.descTokens} tagList={tagList} /></a>)
+    } else if (token.type === "link") {
+      renderList.push(<a href={token.href}><MdTokens tokens={token.tokens!} tagList={tagList} /></a>)
     }
   }
 
