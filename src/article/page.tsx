@@ -110,9 +110,9 @@ function MdTokens({ tokens }: { tokens: Token[] }) {
         renderList.push(<h3><MdTokens tokens={token.tokens!} /></h3>);
       }
     } else if (token.type === "text") {
-      renderList.push(<>{token.text}</>);
+      renderList.push(<span className="whitespace-normal">{token.text}</span>);
     } else if (token.type === "paragraph") {
-      renderList.push(<p><MdTokens tokens={token.tokens!} /></p>);
+      renderList.push(<p className='whitespace-nowrap'><MdTokens tokens={token.tokens!} /></p>);
     } else if (token.type === "strong") {
       renderList.push(<strong><MdTokens tokens={token.tokens!} /></strong>);
     } else if (token.type === "em") {
