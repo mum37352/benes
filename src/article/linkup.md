@@ -99,21 +99,23 @@ For our compression result, we consider blowups $B_\ell \boxtimes K_t$ of Benes 
 
 The routing results from before give rise to good embeddability properties in the following sense.
 
-> %%Frame%%Definition%%def-comprate%%Compression Rate $R$%% The compression rate $R(H)$ of a $k$-vertex graph $H$ is the minimum $t \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**. 
+> %%Frame%%Definition%%def-comprate%%Compression Rate $R$%% The compression rate $R(H)$ of a $k$-vertex graph $H$ is the maximum $R \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**. 
 > This means $G$ is a subgraph of $H \boxtimes K_{n/R}$ after subdividing the edges of $G$ appropriately.
 
-These topological minors will live in special vertex subsets:
+For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, it is also very dense.
+
+We will use Benes networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
 
 > %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%% We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with M possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
 
 This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Benes construction from before:
-> %%Frame%%Definition%%def-aug-benes%%$B_\ell$%% Denote by $w_i$ the output vertices of the Benes network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
+> %%Frame%%Definition%%def-aug-benes%%$B̌_\ell$%% Denote by $(w_j)_j$ the output vertices of the Benes network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
 outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{l-1}]$.
 
 These augmented Benes networks will play the role of the pattern graphs we have thus far evasively called $H$.
 
 > %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching linked subsets of size $\#X = t 2^{l-1}$.
 
-> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_{2i-1}^{(j)}: i \in [2^{l-1}], j \in [n/t]\} \subset V(B̌_\ell \boxtimes K_{n/t})$ as the odd-indexed vertices from all the blowup layers.
+> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_{2i-1}^{(j)}: i \in [2^{l-1}], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the odd-indexed vertices from all the blowup layers.
 >
 > Use %%Ref%%thm-blowup-routing%%: For every vertex-pair $v_{2i-1}^{(j)}v_{2i'-1}^{(j')}\subset X$ in the matching, route the odd input $v_{2i-1}^{(j)}$ to the output $w_{2i-1}^{(j)}$, and route the even input $v_{2i'-1}^{(j')}$ to the output $w_{2i}^{(j')}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2i-1}^{(j)}w_{2i}^{(j')}$.
