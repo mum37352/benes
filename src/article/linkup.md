@@ -112,8 +112,8 @@ outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{l-1}]$.
 
 These augmented Benes networks will play the role of the pattern graphs we have thus far evasively called $H$.
 
-> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching linked subsets of size $\#X = t 2^{l-1}$.
+> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching linked subsets of size $\#X = t 2^\ell$.
 
-> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_{2i-1}^{(j)}: i \in [2^{l-1}], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the odd-indexed inputs from all the blowup layers.
+> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
 >
-> Use %%Ref%%thm-blowup-routing%%: For every vertex-pair $v_{2i-1}^{(j)}v_{2i'-1}^{(j')}\subset X$ in the matching, route the odd input $v_{2i-1}^{(j)}$ to the output $w_{2i-1}^{(j)}$, and route the even input $v_{2i'-1}^{(j')}$ to the output $w_{2i}^{(j')}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2i-1}^{(j)}w_{2i}^{(j')}$.
+> Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m$'th input-pair in the matching, route the input $v_{i}^{(j)}$ to the odd output $w_{2m-1}^{(j)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2m}^{(j')}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2m-1}^{(j)}w_{2m}^{(j')}$.
