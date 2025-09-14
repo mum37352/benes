@@ -116,4 +116,4 @@ These augmented Benes networks will play the role of the pattern graphs we have 
 
 > %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
 >
-> Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m$'th input-pair in the matching, route the input $v_{i}^{(j)}$ to the odd output $w_{2m-1}^{(j)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2m}^{(j')}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2m-1}^{(j)}w_{2m}^{(j')}$.
+> Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m 2^{l-1}+s$'th input-pair in the matching for $s \in [2^{l-1}]$, route the input $v_{i}^{(j)}$ to the odd output $w_{2s-1}^{(m+1)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2s}^{(m+1)}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2s-1}^{(m+1)}w_{2s}^{(m+1)}$.
