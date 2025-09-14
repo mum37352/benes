@@ -247,8 +247,14 @@ body,html{
 .app--dark .layout__panel--editor,.app--dark .layout__panel--preview{
     color:hsla(0,0%,100%,.75)
 }
-blockquote,dl,ol,p,pre,ul{
+blockquote,dl,ol,pre,ul{
     margin:1.2em 0
+}
+p:not(:first-child) {
+    margin-top: 1.2em;
+}
+p:not(:last-child) {
+    margin-bottom: 1.2em;
 }
 h1,h2,h3,h4,h5,h6{
     margin:1.8em 0;

@@ -1,8 +1,10 @@
-import React, { useEffect, useLayoutEffect, useReducer, useRef } from 'react';
+import React, { ReactElement, useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
-import '@/styles/index.css';
 import '@/styles/stackedit.css';
+// I'm confused about why tailwind preflight does not override stuff from stackedit.css.
+import '@/styles/index.css';
+
 import { marked, MarkedExtension, Token } from 'marked';
 import linkupMd from "./linkup.md";
 import { initMacros, KB, KI } from '@/common/katex';
@@ -160,7 +162,7 @@ type TagListEntry = {
 
 type TagList = {[key: string]: TagListEntry};
 
-function MdTokens({ tokens, tagList }: { tokens: Token[], tagList: TagList }) {
+function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList: TagList, injectedTitle?: ReactElement | undefined }) {
   function buildHtmlId(mdId: string) {
     return `mdid-${mdId}`;
   }
@@ -178,7 +180,8 @@ function MdTokens({ tokens, tagList }: { tokens: Token[], tagList: TagList }) {
     } else if (token.type === "text") {
       renderList.push(<span>{token.text}</span>);
     } else if (token.type === "paragraph") {
-      renderList.push(<p><MdTokens tokens={token.tokens!} tagList={tagList} /></p>);
+      renderList.push(<p>{injectedTitle} <MdTokens tokens={token.tokens!} tagList={tagList} /></p>);
+      injectedTitle = undefined;
     } else if (token.type === "strong") {
       renderList.push(<strong><MdTokens tokens={token.tokens!} tagList={tagList} /></strong>);
     } else if (token.type === "em") {
@@ -193,14 +196,16 @@ function MdTokens({ tokens, tagList }: { tokens: Token[], tagList: TagList }) {
       if (!firstToken) {
       } else if (firstToken.type === "frame") {
         hadDirectives = true;
+        let title = <strong>{firstToken.category} {tagList[firstToken.id].number}: <MdTokens tokens={firstToken.tokens!} tagList={tagList} />.</strong>;
         renderList.push(<div className="bg-[rgba(0,0,0,0.1)] p-3" id={buildHtmlId(firstToken.id)}>
-          <strong>{firstToken.category} {tagList[firstToken.id].number}: <MdTokens tokens={firstToken.tokens!} tagList={tagList} />.</strong> <MdTokens tokens={token.tokens!} tagList={tagList} />
+          <MdTokens tokens={token.tokens!} tagList={tagList} injectedTitle={title} />
         </div>);
       } else if (firstToken.type === "proof") {
         hadDirectives = true;
         let tag = tagList[firstToken.thmId];
-        renderList.push(<blockquote><strong>Proof of {tag.category} {tag.number}.</strong>
-          <MdTokens tokens={token.tokens!} tagList={tagList} />
+        let title = <strong>Proof of {tag.category} {tag.number}.</strong>;
+        renderList.push(<blockquote className="!text-[rgba(0,0,0,0.75)]">
+          <MdTokens tokens={token.tokens!} tagList={tagList} injectedTitle={title} />
           <div className="text-right"><KI>{"\\square"}</KI></div>
         </blockquote>);
       }
