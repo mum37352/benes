@@ -47,7 +47,7 @@ Indeed, consider a clique $K$ in the compatibility graph $G'$: Its vertices $v_1
 
 Under very lucky conditions, the lower bound for $k$-cliques works even for $H$-subgraph problems involving subgraphs $H$ of $k$-cliques: Imagine that our partition of $V(G)$ into blocks $V_1,\ldots,V_k$ of size $n/k$ gives rise to an "empty pair" $(i,j) \in [k]^2$ such that $G$ does not contain any edges between $V_i$ and $V_j$. In this case, no conflicts can arise between partial assignments to $V_i$ and $V_j$, so we don't need to test compatibility between such assignments. (Restricted to such assignments, the compatibility graph $G'$ is a complete bipartite graph, so it contains no relevant information in this part.)
 
-In fact, $G$ could even have empty pairs for all non-edges of a specific $k$-vertex graph $H$ of interest. Then $G$ would fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$, which is obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs. If $G$ is a subgraph of $H \boxtimes K_t$  and we build the compatibility graph $G'$ with blocks corresponding to the cliques, then we obtain:
+In fact, the partition of $G$ could even have empty pairs for all non-edges of a specific $k$-vertex graph $H$ of interest. Then $G$ would fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$, which is obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs. If $G$ is a subgraph of $H \boxtimes K_t$  and we build the compatibility graph $G'$ with blocks corresponding to the cliques, then we obtain:
 
 > If $G$ is a subgraph of $H \boxtimes K_t$, then the proper assignments of $G$ correspond bijectively to the $H$-copies in $G'$. 
 
@@ -102,11 +102,9 @@ The routing results from before give rise to good embeddability properties in th
 > %%Frame%%Definition%%def-comprate%%Compression Rate $R$%% The compression rate $R(H)$ of a $k$-vertex graph $H$ is the maximum $R \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**. 
 > This means $G$ is a subgraph of $H \boxtimes K_{n/R}$ after subdividing the edges of $G$ appropriately.
 
-For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, it is also very dense.
+For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, we will instead use modified Benes networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
 
-We will use Benes networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
-
-> %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%% We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with M possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
+> %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%% We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with $M$ possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
 
 This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Benes construction from before:
 > %%Frame%%Definition%%def-aug-benes%%$B̌_\ell$%% Denote by $(w_j)_j$ the output vertices of the Benes network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
@@ -116,6 +114,6 @@ These augmented Benes networks will play the role of the pattern graphs we have 
 
 > %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching linked subsets of size $\#X = t 2^{l-1}$.
 
-> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_{2i-1}^{(j)}: i \in [2^{l-1}], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the odd-indexed vertices from all the blowup layers.
+> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_{2i-1}^{(j)}: i \in [2^{l-1}], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the odd-indexed inputs from all the blowup layers.
 >
 > Use %%Ref%%thm-blowup-routing%%: For every vertex-pair $v_{2i-1}^{(j)}v_{2i'-1}^{(j')}\subset X$ in the matching, route the odd input $v_{2i-1}^{(j)}$ to the output $w_{2i-1}^{(j)}$, and route the even input $v_{2i'-1}^{(j')}$ to the output $w_{2i}^{(j')}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2i-1}^{(j)}w_{2i}^{(j')}$.
