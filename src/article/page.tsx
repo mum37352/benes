@@ -13,6 +13,20 @@ import { Strong, Section, SubSection, TaggedBox, Title } from '@/common/ui';
 import { ReductionApplet } from '@/reduction/applet';
 
 
+function ScrollToHash() {
+  useEffect(() => {
+    if (location.hash) {
+      const id = window.location.hash.replace("#", "");
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, [location]);
+
+  return null;
+}
+
 let mathExtension: MarkedExtension = {
   extensions: [
     {
@@ -285,6 +299,7 @@ function MdArticle() {
 //initMacros();
 root.render(
   <React.StrictMode>
+    <ScrollToHash />
     <div className="stackedit__html !box-content">
       <MdArticle />
     </div>
