@@ -1,5 +1,9 @@
 ﻿# Lower bounds for detecting small subgraphs
 
+$s$ Hi, let us try some block math after a line break:
+$$X
+Y$$
+
 The [exponential-time hypothesis (ETH)](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** This problem requires time $n^{\Omega(k)}$ under ETH.
 
 We would like to transfer this lower bound to other parameterized problems. However, there is a problematic blowup: Reductions from $k$-clique to other problems usually need $k$ "vertex gadgets" to encode potential clique vertices, and $k \choose 2$ "edge gadgets" to check edges between the encoded vertices. This yields target instances with parameter value $\ell = \Omega(k^2)$, since each gadget has to increase the parameter by at least a constant value. Due to this parameter increase, only $n^{o(\sqrt \ell)}$ time algorithms can be ruled out for the target problem by reduction from $k$-clique.
@@ -19,7 +23,7 @@ In this note, we give a self-contained and arguably simple proof of Marx's lower
 
 ## Proving the lower bounds
 
-Our starting point for the proof is the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH. (This can be shown using the standard reduction from 3-SAT together with the sparsification lemma, by which ETH already rules out $2^{o(n)}$ time algorithms for $n$-variable 3-SAT *with just $O(n)$ clauses*.) The lower bound even holds on graphs of maximum degree $3$.
+Our starting point for the proof is the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH. (This can be shown using the standard reduction from 3-SAT together with the sparsification lemma, by which ETH already rules out $2^{o(n)}$ time algorithms for $n$-variable 3-SAT *with just $O(n)$ clauses*.) The lower bound even holds on graphs of maximum degree $4$.
 
 For technical reasons, we generalize this problem slightly: Besides the usual *"disequality"* edges in the $3$-coloring problem that require distinct colors at their endpoints, we also allow *"equality"* edges that require their endpoints to have the same color. Being a generalization of $3$-coloring, there are no $2^{o(n)}$ time algorithms for this problem under ETH.
 
@@ -99,8 +103,8 @@ For our compression result, we consider blowups $B_\ell \boxtimes K_t$ of Benes 
 
 The routing results from before give rise to good embeddability properties in the following sense.
 
-> %%Frame%%Definition%%def-comprate%%Compression Rate $R$%% The compression rate $R(H)$ of a $k$-vertex graph $H$ is the maximum $R \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**. 
-> This means $G$ is a subgraph of $H \boxtimes K_{n/R}$ after subdividing the edges of $G$ appropriately.
+> %%Frame%%Definition%%def-comprate%%Compression rate%% The compression rate $R(H)$ of a $k$-vertex graph $H$ is the maximum $R \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**. 
+> This means $G$ is a subgraph of $H \boxtimes K_{\lceil n/R \rceil}$ after subdividing the edges of $G$ appropriately.
 
 For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, we will instead use modified Benes networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
 
@@ -112,8 +116,10 @@ outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{l-1}]$.
 
 These augmented Benes networks will play the role of the pattern graphs we have thus far evasively called $H$.
 
-> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching linked subsets of size $\#X = t 2^\ell$.
+> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching-linked subsets of size $\#X = t 2^\ell$.
 
 > %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
 >
 > Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m 2^{l-1}+s$'th input-pair in the matching for $s \in [2^{l-1}]$, route the input $v_{i}^{(j)}$ to the odd output $w_{2s-1}^{(m+1)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2s}^{(m+1)}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2s-1}^{(m+1)}w_{2s}^{(m+1)}$.
+
+> %%Frame%%Proposition%%thm-Bl-comprate%%Compression rate of $B̌_\ell$%% We have $$R(B̌_\ell) \geq \left\lfloor \frac{2^l}{7} \right\rfloor$$ In particular, denoting by $k=2^{l+1} l$ the number of vertices in the graph, we have $R(B̌_\ell) \geq \left\lfloor \frac{k}{7 \log k} \right\rfloor$

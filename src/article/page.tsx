@@ -34,7 +34,7 @@ let mathExtension: MarkedExtension = {
       level: 'inline',
       start(src: string) { return src.match(/\$/)?.index; },
       tokenizer(src: string) {
-        const match = src.match(/^\$([^\$]+)\$/);
+        let match = src.match(/^\$([^\$]+)\$/);
         if (match) {
           return {
             type: 'inlineMath',
@@ -47,9 +47,14 @@ let mathExtension: MarkedExtension = {
     {
       name: 'blockMath',
       level: 'block',
-      start(src: string) { return src.match(/\$\$/)?.index; },
+      start(src: string) {
+        let match = src.match(/\$\$/)?.index;
+        console.log("start", src, match);
+        return match;
+      },
       tokenizer(src: string) {
-        const match = src.match(/^\$\$([^$]+)\$\$/m);
+        let match = src.match(/^\$\$([\s\S]+?)\$\$/);
+        console.log("tokenizer", src, match);
         if (match) {
           return {
             type: 'blockMath',
@@ -253,6 +258,10 @@ function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList
     } else if (token.type === "link") {
       renderList.push(<a href={token.href}><MdTokens tokens={token.tokens!} tagList={tagList} /></a>)
     }
+  }
+
+  if (injectedTitle) {
+      renderList.push(<p>{injectedTitle}</p>);
   }
 
   return <>{renderList}</>
