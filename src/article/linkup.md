@@ -128,7 +128,7 @@ These augmented Benes networks will play the role of the pattern graphs we have 
 >   = \left\lfloor \frac{k}{14 \log k} \right\rfloor
 > $$
 >
-> To establish the first bound, let $G$ be an $n$-vertex graph of maximum degree $4$. Let $\tilde{R} = \left\lfloor \frac{2^\ell}{7} \right\rfloor$ Since
+> To establish the first bound, let $G$ be an $n$-vertex graph of maximum degree $4$. Let $\tilde{R} = \left\lfloor \frac{2^\ell}{7} \right\rfloor$. Since
 > $$
 > \left\lceil \frac{n}{\tilde{R}} \right\rceil
 > = \left\lceil \frac{n}{\lfloor 2^\ell / 7 \rfloor} \right\rceil
