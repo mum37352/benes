@@ -1,9 +1,5 @@
 ﻿# Lower bounds for detecting small subgraphs
 
-$s$ Hi, let us try some block math after a line break:
-$$X
-Y$$
-
 The [exponential-time hypothesis (ETH)](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** This problem requires time $n^{\Omega(k)}$ under ETH.
 
 We would like to transfer this lower bound to other parameterized problems. However, there is a problematic blowup: Reductions from $k$-clique to other problems usually need $k$ "vertex gadgets" to encode potential clique vertices, and $k \choose 2$ "edge gadgets" to check edges between the encoded vertices. This yields target instances with parameter value $\ell = \Omega(k^2)$, since each gadget has to increase the parameter by at least a constant value. Due to this parameter increase, only $n^{o(\sqrt \ell)}$ time algorithms can be ruled out for the target problem by reduction from $k$-clique.
@@ -122,4 +118,21 @@ These augmented Benes networks will play the role of the pattern graphs we have 
 >
 > Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m 2^{l-1}+s$'th input-pair in the matching for $s \in [2^{l-1}]$, route the input $v_{i}^{(j)}$ to the odd output $w_{2s-1}^{(m+1)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2s}^{(m+1)}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2s-1}^{(m+1)}w_{2s}^{(m+1)}$.
 
-> %%Frame%%Proposition%%thm-Bl-comprate%%Compression rate of $B̌_\ell$%% We have $$R(B̌_\ell) \geq \left\lfloor \frac{2^l}{7} \right\rfloor$$ In particular, denoting by $k=2^{l+1} l$ the number of vertices in the graph, we have $R(B̌_\ell) \geq \left\lfloor \frac{k}{7 \log k} \right\rfloor$
+> %%Frame%%Proposition%%thm-Bl-comprate%%Compression rate of $B̌_\ell$%% We have $$R(B̌_\ell) \geq \left\lfloor \frac{2^l}{7} \right\rfloor$$ In particular, denoting by $k=l2^{\ell+1}$ the number of vertices in the graph, we have $R(B̌_\ell) \geq \left\lfloor \frac{k}{14 \log k} \right\rfloor$
+
+> %%Proof%%thm-Bl-comprate%% The second bound follows from the first because
+> $$
+> R(B̌_\ell) 
+>   \geq \left\lfloor \frac{2^{\ell+1} \ell}{14 \ell} \right\rfloor
+>   \geq \left\lfloor \frac{2^{\ell+1} \ell}{14 (\ell+1+\log\ell)} \right\rfloor
+>   = \left\lfloor \frac{k}{14 \log k} \right\rfloor
+> $$
+>
+> To establish the first bound, let $G$ be an $n$-vertex graph of maximum degree $4$. Let $\tilde{R} = \left\lfloor \frac{2^l}{7} \right\rfloor$ Since
+> $$
+> \left\lceil \frac{n}{\tilde{R}} \right\rceil
+> = \left\lceil \frac{n}{\lfloor 2^l / 7 \rfloor} \right\rceil
+> \geq \frac{7n}{2^l},
+> $$
+> we see by %%Ref%%thm-augmented-linkedness%% that $B̌_\ell \boxtimes K_{\lceil n / \tilde{R} \rceil}$ contains a matching linked subset of size $\geq 7n$, write $X \equiv [n] \times [7]$ (ignore excess vertices).
+> Also assume $V(G)=[n]$. The greedy algorithm can find a proper $7$-coloring $M_1, \ldots, M_7$ of the *edges* of $G$. This gives rise to a matching $M = (M_1 \times \{1\}) \sqcup \dots \sqcup (M_7 \times\{7\})$ on $X$. Since $X$ is matching-linked, we get disjoint paths realizing $M$. If we connect the endpoints of the paths arising from the same vertex in $G$, we get a topological minor embedding of $G$ in $B̌_\ell \boxtimes K_{\lceil n / \tilde{R} \rceil}$, so $R \geq \tilde{R}$.
