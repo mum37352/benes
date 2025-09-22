@@ -49,12 +49,10 @@ let mathExtension: MarkedExtension = {
       level: 'block',
       start(src: string) {
         let match = src.match(/\$\$/)?.index;
-        console.log("start", src, match);
         return match;
       },
       tokenizer(src: string) {
         let match = src.match(/^\$\$([\s\S]+?)\$\$/);
-        console.log("tokenizer", src, match);
         if (match) {
           return {
             type: 'blockMath',

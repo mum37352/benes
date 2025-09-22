@@ -6,7 +6,7 @@ We would like to transfer this lower bound to other parameterized problems. Howe
 
 A better source problem is **colorful subgraph isomorphism**: We call a  $k$-vertex graph $H$  colorful if it is bijectively vertex-colored with $[k]$. For any fixed colorful $k$-vertex graph $H$, we consider the following problem:
 
-> $\mathsf{ColSub}(H)$: Given colored graphs $H$ and $G$, does $G$ contain a subgraph isomorphic to $H$? The colors matter for the isomorphism, and we assume that $H$ is colorful.
+> %%Frame%%Problem%%prob-colsub%%$\mathsf{ColSub}(H)$%% Given colored graphs $H$ and $G$, does $G$ contain a subgraph isomorphic to $H$? The colors matter for the isomorphism, and we assume that $H$ is colorful.
 
 When $H=K_k$ is a complete graph, $\mathsf{ColSub}(K_k)$ is a colorful version of the $k$-clique problem, for which ETH rules out $n^{o(k)}$ time algorithms. A breakthrough result by Marx shows a similar lower bound even for graphs $H$ of maximum degree $3$:
 > If ETH holds, then $\mathsf{ColSub}(H)$ cannot be solved in time $n^{o(k/\log k)}$, even for $k$-vertex graphs $H$ of maximum degree $3$.
@@ -99,28 +99,37 @@ For our compression result, we consider blowups $B_\ell \boxtimes K_t$ of Benes 
 
 The routing results from before give rise to good embeddability properties in the following sense.
 
-> %%Frame%%Definition%%def-comprate%%Compression rate%% The compression rate $R(H)$ of a $k$-vertex graph $H$ is the maximum $R \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**. 
+> %%Frame%%Definition%%def-comprate%%Compression rate%%
+> The compression rate $R(H)$ of a $k$-vertex graph $H$ is the maximum $R \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**.
 > This means $G$ is a subgraph of $H \boxtimes K_{\lceil n/R \rceil}$ after subdividing the edges of $G$ appropriately.
+>
+> Furthermore, for fixed $H$ these topological minors can be found in polynomial time in $n$.
 
 For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, we will instead use modified Benes networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
 
-> %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%% We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with $M$ possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
+> %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%%
+> We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with $M$ possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
 
 This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Benes construction from before:
-> %%Frame%%Definition%%def-aug-benes%%$B̌_\ell$%% Denote by $(w_j)_j$ the output vertices of the Benes network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
+> %%Frame%%Definition%%def-aug-benes%%$B̌_\ell$%%
+> Denote by $(w_j)_j$ the output vertices of the Benes network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
 outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{l-1}]$.
 
 These augmented Benes networks will play the role of the pattern graphs we have thus far evasively called $H$.
 
-> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%% The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching-linked subsets of size $\#X = t 2^\ell$.
+> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%%
+> The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching-linked subsets of size $\#X = t 2^\ell$.
 
-> %%Proof%%thm-augmented-linkedness%% We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
+> %%Proof%%thm-augmented-linkedness%%
+> We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
 >
 > Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m 2^{l-1}+s$'th input-pair in the matching for $s \in [2^{l-1}]$, route the input $v_{i}^{(j)}$ to the odd output $w_{2s-1}^{(m+1)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2s}^{(m+1)}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2s-1}^{(m+1)}w_{2s}^{(m+1)}$.
 
-> %%Frame%%Proposition%%thm-Bl-comprate%%Compression rate of $B̌_\ell$%% We have $$R(B̌_\ell) \geq \left\lfloor \frac{2^\ell}{7} \right\rfloor$$ In particular, denoting by $k=2^{\ell+1} \ell$ the number of vertices in the graph, we have $R(B̌_\ell) \geq \left\lfloor \frac{k}{14 \log k} \right\rfloor$
+> %%Frame%%Proposition%%thm-Bl-comprate%%Compression rate of $B̌_\ell$%% 
+> We have $$R(B̌_\ell) \geq \left\lfloor \frac{2^\ell}{7} \right\rfloor$$ In particular, denoting by $k=2^{\ell+1} \ell$ the number of vertices in the graph, we have $R(B̌_\ell) \geq \left\lfloor \frac{k}{14 \log k} \right\rfloor$
 
-> %%Proof%%thm-Bl-comprate%% The second bound follows from the first because
+> %%Proof%%thm-Bl-comprate%%
+> The second bound follows from the first because
 > $$
 > R(B̌_\ell) 
 >   \geq \left\lfloor \frac{2^{\ell+1} \ell}{14 \ell} \right\rfloor
@@ -136,3 +145,41 @@ These augmented Benes networks will play the role of the pattern graphs we have 
 > $$
 > we see by %%Ref%%thm-augmented-linkedness%% that $B̌_\ell \boxtimes K_{\lceil n / \tilde{R} \rceil}$ contains a matching linked subset of size $\geq 7n$, write $X \equiv [n] \times [7]$ (ignore excess vertices).
 > Also assume $V(G)=[n]$. The greedy algorithm can find a proper $7$-coloring $M_1, \ldots, M_7$ of the *edges* of $G$. This gives rise to a matching $M = (M_1 \times \{1\}) \sqcup \dots \sqcup (M_7 \times\{7\})$ on $X$. Since $X$ is matching-linked, we get disjoint paths realizing $M$. Finally, for every non-isolated vertex $v \in [n]$ with edges in $M_{i(1)}, \ldots, M_{i(p)}$, connect all $(v, i(j)) \in X$, $j \in [p-1]$ to $(v,i(p))$. Together those edge sets form a topological minor embedding of $G$ in $B̌_\ell \boxtimes K_{\lceil n / \tilde{R} \rceil}$, so $R \geq \tilde{R}$.
+
+## Finalizing the lower bound
+
+We will start by proving statements about $\mathsf{ColSub}(H)$ for a **fixed** pattern graph $H$. However, bounds for a single algorithm handling arbitrary patterns $H$ will follow directly from this discussion.
+
+As indicated in the introduction, our starting point is the following lemma:
+> %%Frame%%Lemma%%thm-col3-slow%%3-assignment is exponential%%
+> Assuming ETH, there exists a constant $\alpha \in (0, \log 3)$ such that the 3-assignment problem for degree 4 graphs cannot be solved in time $O(2^{\alpha n})$.
+
+Note that in contrast, we do have a brute force 3-color assignment algorithm that runs in $O(3^n)$.
+
+> %%Frame%%Theorem%%thm-comprate-bd%%Compression rate is a lower bound for the exponent%%
+> Assuming ETH, there exists $\beta > 0$ such that no fixed graph $H$ admits an $O(n^{\beta R})$-time algorithm for $\mathsf{ColSub}(H)$.
+
+Observe that in the case where we have optimal compression rate $R(K)=k$, this lower bound is tight since the brute-force algorithm is $O(n^k)$.
+
+> %%Proof%%thm-comprate-bd%%
+> Suppose towards contradiction that there exists a $O(n^{\beta R})$-time algorithm for $\mathsf{ColSub}(H)$ for $\beta:=\alpha / (\log(3)+\epsilon)$ for arbitrary $\epsilon > 0$. We find a contradiction by deriving an $O(2^{\alpha n})$ time algorithm for 3-assignment. We may assume that $R \geq \frac 1 \beta =(\log(3)+\epsilon) / \alpha$ since otherwise the theorem becomes trivial.
+>
+> Let $H$ be a fixed $k$-vertex graph of compression rate $R$. Let $G$ be a degree-$4$ graph. Then we can embed $G$ into $H \boxtimes K_{\lceil n/R \rceil}$ in polynomial time. Finding a 3-coloring for $G$ is equivalent to finding a 3-assignment for the embedded graph, if the edge-chains from the subdivided edges only contain exactly one edge that is marked as an equality edge. The subdivided graph will be the pattern graph for $\mathsf{ColSub}(H)$. Every vertex of $H$ will be treated as a bucket, and we sort vertices of the subdivided graph into these buckets according to the embedding. For every bucket, the brute force algorithm gives a list of possible 3-colorings, giving a reduced graph $G'$ with $\leq k 3^{\lceil n/R \rceil}$ vertices. This runs in time $O(\operatorname{poly}(n) \cdot 2^{\log(3) \lceil n/R \rceil}) \leq O(2^{\alpha n})$ since $R \geq  (\log(3)+\epsilon) / \alpha$. Finally, we feed $G'$ into our impossibly fast algorithm for $\mathsf{ColSub}(H)$, which terminates in $O((\#V(G'))^{\beta R}) \leq O(2^{ \log(3) \lceil n/R \rceil \cdot \beta R}) \leq O(2^{\alpha n})$.
+
+This allows us restore the weak result from the introduction:
+> %%Frame%%Corollary%%thm-clique-bd%%Clique size is a lower bound for the exponent%%
+> Assuming ETH, there exists $\beta > 0$ such that no $O(n^{\beta k})$-time algorithm exists for the $k$-colored $k$-clique problem, where $k$ is fixed.
+
+Finally, we retrieve Marx's lower bound:
+> %%Frame%%Corollary%%thm-Bl-bd%%Lower bound for the exponent with sparse graphs%%
+> Assuming ETH, there exists a sequence of $k$-vertex graphs $(H_k)_{k=4}^\infty$ of maximum degree 4 and $\theta > 0$ such that no $O(n^{\theta k / \log k})$-time algorithm exists for $\mathsf{ColSub}(H_k)$.
+
+> %%Proof%%thm-Bl-bd%%  Pick $\theta= \min \{\frac {\alpha}{28}, \frac{1}{14} \}$. Again we may assume $k / \log k > 1/\theta \geq 14$ since otherwise the corollary is trivial.
+>
+> Pick $\ell \in \N^\ast$ maximal such that $\# V(B̌_\ell) \leq k $. Let $H_k$ be obtained from $B̌_\ell$ by adding isolated vertices until the number of vertices is $k$. Since $\#V(B̌_\ell)  = \ell 2^{\ell+1}$, we conclude that $\ell 2^{\ell+1} \leq k < 2^{l+2} (l+1)$, which implies that $k / \log k < 2^{l+2}$. So
+> $$
+> R(H_k) \geq R(B̌_\ell) \geq \left\lfloor \frac{\#V(B̌_\ell)}{14 \log \#V(B̌_\ell)} \right\rfloor \geq \left\lfloor \frac{k}{14 \log k} \right\rfloor \geq \frac{k}{14 \log k} -1 \geq \frac{k}{28 \log k}.
+> $$
+> by %%Ref%%thm-Bl-comprate%%. Now the theorem follows from %%Ref%%thm-comprate-bd%%.
+>
+> 
