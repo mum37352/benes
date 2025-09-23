@@ -56,31 +56,31 @@ Imagine for now that the assignment problem keeps its $2^{\Omega(n)}$ time lower
 This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/R}$, for some **compression rate** $R \in \mathbb N$ (see %%Ref%%def-comprate%% for a definition), then an $n^{\Omega(t)}$ lower bound follows for the colorful $H$-subgraph problem. Our original paper formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
 
 
-## Benes networks
+## Beneš networks
 
 %%Applet%%benes%%
 
-In the remainder of the note, we construct $k$-vertex graphs $B_l$ of maximum degree $4$ with compression rate $t = \Omega(k / \log k)$, that will lead to a good choice of $H$. These graphs are so-called **Benes networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
+In the remainder of the note, we construct $k$-vertex graphs $B_l$ of maximum degree $4$ with compression rate $t = \Omega(k / \log k)$, that will lead to a good choice of $H$. These graphs are so-called **Beneš networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
 
-> The colorful $H$-subgraph problem for Benes networks requires $n^{\Omega (k/\log k)}$ time under ETH.
+> The colorful $H$-subgraph problem for Beneš networks requires $n^{\Omega (k/\log k)}$ time under ETH.
 
 This gives us Marx's original lower bound for sparse $H$-subgraph problems, which is the best known lower bound under ETH.
 
 ### Construction
 
-The Benes networks are recursively defined graphs $B_\ell$ for $\ell \in \mathbb N$. The graph $B_\ell$ has $2^\ell$ input and $2^\ell$ output vertices, maximum degree $4$, and $O(2^\ell \ell)$ vertices in total. Or, writing $s=2^\ell$, it has $k=O(s \log s)$ vertices. The graphs are built as follows: 
+The Beneš networks are recursively defined graphs $B_\ell$ for $\ell \in \mathbb N$. The graph $B_\ell$ has $2^\ell$ input and $2^\ell$ output vertices, maximum degree $4$, and $O(2^\ell \ell)$ vertices in total. Or, writing $s=2^\ell$, it has $k=O(s \log s)$ vertices. The graphs are built as follows: 
 - $B_1$ is a complete bipartite graph on $2+2$ vertices.
 - $B_{\ell+1}$ is built from two vertex-disjoint copies of $B_\ell$: For each index $i \in [2^\ell]$, we create two fresh input vertices and make them adjacent to input $i$ from each of the two $B_\ell$-copies. We do the same with outputs. The inputs and outputs of $B_{\ell+1}$ are the new vertices created this way.
 
 Note that the inputs come in pairs of vertices with the same neighborhood; such pairs are called twins. Of course, the same holds for the outputs.
 
-If you want, you can try building your own Benes network below.
+If you want, you can try building your own Beneš network below.
 
 %%Applet%%construction%%
 
 ### Routing matchings in blowups
 
-For our compression result, we consider blowups $B_\ell \boxtimes K_t$ of Benes networks. The inputs/output vertices of $B_\ell \boxtimes K_t$ are the blowups of input/output vertices in $B_\ell$. We show the following:
+For our compression result, we consider blowups $B_\ell \boxtimes K_t$ of Beneš networks. The inputs/output vertices of $B_\ell \boxtimes K_t$ are the blowups of input/output vertices in $B_\ell$. We show the following:
 
 > %%Frame%%Proposition%%thm-blowup-routing%%$B_\ell \boxtimes K_t$ can route input-output matchings%% For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
 
@@ -105,20 +105,20 @@ The routing results from before give rise to good embeddability properties in th
 >
 > Furthermore, for fixed $H$ these topological minors can be found in polynomial time in $n$.
 
-For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, we will instead use modified Benes networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
+For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, we will instead use modified Beneš networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
 
 > %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%%
 > We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with $M$ possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
 
-This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Benes construction from before:
+This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Beneš construction from before:
 > %%Frame%%Definition%%def-aug-benes%%$B̌_\ell$%%
-> Denote by $(w_j)_j$ the output vertices of the Benes network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
+> Denote by $(w_j)_j$ the output vertices of the Beneš network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
 outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{l-1}]$.
 
-These augmented Benes networks will play the role of the pattern graphs we have thus far evasively called $H$.
+These augmented Beneš networks will play the role of the pattern graphs we have thus far evasively called $H$.
 
 > %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%%
-> The augmented Benes blowups $B̌_\ell \boxtimes K_{t}$ contain matching-linked subsets of size $\#X = t 2^\ell$.
+> The augmented Beneš blowups $B̌_\ell \boxtimes K_{t}$ contain matching-linked subsets of size $\#X = t 2^\ell$.
 
 > %%Proof%%thm-augmented-linkedness%%
 > We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
