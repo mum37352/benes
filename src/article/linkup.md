@@ -162,12 +162,12 @@ Note that in contrast, we do have a brute force 3-color assignment algorithm tha
 Observe that in the case where we have optimal compression rate $R(K)=k$, this lower bound is tight since the brute-force algorithm is $O(n^k)$.
 
 > %%Proof%%thm-comprate-bd%%
-> Suppose towards contradiction that there exists a $O(n^{\beta R})$-time algorithm for $\mathsf{ColSub}(H)$ for $\beta:=\alpha / (\log(3)+\epsilon)$ for arbitrary $\epsilon > 0$. We find a contradiction by deriving an $O(2^{\alpha n})$ time algorithm for 3-assignment.
+> Suppose towards contradiction that there exists a $O(n^{\beta R})$-time algorithm for $\mathsf{ColSub}(H)$ for $\beta < \alpha / \log(3)$. We find a contradiction by deriving an $O(2^{\alpha n})$ time algorithm for 3-assignment.
 >
-> We may assume that $R \geq \frac 1 \beta =(\log(3)+\epsilon) / \alpha$ since otherwise the theorem becomes trivial.
+> We may assume that $R \geq \frac 1 \beta > \log(3) / \alpha$ since otherwise the theorem becomes trivial.
 >
 > - First, *split*. Let $H$ be a fixed $k$-vertex graph of compression rate $R$. Let $G$ be a degree-$4$ graph. Then by %%Ref%%def-comprate%% we can embed $G$ into $H \boxtimes K_{\lceil n/R \rceil}$ in polynomial time. Finding a 3-coloring for $G$ is equivalent to finding a 3-assignment for the embedded graph, if the edge-chains from the subdivided edges only contain exactly one edge that is marked as an disequality edge. 
-> - Next, *list* a *compatibility graph* using the algorithm from the intro. Every vertex of $H$ will be treated as a bucket, and we sort vertices of the subdivided graph into these buckets according to the embedding. For every bucket, the brute force algorithm gives a list of possible 3-colorings, giving a reduced graph $G'$ with $\leq k 3^{\lceil n/R \rceil}$ vertices. This runs in time $O(\operatorname{poly}(n) \cdot 2^{\log(3) \lceil n/R \rceil}) \leq O(2^{\alpha n})$ since $R \geq  (\log(3)+\epsilon) / \alpha$.
+> - Next, *list* a *compatibility graph* using the algorithm from the intro. Every vertex of $H$ will be treated as a bucket, and we sort vertices of the subdivided graph into these buckets according to the embedding. For every bucket, the brute force algorithm gives a list of possible 3-colorings, giving a reduced graph $G'$ with $\leq k 3^{\lceil n/R \rceil}$ vertices. This runs in time $O(\operatorname{poly}(n) \cdot 2^{\log(3) \lceil n/R \rceil}) \leq O(2^{\alpha n})$ since $R > \log(3) / \alpha$.
 > - Finally, we feed $G'$ into our impossibly fast algorithm for $\mathsf{ColSub}(H)$, which terminates in $O((\#V(G'))^{\beta R}) \leq O(2^{ \log(3) \lceil n/R \rceil \cdot \beta R}) \leq O(2^{\alpha n})$.
 
 This allows us restore the weak result from the introduction:
