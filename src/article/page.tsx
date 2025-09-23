@@ -81,13 +81,14 @@ let mathExtension: MarkedExtension = {
     {
       name: 'frame',
       level: 'block',
-      start(src: string) { return src.match(/%%Frame%%/)?.index; },
+      start(src: string) { return src.match(/%%Frame(Sq)?%%/)?.index; },
       tokenizer(src: string) {
-        let match = src.match(/^%%Frame%%([^%]+)%%([^%]+)%%([^%]+)%%/);
+        let match = src.match(/^%%Frame(Sq)?%%([^%]+)%%([^%]+)%%([^%]+)%%/);
         if (match) {
-          let [fullMatch, category, id, text] = match;
+          let [fullMatch, sq, category, id, text] = match;
           return {
             type: 'frame',
+            proofSquare: (sq === "Sq"),
             raw: fullMatch,
             category: category.trim(),
             id: id.trim(),
@@ -217,6 +218,9 @@ function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList
         renderList.push(<div className="bg-[rgba(0,0,0,0.1)] p-3" id={buildHtmlId(firstToken.id)}>
           <MdTokens tokens={token.tokens!} tagList={tagList} injectedTitle={title} />
         </div>);
+        if (firstToken.proofSquare) {
+          renderList.push(<div className="text-right"><KI>{"\\square"}</KI></div>);
+        }
       } else if (firstToken.type === "proof") {
         hadDirectives = true;
         let tag = tagList[firstToken.thmId];

@@ -151,7 +151,7 @@ These augmented Benes networks will play the role of the pattern graphs we have 
 We will start by proving statements about $\mathsf{ColSub}(H)$ for a **fixed** pattern graph $H$. However, bounds for a single algorithm handling arbitrary patterns $H$ will follow directly from this discussion.
 
 As indicated in the introduction, our starting point is the following lemma:
-> %%Frame%%Lemma%%thm-col3-slow%%3-assignment is exponential%%
+> %%FrameSq%%Lemma%%thm-col3-slow%%3-assignment is exponential%%
 > Assuming ETH, there exists a constant $\alpha \in (0, \log 3)$ such that the 3-assignment problem for degree 4 graphs cannot be solved in time $O(2^{\alpha n})$.
 
 Note that in contrast, we do have a brute force 3-color assignment algorithm that runs in $O(3^n)$.
@@ -162,19 +162,23 @@ Note that in contrast, we do have a brute force 3-color assignment algorithm tha
 Observe that in the case where we have optimal compression rate $R(K)=k$, this lower bound is tight since the brute-force algorithm is $O(n^k)$.
 
 > %%Proof%%thm-comprate-bd%%
-> Suppose towards contradiction that there exists a $O(n^{\beta R})$-time algorithm for $\mathsf{ColSub}(H)$ for $\beta:=\alpha / (\log(3)+\epsilon)$ for arbitrary $\epsilon > 0$. We find a contradiction by deriving an $O(2^{\alpha n})$ time algorithm for 3-assignment. We may assume that $R \geq \frac 1 \beta =(\log(3)+\epsilon) / \alpha$ since otherwise the theorem becomes trivial.
+> Suppose towards contradiction that there exists a $O(n^{\beta R})$-time algorithm for $\mathsf{ColSub}(H)$ for $\beta:=\alpha / (\log(3)+\epsilon)$ for arbitrary $\epsilon > 0$. We find a contradiction by deriving an $O(2^{\alpha n})$ time algorithm for 3-assignment.
 >
-> Let $H$ be a fixed $k$-vertex graph of compression rate $R$. Let $G$ be a degree-$4$ graph. Then we can embed $G$ into $H \boxtimes K_{\lceil n/R \rceil}$ in polynomial time. Finding a 3-coloring for $G$ is equivalent to finding a 3-assignment for the embedded graph, if the edge-chains from the subdivided edges only contain exactly one edge that is marked as an equality edge. The subdivided graph will be the pattern graph for $\mathsf{ColSub}(H)$. Every vertex of $H$ will be treated as a bucket, and we sort vertices of the subdivided graph into these buckets according to the embedding. For every bucket, the brute force algorithm gives a list of possible 3-colorings, giving a reduced graph $G'$ with $\leq k 3^{\lceil n/R \rceil}$ vertices. This runs in time $O(\operatorname{poly}(n) \cdot 2^{\log(3) \lceil n/R \rceil}) \leq O(2^{\alpha n})$ since $R \geq  (\log(3)+\epsilon) / \alpha$. Finally, we feed $G'$ into our impossibly fast algorithm for $\mathsf{ColSub}(H)$, which terminates in $O((\#V(G'))^{\beta R}) \leq O(2^{ \log(3) \lceil n/R \rceil \cdot \beta R}) \leq O(2^{\alpha n})$.
+> We may assume that $R \geq \frac 1 \beta =(\log(3)+\epsilon) / \alpha$ since otherwise the theorem becomes trivial.
+>
+> - First, *subdivide and embed*. Let $H$ be a fixed $k$-vertex graph of compression rate $R$. Let $G$ be a degree-$4$ graph. Then we can embed $G$ into $H \boxtimes K_{\lceil n/R \rceil}$ in polynomial time. Finding a 3-coloring for $G$ is equivalent to finding a 3-assignment for the embedded graph, if the edge-chains from the subdivided edges only contain exactly one edge that is marked as an inequality edge. 
+> - Next, construct a *compatibility graph* using the split-algorithm from the intro. Every vertex of $H$ will be treated as a bucket, and we sort vertices of the subdivided graph into these buckets according to the embedding. For every bucket, the brute force algorithm gives a list of possible 3-colorings, giving a reduced graph $G'$ with $\leq k 3^{\lceil n/R \rceil}$ vertices. This runs in time $O(\operatorname{poly}(n) \cdot 2^{\log(3) \lceil n/R \rceil}) \leq O(2^{\alpha n})$ since $R \geq  (\log(3)+\epsilon) / \alpha$.
+> - Finally, we feed $G'$ into our impossibly fast algorithm for $\mathsf{ColSub}(H)$, which terminates in $O((\#V(G'))^{\beta R}) \leq O(2^{ \log(3) \lceil n/R \rceil \cdot \beta R}) \leq O(2^{\alpha n})$.
 
 This allows us restore the weak result from the introduction:
-> %%Frame%%Corollary%%thm-clique-bd%%Clique size is a lower bound for the exponent%%
+> %%FrameSq%%Corollary%%thm-clique-bd%%Clique size is a lower bound for the exponent%%
 > Assuming ETH, there exists $\beta > 0$ such that no $O(n^{\beta k})$-time algorithm exists for the $k$-colored $k$-clique problem, where $k$ is fixed.
 
-Finally, we retrieve Marx's lower bound:
+We can now retrieve Marx's lower bound:
 > %%Frame%%Corollary%%thm-Bl-bd%%Lower bound for the exponent with sparse graphs%%
 > Assuming ETH, there exists a sequence of $k$-vertex graphs $(H_k)_{k=4}^\infty$ of maximum degree 4 and $\theta > 0$ such that no $O(n^{\theta k / \log k})$-time algorithm exists for $\mathsf{ColSub}(H_k)$.
 
-> %%Proof%%thm-Bl-bd%%  Pick $\theta= \min \{\frac {\alpha}{28}, \frac{1}{14} \}$. Again we may assume $k / \log k > 1/\theta \geq 14$ since otherwise the corollary is trivial.
+> %%Proof%%thm-Bl-bd%%  Pick $\theta= \min \{\frac {\alpha}{28}, \frac{1}{14} \}$. Again we may assume $k / \log k \geq 1/\theta \geq 14$ since otherwise the corollary is trivial.
 >
 > Pick $\ell \in \N^\ast$ maximal such that $\# V(B̌_\ell) \leq k $. Let $H_k$ be obtained from $B̌_\ell$ by adding isolated vertices until the number of vertices is $k$. Since $\#V(B̌_\ell)  = \ell 2^{\ell+1}$, we conclude that $\ell 2^{\ell+1} \leq k < 2^{l+2} (l+1)$, which implies that $k / \log k < 2^{l+2}$. So
 > $$
