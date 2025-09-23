@@ -157,7 +157,7 @@ As indicated in the introduction, our starting point is the following lemma:
 Note that in contrast, we do have a brute force 3-color assignment algorithm that runs in $O(3^n)$.
 
 > %%Frame%%Theorem%%thm-comprate-bd%%Compression rate is a lower bound for the exponent%%
-> Assuming ETH, there exists $\beta > 0$ such that no fixed graph $H$ admits an $O(n^{\beta R})$-time algorithm for $\mathsf{ColSub}(H)$.
+> Assuming ETH, there exists $\beta > 0$ such that no fixed graph $H$ admits an $O(n^{\beta R})$ polynomial-time algorithm for $\mathsf{ColSub}(H)$.
 
 Observe that in the case where we have optimal compression rate $R(K)=k$, this lower bound is tight since the brute-force algorithm is $O(n^k)$.
 
@@ -172,11 +172,11 @@ Observe that in the case where we have optimal compression rate $R(K)=k$, this l
 
 This allows us restore the weak result from the introduction:
 > %%FrameSq%%Corollary%%thm-clique-bd%%Clique size is a lower bound for the exponent%%
-> Assuming ETH, there exists $\beta > 0$ such that no $O(n^{\beta k})$-time algorithm exists for the $k$-colored $k$-clique problem, where $k$ is fixed.
+> Assuming ETH, there exists $\beta > 0$ such that no $O(n^{\beta k})$ polynomial-time algorithm exists for the $k$-colored $k$-clique problem, where $k$ is fixed.
 
 We can now retrieve Marx's lower bound:
 > %%Frame%%Corollary%%thm-Bl-bd%%Lower bound for the exponent with sparse graphs%%
-> Assuming ETH, there exists a sequence of $k$-vertex graphs $(H_k)_{k=4}^\infty$ of maximum degree 4 and $\theta > 0$ such that no $O(n^{\theta k / \log k})$-time algorithm exists for $\mathsf{ColSub}(H_k)$.
+> Assuming ETH, there exists a sequence of $k$-vertex graphs $(H_k)_{k=4}^\infty$ of maximum degree 4 and $\theta > 0$ such that no $O(n^{\theta k / \log k})$ polynomial-time algorithm exists for $\mathsf{ColSub}(H_k)$.
 
 > %%Proof%%thm-Bl-bd%%  Pick $\theta= \min \{\frac {\alpha}{28}, \frac{1}{14} \}$. Again we may assume $k / \log k \geq 1/\theta \geq 14$ since otherwise the corollary is trivial.
 >
