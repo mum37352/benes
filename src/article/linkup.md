@@ -174,7 +174,7 @@ This allows us restore the weak result from the introduction:
 > %%FrameSq%%Corollary%%thm-clique-bd%%Clique size is a lower bound for the exponent%%
 > Assuming ETH, there exists $\beta > 0$ such that no $O(n^{\beta k})$ polynomial-time algorithm exists for the $k$-colored $k$-clique problem, where $k$ is fixed.
 
-We can now retrieve Marx's lower bound:
+But additionally, we can now retrieve Marx's lower bound:
 > %%Frame%%Corollary%%thm-Bl-bd%%Lower bound for the exponent with sparse graphs%%
 > Assuming ETH, there exists a sequence of $k$-vertex graphs $(H_k)_{k=4}^\infty$ of maximum degree 4 and $\theta > 0$ such that no $O(n^{\theta k / \log k})$ polynomial-time algorithm exists for $\mathsf{ColSub}(H_k)$.
 
