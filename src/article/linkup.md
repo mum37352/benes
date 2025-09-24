@@ -170,7 +170,7 @@ Observe that in the case where we have optimal compression rate $R(K)=k$, this l
 > - Next, *list* a *compatibility graph* using the algorithm from the intro. Every vertex of $H$ will be treated as a bucket, and we sort vertices of the subdivided graph into these buckets according to the embedding. For every bucket, the brute force algorithm gives a list of possible 3-colorings, giving a reduced graph $G'$ with $\leq k 3^{\lceil n/R \rceil}$ vertices. This runs in time $O(\operatorname{poly}(n) \cdot 2^{\log(3) \lceil n/R \rceil}) \leq O(2^{\alpha n})$ since $R > \log(3) / \alpha$.
 > - Finally, we feed $G'$ into our impossibly fast algorithm for $\mathsf{ColSub}(H)$, which terminates in $O((\#V(G'))^{\beta R}) \leq O(2^{ \log(3) \lceil n/R \rceil \cdot \beta R}) \leq O(2^{\alpha n})$.
 
-This allows us restore the weak result from the introduction:
+This allows us restore the dense result from the introduction:
 > %%FrameSq%%Corollary%%thm-clique-bd%%Clique size is a lower bound for the exponent%%
 > Assuming ETH, there exists $\beta > 0$ such that no $O(n^{\beta k})$ polynomial-time algorithm exists for the $k$-colored $k$-clique problem, where $k$ is fixed.
 
