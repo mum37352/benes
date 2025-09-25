@@ -37,7 +37,7 @@ As a warm-up, we demonstrate this idea with $H=K_k$. In this case, we construct 
 
 %%Applet%%reduction%%
 
-In other words, we have created a **compatibility graph** $G'$ on the partial assignments to individual blocks of $G$. This graph has at most  $k 3^b$ vertices, where $b = \lceil n/k \rceil$ is the maximum block size. The key observation is:
+In other words, we have created a **compatibility graph** $G'$ on the partial assignments to individual blocks of $G$. This graph has at most  $k 3^t$ vertices, where $t = \lceil n/k \rceil$ is the maximum block size. The key observation is:
 
 > The colorful $k$-cliques $K$ in the compatibility graph $G'$ correspond bijectively to proper assignments of the original graph $G$. 
 
@@ -47,13 +47,13 @@ Indeed, consider a clique $K$ in the compatibility graph $G'$: Its vertices $v_1
 
 Under very lucky conditions, the lower bound for $k$-cliques works even for $H$-subgraph problems involving subgraphs $H$ of $k$-cliques: Imagine that our partition of $V(G)$ into blocks $V_1,\ldots,V_k$ of size $n/k$ gives rise to an "empty pair" $(i,j) \in [k]^2$ such that $G$ does not contain any edges between $V_i$ and $V_j$. In this case, no conflicts can arise between partial assignments to $V_i$ and $V_j$, so we don't need to test compatibility between such assignments. (Restricted to such assignments, the compatibility graph $G'$ is a complete bipartite graph, so it contains no relevant information in this part.)
 
-In fact, the partition of $G$ could even have empty pairs for all non-edges of a specific $k$-vertex graph $H$ of interest. Then $G$ would fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$, which is obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs. If $G$ is a subgraph of $H \boxtimes K_t$  and we build the compatibility graph $G'$ with blocks corresponding to the cliques, then we obtain:
+In fact, the partition of $G$ could even have empty pairs for all non-edges of a specific $k$-vertex graph $H$ of interest. Denoting by $t$ again the maximum blcok size, $G$ would then fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$, which is obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs. If $G$ is a subgraph of $H \boxtimes K_t$  and we build the compatibility graph $G'$ with blocks corresponding to the cliques, then we obtain:
 
 > If $G$ is a subgraph of $H \boxtimes K_t$, then the proper assignments of $G$ correspond bijectively to the $H$-copies in $G'$. 
 
 Imagine for now that the assignment problem keeps its $2^{\Omega(n)}$ time lower bound under ETH when each input $G$ (an $n$-vertex graph) is given as a subgraph of $H \boxtimes K_{n/k}$. Then the above correspondence between assignments of $G$ and $H$-copies in $G'$ would imply an $n^{\Omega(k)}$ lower bound for the colorful $H$-subgraph problem: Indeed, an $H$-subgraph exists in $G'$ if and only if there is a proper assignment in $G$.
 
-This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/R}$, for some **compression rate** $R \in \mathbb N$ (see %%Ref%%def-comprate%% for a definition), then an $n^{\Omega(t)}$ lower bound follows for the colorful $H$-subgraph problem. Our original paper formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
+This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/R}$, for some **compression rate** $R \in \mathbb N$ (see %%Ref%%def-comprate%%), then an $n^{\Omega(R)}$ lower bound follows for the colorful $H$-subgraph problem. Our original paper formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
 
 
 ## Beneš networks
@@ -113,7 +113,7 @@ For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(
 This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Beneš construction from before:
 > %%Frame%%Definition%%def-aug-benes%%$B̌_\ell$%%
 > Denote by $(w_j)_j$ the output vertices of the Beneš network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
-outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{l-1}]$.
+outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{\ell-1}]$.
 
 These augmented Beneš networks will play the role of the pattern graphs we have thus far evasively called $H$.
 
@@ -123,7 +123,7 @@ These augmented Beneš networks will play the role of the pattern graphs we have
 > %%Proof%%thm-augmented-linkedness%%
 > We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
 >
-> Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m 2^{l-1}+s$'th input-pair in the matching for $s \in [2^{l-1}]$, route the input $v_{i}^{(j)}$ to the odd output $w_{2s-1}^{(m+1)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2s}^{(m+1)}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2s-1}^{(m+1)}w_{2s}^{(m+1)}$.
+> Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m 2^{\ell-1}+s$'th input-pair in the matching for $s \in [2^{\ell-1}]$, route the input $v_{i}^{(j)}$ to the odd output $w_{2s-1}^{(m+1)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2s}^{(m+1)}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2s-1}^{(m+1)}w_{2s}^{(m+1)}$.
 
 > %%Frame%%Proposition%%thm-Bl-comprate%%Compression rate of $B̌_\ell$%% 
 > We have $$R(B̌_\ell) \geq \left\lfloor \frac{2^\ell}{7} \right\rfloor$$ In particular, denoting by $k=2^{\ell+1} \ell$ the number of vertices in the graph, we have $R(B̌_\ell) \geq \left\lfloor \frac{k}{14 \log k} \right\rfloor$
@@ -180,7 +180,7 @@ But additionally, we can now retrieve Marx's lower bound:
 
 > %%Proof%%thm-Bl-bd%%  Pick $\theta= \min \{\frac {\alpha}{28}, \frac{1}{14} \}$. Again we may assume $k / \log k \geq 1/\theta \geq 14$ since otherwise the corollary is trivial.
 >
-> Pick $\ell \in \N^\ast$ maximal such that $\# V(B̌_\ell) \leq k $. Let $H_k$ be obtained from $B̌_\ell$ by adding isolated vertices until the number of vertices is $k$. Since $\#V(B̌_\ell)  = \ell 2^{\ell+1}$, we conclude that $\ell 2^{\ell+1} \leq k < 2^{l+2} (l+1)$, which implies that $k / \log k < 2^{l+2}$. So
+> Pick $\ell \in \N^\ast$ maximal such that $\# V(B̌_\ell) \leq k $. Let $H_k$ be obtained from $B̌_\ell$ by adding isolated vertices until the number of vertices is $k$. Since $\#V(B̌_\ell)  = \ell 2^{\ell+1}$, we conclude that $\ell 2^{\ell+1} \leq k < 2^{\ell+2} (\ell+1)$, which implies that $k / \log k < 2^{l+2}$. So
 > $$
 > R(H_k) \geq R(B̌_\ell) \geq \left\lfloor \frac{\#V(B̌_\ell)}{14 \log \#V(B̌_\ell)} \right\rfloor \geq \left\lfloor \frac{k}{14 \log k} \right\rfloor \geq \frac{k}{14 \log k} -1 \geq \frac{k}{28 \log k}.
 > $$
