@@ -53,7 +53,7 @@ In fact, the partition of $G$ could even have empty pairs for all non-edges of a
 
 Imagine for now that the assignment problem keeps its $2^{\Omega(n)}$ time lower bound under ETH when each input $G$ (an $n$-vertex graph) is given as a subgraph of $H \boxtimes K_{n/k}$. Then the above correspondence between assignments of $G$ and $H$-copies in $G'$ would imply an $n^{\Omega(k)}$ lower bound for the colorful $H$-subgraph problem: Indeed, an $H$-subgraph exists in $G'$ if and only if there is a proper assignment in $G$.
 
-This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/R}$, for some **compression rate** $R \in \mathbb N$ (see %%Ref%%def-comprate%%), then an $n^{\Omega(R)}$ lower bound follows for the colorful $H$-subgraph problem. Our original paper formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
+This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/R}$, for some **compression rate** $R \in \mathbb N$ (see %%Ref%%def-comprate%%), then an $n^{\Omega(R)}$ lower bound follows for the colorful $H$-subgraph problem. Our [original paper](https://arxiv.org/abs/2410.02606) formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
 
 
 ## Beneš networks
