@@ -178,7 +178,7 @@ But additionally, we can now retrieve Marx's lower bound:
 > %%Frame%%Corollary%%thm-Bl-bd%%Lower bound for the exponent with sparse graphs%%
 > Assuming ETH, there exists a sequence of $k$-vertex graphs $(H_k)_{k=4}^\infty$ of maximum degree 4 and $\theta > 0$ such that no $O(n^{\theta k / \log k})$ polynomial-time algorithm exists for $\mathsf{ColSub}(H_k)$.
 
-> %%Proof%%thm-Bl-bd%%  Pick $\theta= \min \{\frac {\alpha}{28}, \frac{1}{14} \}$. Again we may assume $k / \log k \geq 1/\theta \geq 14$ since otherwise the corollary is trivial.
+> %%Proof%%thm-Bl-bd%%  Pick $\theta= \min \{\frac {\beta}{28}, \frac{1}{14} \}$. Again we may assume $k / \log k \geq 1/\theta \geq 14$ since otherwise the corollary is trivial.
 >
 > Pick $\ell \in \N^\ast$ maximal such that $\# V(B̌_\ell) \leq k $. Let $H_k$ be obtained from $B̌_\ell$ by adding isolated vertices until the number of vertices is $k$. Since $\#V(B̌_\ell)  = \ell 2^{\ell+1}$, we conclude that $\ell 2^{\ell+1} \leq k < 2^{\ell+2} (\ell+1)$, which implies that $k / \log k < 2^{l+2}$. So
 > $$
