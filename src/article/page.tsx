@@ -242,7 +242,7 @@ function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList
       let tokens = marked.lexer(token.text);
       renderList.push(<li><MdTokens tokens={tokens} tagList={tagList} /></li>);
     } else if (token.type === "applet") {
-      if (token.text === "reduction") {
+      if (token.text === "reduction!") { // Turn this back on by removing the !
         renderList.push(<ReductionApplet />);
       } else {
         renderList.push(
