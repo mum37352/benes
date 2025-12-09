@@ -126,7 +126,7 @@ export function GraphToolbar({ activeTool, onChange, tools }: {activeTool: strin
     if (tool) {
       toolButtons.push(<Button
         key={tool.name}
-        className={`p-button-rounded p-button-text ${activeTool === tool.name ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white' : ''}`}
+        className={`p-button-rounded p-button-text ${activeTool === tool.name ? 'ring-2 ring-[#2dd4bfa0]' : ''}`}
         onClick={() => onChange(tool.name)}
         tooltip={`${tool.name[0].toUpperCase() + tool.name.slice(1)} (Hotkey: ${tool.hotkey})`}
       >
