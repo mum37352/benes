@@ -1,70 +1,75 @@
-﻿# Lower bounds for detecting small subgraphs
+# Lower bounds for detecting small subgraphs
 
-The [exponential-time hypothesis (ETH)](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** This problem requires time $n^{\Omega(k)}$ under ETH.
+The [exponential-time hypothesis (ETH)](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** Namely, under ETH, this problem requires time $n^{\Omega(k)}$.
 
-We would like to transfer this lower bound to other parameterized problems. However, there is a problematic blowup: Reductions from $k$-clique to other problems usually need $k$ "vertex gadgets" to encode potential clique vertices, and $k \choose 2$ "edge gadgets" to check edges between the encoded vertices. This yields target instances with parameter value $\ell = \Omega(k^2)$, since each gadget has to increase the parameter by at least a constant value. Due to this parameter increase, only $n^{o(\sqrt \ell)}$ time algorithms can be ruled out for the target problem by reduction from $k$-clique.
+We would like to transfer this lower bound to other parameterized problems. This however seems impossible at first glance: Reductions from $k$-clique to other problems tend to need $k$ "vertex gadgets" that encode potential clique vertices, and $k \choose 2$ "edge gadgets" that check edges between the encoded vertices. This yields target instances with parameter value $\ell = \Omega(k^2)$, since each gadget has to increase the parameter by at least a constant value. Due to this parameter increase, a reduction from $k$-clique only rules out $n^{o(\sqrt \ell)}$ time algorithms for the target problem.
 
-A better source problem is **colorful subgraph isomorphism**: We call a  $k$-vertex graph $H$  colorful if it is bijectively vertex-colored with $[k]$. For any fixed colorful $k$-vertex graph $H$, we consider the following problem:
+A better source problem is **colorful subgraph isomorphism**: We call a $k$-vertex graph $H$ colorful if it is bijectively colored with $k$ colors. For any fixed colorful $k$-vertex graph $H$, we consider the following problem:
 
-> %%Frame%%Problem%%prob-colsub%%$\mathsf{ColSub}(H)$%% Given colored graphs $H$ and $G$, does $G$ contain a subgraph isomorphic to $H$? The colors matter for the isomorphism, and we assume that $H$ is colorful.
+> %%Frame%%Problem%%prob-colsub%%$\mathsf{ColSub}(H)$%% Given colored graphs $H$ and $G$, where $H$ is colorful, does $G$ contain a subgraph isomorphic to $H$? The colors matter for the isomorphism.
 
 When $H=K_k$ is a complete graph, $\mathsf{ColSub}(K_k)$ is a colorful version of the $k$-clique problem, for which ETH rules out $n^{o(k)}$ time algorithms. A breakthrough result by Marx shows a similar lower bound even for graphs $H$ of maximum degree $3$:
-> If ETH holds, then $\mathsf{ColSub}(H)$ cannot be solved in time $n^{o(k/\log k)}$, even for $k$-vertex graphs $H$ of maximum degree $3$.
+> If ETH holds, then $\mathsf{ColSub}(H)$ cannot be solved in time $n^{o(k/\log k)}$, even for certain $k$-vertex graphs $H$ of maximum degree $3$.
 
-This helps a lot in proving lower bounds for other parameterized problems. The reason is that many reductions from $\mathsf{Clique}$ to problems $\mathsf X$ can be turned into reductions from $\mathsf{ColSub}(H)$ with arbitrary $H$ to $\mathsf X$. Usually, the same vertex- and edge-gadgets work, each of which increase the parameter by $O(1)$. If we start with a $k$-vertex graph $H$ of maximum degree $3$, then we only need to take care of $O(k)$ rather than $O(k^2)$ edges.
+This gives us lower bounds for other parameterized problems. The reason is that many reductions from $\mathsf{Clique}$ to problems $\mathsf X$ can be generalized, without too much effort, into more general reductions from $\mathsf{ColSub}(H)$ with arbitrary $H$ to $\mathsf X$. Usually, the same vertex- and edge-gadgets work, each of which increase the parameter by $O(1)$. Crucially, if we start with a $k$-vertex graph $H$ of maximum degree $3$, then we only need to take care of $O(k)$ rather than $O(k^2)$ edges. 
 
 Overall, this transforms an $\mathsf{ColSub}(H)$-instance with a $k$-vertex graph $H$ to an $\mathsf X$-instance with parameter $\ell = O(k)$. If we could then solve $\mathsf X$ in $n^{o(\ell / \log \ell)}$ time, we would refute Marx's bound. This strategy was used in many papers to rule out $n^{o(\ell / \log \ell)}$ time algorithms for problems with known $n^{O(\ell)}$ time algorithms.
 
 In this note, we give a self-contained and arguably simple proof of Marx's lower bound.
 
-## Proving the lower bounds
+## Proof idea
 
-Our starting point for the proof is the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH. (This can be shown using the standard reduction from 3-SAT together with the sparsification lemma, by which ETH already rules out $2^{o(n)}$ time algorithms for $n$-variable 3-SAT *with just $O(n)$ clauses*.) The lower bound even holds on graphs of maximum degree $4$.
+For the proof, we first consider the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH. (The standard reduction from 3-SAT gives this when combined with the sparsification lemma: This lemma says that ETH already rules out $2^{o(n)}$ time algorithms for $n$-variable 3-SAT *with just $O(n)$ clauses*.) The lower bound even holds on graphs of maximum degree $4$.
 
-For technical reasons, we generalize this problem slightly: Besides the usual *"disequality"* edges in the $3$-coloring problem that require distinct colors at their endpoints, we also allow *"equality"* edges that require their endpoints to have the same color. Being a generalization of $3$-coloring, there are no $2^{o(n)}$ time algorithms for this problem under ETH.
+For technical reasons, we generalize this problem slightly: Besides the usual *"disequality"* edges in the $3$-coloring problem that require distinct colors at their endpoints, we also allow *"equality"* edges that require endpoints to have the same color. We call an assignment from $V(G)$ to $\{1,2,3\}$ proper if it satisfies all conditions imposed by edges. Since this *$3$-assignment problem* generalizes $3$-coloring, it admits no $2^{o(n)}$ time algorithms under ETH.
 
-Now this is the basic idea behind the lower bound: 
-- We transform an $n$-vertex instance $G$ for the generalized $3$-coloring problem into an equivalent $H$-subgraph problem instance $G'$ with approximately $3^{n/k}$ vertices. 
-- Then an $n^{o(k)}$-time algorithm for the $H$-subgraph problem would then imply a $2^{o(n)}$-time algorithm for the generalized $3$-coloring problem. But this contradicts ETH. 
+The basic idea behind the lower bound is this: 
+- We transform an $n$-vertex instance $G$ for the $3$-assignment problem into an equivalent blown up $H$-subgraph problem instance $G'$ with approximately $3^{n/k}$ vertices. 
+- An $n^{o(k)}$-time algorithm for the $H$-subgraph problem would then imply a $2^{o(n)}$-time algorithm for the generalized $3$-coloring problem. But this contradicts ETH.
 
 
 ### Cliques
 
-As a warm-up, we demonstrate this idea with $H=K_k$. In this case, we construct $G'$ as follows from $G$: 
-- $V(G)$ is divided equitably into *blocks* $V_1, \ldots, V_k$ of size at most $\lceil n/k\rceil$ each. The resulting graph depends on our choice of blocks, but any choice is fine.
-- For each proper $3$-assignment of $V_i$, we add a vertex of color $i$ to the graph $G'$.
+To warm up, let us demonstrate this idea in the special case that $H=K_k$ is a clique. We construct $G'$ as follows from $G$: 
+- $V(G)$ is divided arbitrarily into *blocks* $V_1, \ldots, V_k$, each of size at most $t := \lceil n/k\rceil$.
+- For each valid $3$-assignment of $V_i$, add a vertex of color $i$ to the graph $G'$.
 - Two vertices in $G'$ are connected by an edge if their colorings are compatible, meaning they come from different blocks and together form a proper assignment.
 
 %%Applet%%reduction%%
 
-In other words, we have created a **compatibility graph** $G'$ on the partial assignments to individual blocks of $G$. This graph has at most  $k 3^t$ vertices, where $t = \lceil n/k \rceil$ is the maximum block size. The key observation is:
+We call $G'$ the **compatibility graph**, as it tells us which partial assignments to individual blocks of $G$ are compatible. This graph has at most  $k 3^t$ vertices, where $t = \lceil n/k \rceil$ is the maximum block size. The key observation:
 
 > The colorful $k$-cliques $K$ in the compatibility graph $G'$ correspond bijectively to proper assignments of the original graph $G$. 
 
-Indeed, consider a clique $K$ in the compatibility graph $G'$: Its vertices $v_1,\ldots,v_k$ provide a valid assignment for each block in $G$. Moreover, the presence of all edges $v_iv_j$ with $i \neq j$ in $K$ ensures that the union of these partial assignments is a valid assignment of $G$ as a whole. If there was a conflict in the union, then it would stem from an edge between two different blocks in $G$, but our compatibility relation in $G'$ rules this out. Conversely, every proper assignment to $G$ specifies a unique clique in $G'$.
+Indeed, consider a clique $K$ in the compatibility graph $G'$: Its vertices $v_1,\ldots,v_k$ provide a proper assignment for each block in $G$. Moreover, the presence of all edges $v_iv_j$ with $i \neq j$ in $K$ ensures that the union of these partial assignments is a valid assignment of $G$ as a whole. If there was a conflict in the union, then it would stem from an edge between two different blocks in $G$, but our compatibility relation in $G'$ rules this out. Conversely, every proper assignment to $G$ specifies a unique clique in $G'$.
 
-### Blowups and compression rate
+### Blowups
 
-Under very lucky conditions, the lower bound for $k$-cliques works even for $H$-subgraph problems involving subgraphs $H$ of $k$-cliques: Imagine that our partition of $V(G)$ into blocks $V_1,\ldots,V_k$ of size $n/k$ gives rise to an "empty pair" $(i,j) \in [k]^2$ such that $G$ does not contain any edges between $V_i$ and $V_j$. In this case, no conflicts can arise between partial assignments to $V_i$ and $V_j$, so we don't need to test compatibility between such assignments. (Restricted to such assignments, the compatibility graph $G'$ is a complete bipartite graph, so it contains no relevant information in this part.)
+Under very lucky conditions, the proof above works even for $H$-subgraph problems when $H$ is much sparser than a clique: Imagine that our partition of $V(G)$ into blocks $V_1,\ldots,V_k$ is such that no edges run between two particular blocks $V_i$ and $V_j$. Let us then call $(i,j)$ an empty pair. For such empty pairs, no conflicts can arise between partial assignments to $V_i$ and $V_j$, so we can skip the compatibility test between such assignments.
 
-In fact, the partition of $G$ could even have empty pairs for all non-edges of a specific $k$-vertex graph $H$ of interest. Denoting by $t$ again the maximum block size, $G$ would then fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$, which is obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs. If $G$ is a subgraph of $H \boxtimes K_t$  and we build the compatibility graph $G'$ with blocks corresponding to the cliques, then we obtain:
+In fact, the partition of $G$ could be so nice that all non-edges $ij \notin E(H)$ of a specific $k$-vertex graph $H$ of interest give rise to empty pairs. If $t = \lceil n/k \rceil$ denotes the maximum block size, then $G$ would fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$. This is the graph obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs. In this very nice situation, we have:
 
 > If $G$ is a subgraph of $H \boxtimes K_t$, then the proper assignments of $G$ correspond bijectively to the $H$-copies in $G'$. 
 
-Imagine for now that the assignment problem keeps its $2^{\Omega(n)}$ time lower bound under ETH when each input $G$ (an $n$-vertex graph) is given as a subgraph of $H \boxtimes K_{n/k}$. Then the above correspondence between assignments of $G$ and $H$-copies in $G'$ would imply an $n^{\Omega(k)}$ lower bound for the colorful $H$-subgraph problem: Indeed, an $H$-subgraph exists in $G'$ if and only if there is a proper assignment in $G$.
+Imagine now that, for some reason, the $3$-assignment problem stayed hard under ETH (with an $2^{\Omega(n)}$ time lower bound) when the $n$-vertex input graph $G$ is given as a subgraph of $H \boxtimes K_{n/k}$. Then the above correspondence between assignments of $G$ and $H$-copies in $G'$ directly gives an $n^{\Omega(k)}$ lower bound for the colorful $H$-subgraph problem, because testing for an $H$-subgraph in $G'$ is equivalent to testing for a proper assignment in $G$.
 
-This works more generally: When the coloring problem has a $2^{\Omega(n)}$ lower bound on graphs $G$ that are explicitly given as subgraphs of $H \boxtimes K_{n/R}$, for some **compression rate** $R \in \mathbb N$ (see %%Ref%%def-comprate%%), then an $n^{\Omega(R)}$ lower bound follows for the colorful $H$-subgraph problem. Our [original paper](https://arxiv.org/abs/2410.02606) formally defines a closely related but more complicated notion, the *linkage capacity* $\gamma(H)$, but the more informal notion of compression rate above suffices for this note.
+### Compression rate
 
+Just before, we have learned the following: When the $3$-assignment problem has an $2^{\Omega(n)}$ time lower bound on graphs $G$ that fit into the $\lceil n/k \rceil$-blowup of $H$, then testing for $H$-copies in $n$-vertex graphs has an $n^{\Omega(k)}$ lower bound.
+
+In many cases, $G$ does not fit into the $\lceil n/k \rceil$-blowup of $H$, but only into an $n/R$-blowup of $H$ for some $R \leq k$. It certainly fits when $R=1$, as the $n$-blowup of $H$ contains an $n$-clique. Let us say that $H$ admits **compression rate** $R \in \mathbb N$ if the $3$-assignment problem has an $2^{\Omega(n)}$ time lower bound on graphs $G$ that fit into the $\lceil n/R \rceil$-blowup of $H$. An $n^{\Omega(R)}$ lower bound then follows for the colorful $H$-subgraph problem by our argument above. We are good if $R \in \Omega(k)$, but we'll usually get $R \in \Omega(k/ \log k)$.
+
+Our [original paper](https://arxiv.org/abs/2410.02606) uses a closely related but somewhat more complicated notion, the *linkage capacity* $\gamma(H)$. For this note, the more informal notion of compression rate above suffices.
 
 ## Beneš networks
 
 %%Applet%%benes%%
 
-In the remainder of the note, we construct $k$-vertex graphs $B_l$ of maximum degree $4$ with compression rate $t = \Omega(k / \log k)$, that will lead to a good choice of $H$. These graphs are so-called **Beneš networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
+In the remainder of this note, we construct $k$-vertex graphs $B_l$ of maximum degree $4$ with compression rate $R = \Omega(k / \log k)$. These graphs are so-called **Beneš networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
 
 > The colorful $H$-subgraph problem for Beneš networks requires $n^{\Omega (k/\log k)}$ time under ETH.
 
-This gives us Marx's original lower bound for sparse $H$-subgraph problems, which is the best known lower bound under ETH.
+This gives us Marx's original lower bound for sparse $H$-subgraph problems, which is the best known lower bound under ETH for $k$-vertex pattern graphs with $O(k)$ edges.
 
 ### Construction
 
