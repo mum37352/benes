@@ -19,16 +19,16 @@ In this note, we give a self-contained and arguably simple proof of Marx's lower
 
 ## Proof idea
 
-For the proof, we first consider the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH. (The standard reduction from 3-SAT gives this when combined with the sparsification lemma: This lemma says that ETH already rules out $2^{o(n)}$ time algorithms for $n$-variable 3-SAT *with just $O(n)$ clauses*.) The lower bound even holds on graphs of maximum degree $4$.
+Our proof starts from the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH, even on graphs of maximum degree $4$. This can be shown with the standard reduction from $3$-SAT to $3$-coloring, combined with the sparsification lemma. (This lemma says that ETH already rules out $2^{o(n)}$ time algorithms for *sparse* $n$-variable $3$-SAT, i.e., with just $O(n)$ clauses.) For technical reasons, we generalize this problem slightly. 
+- In the standard problem, we are given a graph $G=(V,E)$ and should decide whether there is an assignment $a : V \to \{1,2,3\}$ such that each edge has *distinct* colors on its endpoints, that is, we want $a(u) \neq a(v)$ for all $uv \in E$. 
+- In our version, we also want to enforce some edges to have endpoints of the *same* color. That is, we require $a(u) = a(v)$ for those *"equality"* edges $uv \in E$. We call the other edges *"disequality"* edges.
 
-For technical reasons, we generalize this problem slightly: Besides the usual *"disequality"* edges in the $3$-coloring problem that require distinct colors at their endpoints, we also allow *"equality"* edges that require endpoints to have the same color. We call an assignment from $V(G)$ to $\{1,2,3\}$ proper if it satisfies all conditions imposed by edges. Since this *$3$-assignment problem* generalizes $3$-coloring, it admits no $2^{o(n)}$ time algorithms under ETH.
-
-The basic idea behind the lower bound is this: 
-- We transform an $n$-vertex instance $G$ for the $3$-assignment problem into an equivalent blown up $H$-subgraph problem instance $G'$ with approximately $3^{n/k}$ vertices. 
-- An $n^{o(k)}$-time algorithm for the $H$-subgraph problem would then imply a $2^{o(n)}$-time algorithm for the generalized $3$-coloring problem. But this contradicts ETH.
+Testing for an assignment $a : V \to \{1,2,3\}$ that satisfies all conditions imposed by edges is only more general than $3$-coloring, so ETH rules out $2^{o(n)}$ time algorithms on graphs of maximum degree $4$.  The basic idea for the reduction from the generalized assignment is now this: 
+- We transform an $n$-vertex instance $G$ for the $3$-coloring problem into an equivalent blown up $H$-subgraph problem instance $G'$ with approximately $3^{n/k}$ vertices. 
+- An $n^{o(k)}$-time algorithm for $H$-subgraphs would then imply $2^{o(n)}$ time for $3$-coloring. But this contradicts ETH.
 
 
-### Cliques
+### From $3$-coloring to cliques
 
 To warm up, let us demonstrate this idea in the special case that $H=K_k$ is a clique. We construct $G'$ as follows from $G$: 
 - $V(G)$ is divided arbitrarily into *blocks* $V_1, \ldots, V_k$, each of size at most $t := \lceil n/k\rceil$.
@@ -47,7 +47,7 @@ Indeed, consider a clique $K$ in the compatibility graph $G'$: Its vertices $v_1
 
 Under very lucky conditions, the proof above works even for $H$-subgraph problems when $H$ is much sparser than a clique: Imagine that our partition of $V(G)$ into blocks $V_1,\ldots,V_k$ is such that no edges run between two particular blocks $V_i$ and $V_j$. Let us then call $(i,j)$ an empty pair. For such empty pairs, no conflicts can arise between partial assignments to $V_i$ and $V_j$, so we can skip the compatibility test between such assignments.
 
-In fact, the partition of $G$ could be so nice that all non-edges $ij \notin E(H)$ of a specific $k$-vertex graph $H$ of interest give rise to empty pairs. If $t = \lceil n/k \rceil$ denotes the maximum block size, then $G$ would fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$. This is the graph obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs. In this very nice situation, we have:
+In fact, the partition of $G$ could be so nice that all non-edges $ij \notin E(H)$ of a specific $k$-vertex graph $H$ of interest give rise to empty pairs. If $t = \lceil n/k \rceil$ denotes the maximum block size, then $G$ would fit into the $t$-**blowup** of $H$, written $H \boxtimes K_t$. This is the graph obtained by turning each vertex $v$ into a $t$-clique and turning edges into complete bipartite graphs between the cliques. In this very nice situation, we have:
 
 > If $G$ is a subgraph of $H \boxtimes K_t$, then the proper assignments of $G$ correspond bijectively to the $H$-copies in $G'$. 
 
@@ -56,100 +56,62 @@ Imagine now that, for some reason, the $3$-assignment problem stayed hard under 
 ### Compression rate
 
 Just before, we have learned the following: When the $3$-assignment problem has an $2^{\Omega(n)}$ time lower bound on graphs $G$ that fit into the $\lceil n/k \rceil$-blowup of $H$, then testing for $H$-copies in $n$-vertex graphs has an $n^{\Omega(k)}$ lower bound.
+It may however happen that $G$ does not fit into the $\lceil n/k \rceil$-blowup of $H$, but only into an $n/R$-blowup of $H$ for some $R \leq k$. It certainly fits when $R=1$, as the $n$-blowup of $H$ contains an $n$-clique. 
 
-In many cases, $G$ does not fit into the $\lceil n/k \rceil$-blowup of $H$, but only into an $n/R$-blowup of $H$ for some $R \leq k$. It certainly fits when $R=1$, as the $n$-blowup of $H$ contains an $n$-clique. Let us say that $H$ admits **compression rate** $R \in \mathbb N$ if the $3$-assignment problem has an $2^{\Omega(n)}$ time lower bound on graphs $G$ that fit into the $\lceil n/R \rceil$-blowup of $H$. An $n^{\Omega(R)}$ lower bound then follows for the colorful $H$-subgraph problem by our argument above. We are good if $R \in \Omega(k)$, but we'll usually get $R \in \Omega(k/ \log k)$.
+Let us say (for now only informally) that $H$ admits *compression rate* $R \in \mathbb N$ if the generalized $3$-coloring problem has an $2^{\Omega(n)}$ time lower bound on graphs $G$ that fit into the $\lceil n/R \rceil$-blowup of $H$. An $n^{\Omega(R)}$ lower bound then follows for the colorful $H$-subgraph problem by our argument above. Ideally we have $R \in \Omega(k)$, which holds for cliques, but we'll make the sacrifice of lowering the compression rate to $R \in \Omega(k/ \log k)$ in order to pass to sparse graphs $H$. 
 
-Our [original paper](https://arxiv.org/abs/2410.02606) uses a closely related but somewhat more complicated notion, the *linkage capacity* $\gamma(H)$. For this note, the more informal notion of compression rate above suffices.
+In our proofs, we use a more formal and inherently graph-theoretic definition. At the end of this note, we'll show that the lower bounds under ETH indeed follow with this definition. In the following, we say that a graph $X$ contains $G$ as a *topological minor* if we can subdivide the edges of $G$ and find the result as a subgraph in $X$. This subgraph called a *topological minor model* of $G$ in $X$.
+
+> %%Frame%%Definition%%def-comprate%%Compression rate%%
+> The compression rate $R(H)$ of $H$ is the maximum $R \in \mathbb N$ such that the following holds: For every bipartite graph $G$ with $n+n$ vertices and maximum degree $5$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a *topological minor*. Moreover, a topological minor model of $G$ can be found in polynomial time.
+
+Our [original paper](https://arxiv.org/abs/2410.02606) uses a closely related but somewhat more complicated notion, the *linkage capacity* $\gamma(H)$. For this note, the simpler notion above suffices.
+You might also wonder why the definition only requires bipartite graphs:
+
+> The generalized $3$-coloring problem admits no $2^{o(n)}$ time algorithms on bipartite graphs of maximum degree $5$.
+
+Starting from the $3$-coloring problem on a graph $G=(V,E)$ of maximum degree $4$, replace each vertex $v$ by vertices $\ell_v$ and $r_v$, connected by an equality edge, and replace each edge $uv\in E$ by a disequality edge $\ell_u r_v$. Contracting the equality edges gives back $G$ on disequality edges.
 
 ## Beneš networks
 
 %%Applet%%benes%%
 
-In the remainder of this note, we construct $k$-vertex graphs $B_l$ of maximum degree $4$ with compression rate $R = \Omega(k / \log k)$. These graphs are so-called **Beneš networks**, first discovered in the context of communication networks. With the reduction from the previous section, this implies:
+In the remainder of this note, we construct $k$-vertex graphs of maximum degree $4$ with compression rate $R = \Omega(k / \log k)$. These graphs are so-called **Beneš networks** and were originally developed for communication networks. With the reduction from the previous section, this implies:
 
 > The colorful $H$-subgraph problem for Beneš networks requires $n^{\Omega (k/\log k)}$ time under ETH.
 
-This gives us Marx's original lower bound for sparse $H$-subgraph problems, which is the best known lower bound under ETH for $k$-vertex pattern graphs with $O(k)$ edges.
+This gives us Marx's original lower bound for sparse $H$-subgraph problems, which is the best known lower bound under ETH for $k$-vertex pattern graphs with $O(k)$ edges. 
 
 ### Construction
 
-The Beneš networks are recursively defined graphs $B_\ell$ for $\ell \in \mathbb N$. The graph $B_\ell$ has $2^\ell$ input and $2^\ell$ output vertices, maximum degree $4$, and $O(2^\ell \ell)$ vertices in total. Or, writing $s=2^\ell$, it has $k=O(s \log s)$ vertices. The graphs are built as follows: 
+The Beneš networks are recursively defined graphs $B_\ell$ for $\ell \in \mathbb N$. The graph $B_\ell$ has $2^\ell$ input and $2^\ell$ output vertices, maximum degree $4$, and $O(2^\ell \ell)$ vertices in total. Writing $s=2^\ell$, it has $k=O(s \log s)$ vertices. The graphs are built as follows: 
 - $B_1$ is a complete bipartite graph on $2+2$ vertices.
-- $B_{\ell+1}$ is built from two vertex-disjoint copies of $B_\ell$: For each index $i \in [2^\ell]$, we create two fresh input vertices and make them adjacent to input $i$ from each of the two $B_\ell$-copies. We do the same with outputs. The inputs and outputs of $B_{\ell+1}$ are the new vertices created this way.
+- $B_{\ell+1}$ is built from two vertex-disjoint copies $B^\uparrow$ and $B^\downarrow$ of $B_\ell$: For each index $i \in [2^\ell]$, we create two fresh input vertices and make them adjacent to input $i$ from each of the two $B_\ell$-copies. We do the same with outputs. The inputs and outputs of $B_{\ell+1}$ are the new vertices created this way.
 
-Note that the inputs come in pairs of vertices with the same neighborhood; such pairs are called twins. Of course, the same holds for the outputs.
-
-If you want, you can try building your own Beneš network below.
+Note that the inputs come in pairs of vertices with the same neighborhood; such pairs are called *twins*. Same for the outputs. You can try building your own Beneš network below.
 
 %%Applet%%construction%%
 
-### Routing matchings in blowups
+### Routing matchings
 
-For our compression result, we consider blowups $B_\ell \boxtimes K_t$ of Beneš networks. The inputs/output vertices of $B_\ell \boxtimes K_t$ are the blowups of input/output vertices in $B_\ell$. We show the following:
+To establish the claimed compression rate, we need to consider blowups $B_\ell \boxtimes K_t$ of Beneš networks. This just means that every vertex in the network is replaced by a clique $K_t$, and the inputs and outputs of $B_\ell \boxtimes K_t$ are the blowups of the inputs and outputs in $B_\ell$. Note that the recursive construction above gives us $B_\ell \boxtimes K_t$ if we replace the starting graph $K_{2,2}$ by $K_{2,2} \boxtimes K_t$. In other words, we can either blow up the initial graph and then perform the recursive construction of Beneš networks, or we do the recursive construction and the blow up. Both give the same result.
 
-> %%Frame%%Proposition%%thm-blowup-routing%%$B_\ell \boxtimes K_t$ can route input-output matchings%% For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
+We first show that these blowups can realize arbitrary pairings between inputs and outputs by vertex-disjoint paths; we say that they can *route matchings*. This will be crucial when proving the compression rate later. The proof is shown in introductory courses on discrete mathematics; we have also prepared a video.
 
-> %%Proof%%thm-blowup-routing%% We prove this by fixing $t$ arbitrary and performing induction over $\ell$. The statement is trivial for $B_1 \boxtimes K_t$, because this graph is isomorphic to $K_{2t,2t}$. 
->
-> For the induction step, we assume that $B_\ell \boxtimes K_t$ can route input-output matchings and show it for $B_{\ell+1} \boxtimes K_t$. Recall that $B_{\ell+1}$ consists of two subnetworks $B^\uparrow$ and $B^\downarrow$ isomorphic to $B_\ell$. Then $B_\ell \boxtimes K_t$ consists of subnetwork blowups $B^\uparrow \boxtimes K_t$ and $B^\downarrow \boxtimes K_t$.
->
-> A collection of paths $\mathcal P$ from inputs to outputs in $B_{\ell+1} \boxtimes K_t$ is vertex-disjoint if (but not only if) the following three conditions are satisfied:
-> 1. For $i \in [2^\ell]$, write $v_i$ and $v'_i$ for the two inputs of $B_{\ell+1}$ adjacent to input $i$ of the two subnetworks. Let $a$ and $a'$ be vertices in $B_{\ell+1} \boxtimes K_t$ from the $t$-blowups of $v_i$ and $v'_i$, respectively. The **first condition** is that the two paths starting at $a$ and $a'$ should go into different subnetwork blowups.
-> 2. The same holds for outputs: If $w_i$ and $w_{2^\ell +i}$ are the outputs adjacent to output $i$ of the subnetworks, then the paths in $\mathcal P$ ending there must come from different subnetworks.
-> 3. Within each subnetwork, $\mathcal P$ must induce vertex-disjoint paths from inputs to outputs.
+> %%Frame%%Proposition%%thm-blowup-routing%% For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
 
+### Routing bipartite graphs
 
+Now that we can route matchings in blowups of Beneš networks, it is not much harder to route general bipartite graphs $G$ of small maximum degree $\Delta$. For this, we just decompose the edge set of $G$ into a small number of matchings: Vizing's theorem shows that $\Delta+1$ matchings suffice, but a simple greedy edge-coloring algorithm already gives us $2\Delta-1$ matchings, which suffices for us. (Assign the edges one by one to matchings, just ensure that $e$ doesn't end up in a matching that contains an edge intersecting $e$. Since each edge intersects at most $2 \Delta-2$ other edges, at least one matching will always be free.)
 
-### Compression rate
-
-The routing results from before give rise to good embeddability properties in the following sense.
-
-> %%Frame%%Definition%%def-comprate%%Compression rate%%
-> The compression rate $R(H)$ of a $k$-vertex graph $H$ is the maximum $R \in [k]$ such that for every graph $G$ of arbitrary vertex-count $n$, but restricted maximum degree $\leq 4$, the blowup $H \boxtimes K_{\lceil n/R \rceil}$ contains $G$ as a **topological minor**.
-> This means $G$ is a subgraph of $H \boxtimes K_{\lceil n/R \rceil}$ after subdividing the edges of $G$ appropriately.
->
-> Furthermore, for fixed $H$ these topological minors can be found in polynomial time in $n$.
-
-For example, the complete graph $H=K_k$ has optimal (large) compression rate $R(K_k)=k$. However, we will instead use modified Beneš networks to sacrifice compression rate for lower density. Topological minors will live in special vertex subsets:
-
-> %%Frame%%Definition%%def-matching-linkedness%%Matching-linkedness%%
-> We call a vertex-set $X$ in a graph $F$ **matching-linked** if, for every matching $M$ with vertices from $X$ (but with $M$ possibly containing edges not present in $F$), there exist disjoint $u$-$v$-paths in $F$ realizing the edges $uv \in M$.
-
-This is vaguely similar to the property described in %%Ref%%thm-blowup-routing%%, however we need a slight modification to our Beneš construction from before:
-> %%Frame%%Definition%%def-aug-benes%%$B̌_\ell$%%
-> Denote by $(w_j)_j$ the output vertices of the Beneš network $B_\ell$. The **augmented Beneš network $B̌_\ell$** is obtained from $B_\ell$ by adding an edge between
-outputs $w_{2i−1}$ and $w_{2i}$, for each $i \in [2^{\ell-1}]$.
-
-These augmented Beneš networks will play the role of the pattern graphs we have thus far evasively called $H$.
-
-> %%Frame%%Lemma%%thm-augmented-linkedness%%Matching-linkedness%%
-> The augmented Beneš blowups $B̌_\ell \boxtimes K_{t}$ contain matching-linked subsets of size $\#X = t 2^\ell$.
-
-> %%Proof%%thm-augmented-linkedness%%
-> We choose $X=\{v_i^{(j)}: i \in [2^\ell], j \in [t]\} \subset V(B̌_\ell \boxtimes K_{t})$ as the inputs from all the blowup layers.
->
-> Use %%Ref%%thm-blowup-routing%%: If $v_{i}^{(j)}v_{i'}^{(j')}\subset X$ is the $m 2^{\ell-1}+s$'th input-pair in the matching for $s \in [2^{\ell-1}]$, route the input $v_{i}^{(j)}$ to the odd output $w_{2s-1}^{(m+1)}$, and route the other input $v_{i'}^{(j')}$ to the even output $w_{2s}^{(m+1)}$. After this, the paths are found by bridging the obtained pairs of routes with the edges $w_{2s-1}^{(m+1)}w_{2s}^{(m+1)}$.
-
-> %%Frame%%Proposition%%thm-Bl-comprate%%Compression rate of $B̌_\ell$%% 
-> We have $$R(B̌_\ell) \geq \left\lfloor \frac{2^\ell}{7} \right\rfloor$$ In particular, denoting by $k=2^{\ell+1} \ell$ the number of vertices in the graph, we have $R(B̌_\ell) \geq \left\lfloor \frac{k}{14 \log k} \right\rfloor$
+> %%Frame%%Proposition%%thm-Bl-comprate%%
+> We have $$R(B_\ell) \in \Omega(2^\ell)$$. In particular, writing $k = |V(B_\ell)| = 2^{\ell+1} \ell$, we have $R(B_\ell) \in \Omega(k / \log k)$.
 
 > %%Proof%%thm-Bl-comprate%%
-> The second bound follows from the first because
-> $$
-> R(B̌_\ell) 
->   \geq \left\lfloor \frac{2^{\ell+1} \ell}{14 \ell} \right\rfloor
->   \geq \left\lfloor \frac{2^{\ell+1} \ell}{14 (\ell+1+\log\ell)} \right\rfloor
->   = \left\lfloor \frac{k}{14 \log k} \right\rfloor
-> $$
->
-> To establish the first bound, let $G$ be an $n$-vertex graph of maximum degree $4$. Let $\tilde{R} = \left\lfloor \frac{2^\ell}{7} \right\rfloor$. Since
-> $$
-> \left\lceil \frac{n}{\tilde{R}} \right\rceil
-> = \left\lceil \frac{n}{\lfloor 2^\ell / 7 \rfloor} \right\rceil
-> \geq \frac{7n}{2^\ell},
-> $$
-> we see by %%Ref%%thm-augmented-linkedness%% that $B̌_\ell \boxtimes K_{\lceil n / \tilde{R} \rceil}$ contains a matching linked subset of size $\geq 7n$, write $X \equiv [n] \times [7]$ (ignore excess vertices).
-> Also assume $V(G)=[n]$. The greedy algorithm can find a proper $7$-coloring $M_1, \ldots, M_7$ of the *edges* of $G$. This gives rise to a matching $M = (M_1 \times \{1\}) \sqcup \dots \sqcup (M_7 \times\{7\})$ on $X$. Since $X$ is matching-linked, we get disjoint paths realizing $M$. Finally, for every non-isolated vertex $v \in [n]$ with edges in $M_{i(1)}, \ldots, M_{i(p)}$, connect all $(v, i(j)) \in X$, $j \in [p-1]$ to $(v,i(p))$. Together those edge sets form a topological minor embedding of $G$ in $B̌_\ell \boxtimes K_{\lceil n / \tilde{R} \rceil}$, so $R \geq \tilde{R}$.
+Let $G=(L\cup R,E)$ be bipartite with $n+n$ vertices and maximum degree $5$.
+We decompose $E$ into matchings $M_1,\ldots,M_9$ as above.
+For $q = \lceil n/2^\ell \rceil$,
+the blowup $B_\ell \boxtimes K_q$ has $n$ inputs and outputs, and each *individual* matching $M_i$ can be realized therein as a collection $P_i$ of vertex-disjoint paths. We construct a topological minor model of $G$ in $B_\ell \boxtimes K_{9q}$ by partitioning the vertices of $B_\ell \boxtimes K_{9q}$ into $9$ layers and placing the internal vertices of the paths in $P_i$ into layer $i$, while placing the endpoints into layer $1$.
 
 ## Finalizing the lower bound
 
