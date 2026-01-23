@@ -1,4 +1,4 @@
-# Lower bounds for detecting small subgraphs
+﻿# Lower bounds for detecting small subgraphs
 
 The [exponential-time hypothesis (ETH)](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** Namely, under ETH, this problem requires time $n^{\Omega(k)}$.
 
@@ -98,13 +98,13 @@ To establish the claimed compression rate, we need to consider blowups $B_\ell \
 
 We first show that these blowups can realize arbitrary pairings between inputs and outputs by vertex-disjoint paths; we say that they can *route matchings*. This will be crucial when proving the compression rate later. The proof is shown in introductory courses on discrete mathematics; we have also prepared a video.
 
-> %%Frame%%Proposition%%thm-blowup-routing%% For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
+> %%Frame%%Proposition%%thm-blowup-routing%%%% For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
 
 ### Routing bipartite graphs
 
 Now that we can route matchings in blowups of Beneš networks, it is not much harder to route general bipartite graphs $G$ of small maximum degree $\Delta$. For this, we just decompose the edge set of $G$ into a small number of matchings: Vizing's theorem shows that $\Delta+1$ matchings suffice, but a simple greedy edge-coloring algorithm already gives us $2\Delta-1$ matchings, which suffices for us. (Assign the edges one by one to matchings, just ensure that $e$ doesn't end up in a matching that contains an edge intersecting $e$. Since each edge intersects at most $2 \Delta-2$ other edges, at least one matching will always be free.)
 
-> %%Frame%%Proposition%%thm-Bl-comprate%%
+> %%Frame%%Proposition%%thm-Bl-comprate%%%%
 > We have $$R(B_\ell) \in \Omega(2^\ell)$$. In particular, writing $k = |V(B_\ell)| = 2^{\ell+1} \ell$, we have $R(B_\ell) \in \Omega(k / \log k)$.
 
 > %%Proof%%thm-Bl-comprate%%

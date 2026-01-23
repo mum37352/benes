@@ -83,7 +83,7 @@ let mathExtension: MarkedExtension = {
       level: 'block',
       start(src: string) { return src.match(/%%Frame(Sq)?%%/)?.index; },
       tokenizer(src: string) {
-        let match = src.match(/^%%Frame(Sq)?%%([^%]+)%%([^%]+)%%([^%]+)%%/);
+        let match = src.match(/^%%Frame(Sq)?%%([^%]+)%%([^%]+)%%([^%]*)%%/);
         if (match) {
           let [fullMatch, sq, category, id, text] = match;
           return {
@@ -214,7 +214,7 @@ function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList
       if (!firstToken) {
       } else if (firstToken.type === "frame") {
         hadDirectives = true;
-        let title = <strong>{firstToken.category} {tagList[firstToken.id].number}: <MdTokens tokens={firstToken.tokens!} tagList={tagList} />.</strong>;
+        let title = <strong>{firstToken.category} {tagList[firstToken.id].number}{firstToken.tokens!.length !== 0 ? ": " : ""}<MdTokens tokens={firstToken.tokens!} tagList={tagList} />.</strong>;
         renderList.push(<div className="bg-[rgba(0,0,0,0.1)] p-3" id={buildHtmlId(firstToken.id)}>
           <MdTokens tokens={token.tokens!} tagList={tagList} injectedTitle={title} />
         </div>);
@@ -224,6 +224,7 @@ function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList
       } else if (firstToken.type === "proof") {
         hadDirectives = true;
         let tag = tagList[firstToken.thmId];
+        console.log("id", firstToken.thmId, "tag", tag);
         let title = <strong>Proof of {tag.category} {tag.number}.</strong>;
         renderList.push(<blockquote className="!text-[rgba(0,0,0,0.75)]">
           <MdTokens tokens={token.tokens!} tagList={tagList} injectedTitle={title} />
@@ -256,7 +257,7 @@ function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList
       // Handled by the caller.
     } else if (token.type === "ref") {
       let tag = tagList[token.id];
-      renderList.push(<a href={'#'+buildHtmlId(token.id)}>{tag.category} {tag.number}: <MdTokens tokens={tag.descTokens} tagList={tagList} /></a>)
+      renderList.push(<a href={'#'+buildHtmlId(token.id)}>{tag.category} {tag.number}{tag.descTokens!.length !== 0 ? ": " : ""}<MdTokens tokens={tag.descTokens} tagList={tagList} /></a>)
     } else if (token.type === "link") {
       renderList.push(<a href={token.href}><MdTokens tokens={token.tokens!} tagList={tagList} /></a>)
     }
@@ -301,6 +302,7 @@ function buildTagList(tokens: Token[]) {
 
 function MdArticle() {
   let tagList = buildTagList(tokens);
+  console.log("tagList", tagList);
 
   return <MdTokens tokens={tokens} tagList={tagList} />;
 }
