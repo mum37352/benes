@@ -97,6 +97,7 @@ Note that the inputs come in pairs of vertices with the same neighborhood; such 
 To establish the claimed compression rate, we need to consider blowups $B_\ell \boxtimes K_t$ of Beneš networks. This just means that every vertex in the network is replaced by a clique $K_t$, and the inputs and outputs of $B_\ell \boxtimes K_t$ are the blowups of the inputs and outputs in $B_\ell$. Note that the recursive construction above gives us $B_\ell \boxtimes K_t$ if we replace the starting graph $K_{2,2}$ by $K_{2,2} \boxtimes K_t$. In other words, we can either blow up the initial graph and then perform the recursive construction of Beneš networks, or we do the recursive construction and the blow up. Both give the same result.
 
 We first show that these blowups can realize arbitrary pairings between inputs and outputs by vertex-disjoint paths; we say that they can *route matchings*. This will be crucial when proving the compression rate later. The proof is shown in introductory courses on discrete mathematics; we have also prepared a video.
+%%Applet%%benesvid%%
 
 > %%Frame%%Proposition%%thm-blowup-routing%%%% For every bijection $\pi$ from inputs to outputs of $B_\ell \boxtimes K_t$, there is a collection of vertex-disjoint paths connecting each input with its corresponding output under $\pi$.
 

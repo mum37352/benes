@@ -245,6 +245,9 @@ function MdTokens({ tokens, tagList, injectedTitle }: { tokens: Token[], tagList
     } else if (token.type === "applet") {
       if (token.text === "reduction!") { // Turn this back on by removing the !
         renderList.push(<ReductionApplet />);
+      } else if (token.text === "benesvid") {
+        renderList.push(<iframe className="my-5" width="100%" height="400" src="https://www.youtube.com/embed/lJIrF4YjHfQ?si=-KfvkEoZeo4lcr8K" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
+        )
       } else {
         renderList.push(
           <iframe src={`https://mum37352.github.io/benes/${token.text}.html`} width="100%"
