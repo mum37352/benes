@@ -1,32 +1,27 @@
 ﻿# Lower bounds for detecting small subgraphs
 
-The [exponential-time hypothesis (ETH)](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting **$k$-cliques in $n$-vertex graphs.** Namely, under ETH, this problem requires time $n^{\Omega(k)}$.
+The [exponential-time hypothesis](https://en.wikipedia.org/wiki/Exponential_time_hypothesis) (ETH) implies a lower bound for the canonical hard problem in parameterized complexity: Detecting $k$-cliques in $n$-vertex graphs requires time $n^{\Omega(k)}$ under ETH.
 
-We would like to transfer this lower bound to other parameterized problems. This however seems impossible at first glance: Reductions from $k$-clique to other problems tend to need $k$ "vertex gadgets" that encode potential clique vertices, and $k \choose 2$ "edge gadgets" that check edges between the encoded vertices. This yields target instances with parameter value $\ell = \Omega(k^2)$, since each gadget has to increase the parameter by at least a constant value. Due to this parameter increase, a reduction from $k$-clique only rules out $n^{o(\sqrt \ell)}$ time algorithms for the target problem.
+We would like to transfer this lower bound under ETH from cliques to other problems. However, reductions from $k$-clique to other problems tend to need $k$ "vertex gadgets" that encode potential clique vertices, and $k \choose 2$ "edge gadgets" that check edges between the encoded vertices. The edge gadgets are problematic, as they yield target instances with parameter value $\ell = \Omega(k^2)$. No matter how efficient they are, each gadget will increase the parameter by at least a constant value. Due to this quadratic parameter blowup, a reduction from $k$-clique only rules out $n^{o(\sqrt \ell)}$ time algorithms for the target problem.
 
-A better source problem is **colorful subgraph isomorphism**: We call a $k$-vertex graph $H$ colorful if it is bijectively colored with $k$ colors. For any fixed colorful $k$-vertex graph $H$, we consider the following problem:
+A better source problem is *partitioned subgraph isomorphism*: For any fixed $k$-vertex graph $H$, we consider the following problem:
 
-> %%Frame%%Problem%%prob-colsub%%$\mathsf{ColSub}(H)$%% Given colored graphs $H$ and $G$, where $H$ is colorful, does $G$ contain a subgraph isomorphic to $H$? The colors matter for the isomorphism.
+> %%Frame%%Problem%%prob-colsub%%$\mathrm{PartSub}(H)$%% Given a graph $G$ whose vertices are partitioned into classes $V_i(G)$ for $i\in V(H)$, are there vertices $v_1,\ldots,v_k$ with $v_i \in V_i(G)$ for all $i\in V(H)$ such that $v_i v_j \in E(G)$ for all $ij\in E(H)$?
 
-When $H=K_k$ is a complete graph, $\mathsf{ColSub}(K_k)$ is a colorful version of the $k$-clique problem, for which ETH rules out $n^{o(k)}$ time algorithms. A breakthrough result by Marx shows a similar lower bound even for graphs $H$ of maximum degree $3$:
-> If ETH holds, then $\mathsf{ColSub}(H)$ cannot be solved in time $n^{o(k/\log k)}$, even for certain $k$-vertex graphs $H$ of maximum degree $3$.
+When $H=K_k$ is a complete graph, $\mathrm{PartSub}(K_k)$ is a "colored version" of the $k$-clique problem and therefore has no $n^{o(k)}$ time algorithms under ETH. A breakthrough result by Marx shows a similar lower bound even for graphs $H$ of maximum degree $3$. In this note, we give a self-contained and arguably simple proof of Marx's lower bound.
+> If ETH holds, then $\mathrm{PartSub}(H)$ cannot be solved in time $n^{o(k/\log k)}$, even for certain $k$-vertex graphs $H$ of maximum degree $3$.
 
-This gives us lower bounds for other parameterized problems. The reason is that many reductions from $\mathsf{Clique}$ to problems $\mathsf X$ can be generalized, without too much effort, into more general reductions from $\mathsf{ColSub}(H)$ with arbitrary $H$ to $\mathsf X$. Usually, the same vertex- and edge-gadgets work, each of which increase the parameter by $O(1)$. Crucially, if we start with a $k$-vertex graph $H$ of maximum degree $3$, then we only need to take care of $O(k)$ rather than $O(k^2)$ edges. 
+This gives us lower bounds for other parameterized problems, because many reductions from $\mathrm{Clique}$ to problems $\mathrm X$ can be generalized to reductions from $\mathrm{PartSub}(H)$ with *arbitrary* $H$ to $\mathrm X$. The same vertex- and edge-gadgets usually work, each of which increase the parameter by $O(1)$. Crucially, if we start with a $k$-vertex graph $H$ of maximum degree $3$, then we only need to take care of $O(k)$ edges rather than $O(k^2)$ edges. 
 
-Overall, this transforms an $\mathsf{ColSub}(H)$-instance with a $k$-vertex graph $H$ to an $\mathsf X$-instance with parameter $\ell = O(k)$. If we could then solve $\mathsf X$ in $n^{o(\ell / \log \ell)}$ time, we would refute Marx's bound. This strategy was used in many papers to rule out $n^{o(\ell / \log \ell)}$ time algorithms for problems with known $n^{O(\ell)}$ time algorithms.
-
-In this note, we give a self-contained and arguably simple proof of Marx's lower bound.
+Overall, this transforms an instance of $\mathrm{PartSub}(H)$ with a $k$-vertex graph $H$ to an $\mathrm X$-instance with parameter $\ell = O(k)$. If we could then solve $\mathrm X$ in $n^{o(\ell / \log \ell)}$ time, we would refute Marx's lower bound. This strategy was used in many papers to rule out $n^{o(\ell / \log \ell)}$ time algorithms for problems with known $n^{O(\ell)}$ time algorithms.
 
 ## Proof idea
 
-Our proof starts from the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH, even on graphs of maximum degree $4$. This can be shown with the standard reduction from $3$-SAT to $3$-coloring, combined with the sparsification lemma. (This lemma says that ETH already rules out $2^{o(n)}$ time algorithms for *sparse* $n$-variable $3$-SAT, i.e., with just $O(n)$ clauses.) For technical reasons, we generalize this problem slightly. 
-- In the standard problem, we are given a graph $G=(V,E)$ and should decide whether there is an assignment $a : V \to \{1,2,3\}$ such that each edge has *distinct* colors on its endpoints, that is, we want $a(u) \neq a(v)$ for all $uv \in E$. 
-- In our version, we also want to enforce some edges to have endpoints of the *same* color. That is, we require $a(u) = a(v)$ for those *"equality"* edges $uv \in E$. We call the other edges *"disequality"* edges.
+We start from the $3$-coloring problem, which has no $2^{o(n)}$ time algorithms under ETH, even on graphs of maximum degree $4$. This can be shown with the standard reduction from $3$-SAT to $3$-coloring, combined with the sparsification lemma. (This lemma says that ETH already rules out $2^{o(n)}$ time algorithms for *sparse* $n$-variable $3$-SAT, i.e., with just $O(n)$ clauses.) For technical reasons, we generalize the $3$-coloring problem slightly.
+- In the *standard problem*, we are given a graph $G=(V,E)$ and should decide whether there is an assignment $a : V \to \{1,2,3\}$ such that each edge has *distinct* colors on its endpoints. That is, we want $a(u) \neq a(v)$ for all $uv \in E$. 
+- In our *generalized version*, some edges $uv \in E$ may want $a(u) = a(v)$. We call these *"equality"* edges, and the others *"disequality"* edges.
 
-Testing for an assignment $a : V \to \{1,2,3\}$ that satisfies all conditions imposed by edges is only more general than $3$-coloring, so ETH rules out $2^{o(n)}$ time algorithms on graphs of maximum degree $4$.  The basic idea for the reduction from the generalized assignment is now this: 
-- We transform an $n$-vertex instance $G$ for the $3$-coloring problem into an equivalent blown up $H$-subgraph problem instance $G'$ with approximately $3^{n/k}$ vertices. 
-- An $n^{o(k)}$-time algorithm for $H$-subgraphs would then imply $2^{o(n)}$ time for $3$-coloring. But this contradicts ETH.
-
+This problem is clearly more general than $3$-coloring, so ETH rules out $2^{o(n)}$ time algorithms on graphs of maximum degree $4$.  Our goal now is to transform an $n$-vertex instance $G$ for this problem into an equivalent instance $G'$ for $\mathrm{PartSub}(H)$ with approximately $3^{n/k}$ vertices.  An $n^{o(k)}$-time algorithm for $\mathrm{PartSub}(H)$ would then imply $2^{o(n)}$ time for $3$-coloring, contradicting ETH.
 
 ### From $3$-coloring to cliques
 
